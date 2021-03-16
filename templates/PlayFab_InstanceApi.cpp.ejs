@@ -122,7 +122,7 @@ namespace PlayFab
 
         UnorderedMap<String, String> headers;
 <% if (hasAuthParams(apiCall)) {
-%>        headers.emplace(<%- getAuthParams(apiCall, true) %>);
+%>        headers.emplace(<%- getAuthParams(apiCall) %>);
 <% } %>
         // TODO bug: There is a lifetime issue with capturing this here since the client owns the object
         auto callComplete = [ this, callback, errorCallback, context{ m_context }, customData ](const HttpResult& httpResult)

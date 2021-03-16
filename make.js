@@ -121,23 +121,15 @@ function hasAuthParams(apiCall) {
     return true;
 }
 
-function getAuthParams(apiCall, isInstanceApi) {
+function getAuthParams(apiCall) {
     if (apiCall.url === "/Authentication/GetEntityToken")
         return "authKey, authValue";
-    if (isInstanceApi) {
-        switch (apiCall.auth) {
-            case "EntityToken": return "\"X-EntityToken\", m_context->entityToken.data()";
-            case "SessionTicket": return "\"X-Authorization\", m_context->clientSessionTicket.data()";
-            case "SecretKey": return "\"X-SecretKey\", m_settings->developerSecretKey.data()";
-        }
+    switch (apiCall.auth) {
+        case "EntityToken": return "\"X-EntityToken\", m_context->entityToken.data()";
+        case "SessionTicket": return "\"X-Authorization\", m_context->clientSessionTicket.data()";
+        case "SecretKey": return "\"X-SecretKey\", m_settings->developerSecretKey.data()";
     }
-    else {
-        switch (apiCall.auth) {
-            case "EntityToken": return "\"X-EntityToken\", context->entityToken.data()";
-            case "SessionTicket": return "\"X-Authorization\", context->clientSessionTicket.data()";
-            case "SecretKey": return "\"X-SecretKey\", settings->developerSecretKey.data()";
-        }
-    }
+    
     throw Error("getAuthParams: Unknown auth type: " + apiCall.auth + " for " + apiCall.name);
 }
 function getBaseType(datatype) {
