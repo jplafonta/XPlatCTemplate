@@ -55,14 +55,8 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         sortedClasses: getSortedClasses(api.datatypes)
     };
 
-    var apihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_Api.h.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "Api.h"), apihTemplate(locals));
-
     var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_InstanceApi.h.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "InstanceApi.h"), iapihTemplate(locals));
-
-    var apiCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_Api.cpp.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/source/playfab", "PlayFab" + api.name + "Api.cpp"), apiCppTemplate(locals));
 
     var iapiCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_InstanceApi.cpp.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/source/playfab", "PlayFab" + api.name + "InstanceApi.cpp"), iapiCppTemplate(locals));
@@ -130,10 +124,19 @@ function hasAuthParams(apiCall) {
 function getAuthParams(apiCall, isInstanceApi) {
     if (apiCall.url === "/Authentication/GetEntityToken")
         return "authKey, authValue";
-    switch (apiCall.auth) {
-        case "EntityToken": return "\"X-EntityToken\", context->entityToken";
-        case "SessionTicket": return "\"X-Authorization\", context->clientSessionTicket";
-        case "SecretKey": return "\"X-SecretKey\", settings->developerSecretKey";
+    if (isInstanceApi) {
+        switch (apiCall.auth) {
+            case "EntityToken": return "\"X-EntityToken\", m_context->entityToken.data()";
+            case "SessionTicket": return "\"X-Authorization\", m_context->clientSessionTicket.data()";
+            case "SecretKey": return "\"X-SecretKey\", m_settings->developerSecretKey.data()";
+        }
+    }
+    else {
+        switch (apiCall.auth) {
+            case "EntityToken": return "\"X-EntityToken\", context->entityToken.data()";
+            case "SessionTicket": return "\"X-Authorization\", context->clientSessionTicket.data()";
+            case "SecretKey": return "\"X-SecretKey\", settings->developerSecretKey.data()";
+        }
     }
     throw Error("getAuthParams: Unknown auth type: " + apiCall.auth + " for " + apiCall.name);
 }
@@ -243,36 +246,31 @@ function getPropertySafeName(property) {
     return (property.actualtype === property.name) ? "pf" + property.name : property.name;
 }
 
-function getRequestActions(tabbing, apiCall, isInstanceApi) {
-    //TODO Bug 6594: add to this titleId check.
-    // If this titleId does not exist we should be throwing an error informing the user MUST have a titleId.
+function getRequestActions(tabbing, apiCall) {
     if (apiCall.result === "LoginResult" || apiCall.result === "RegisterPlayFabUserResult")
-        return tabbing + "if (request.TitleId.empty())\n"
-            + tabbing + "{\n"
-            + tabbing + "    request.TitleId = settings->titleId;\n"
-            + tabbing + "}\n";
+        return tabbing + "m_settings->titleId = request.TitleId;\n"
 
     if (apiCall.url === "/Authentication/GetEntityToken")
-        return tabbing + "std::string authKey, authValue;\n" +
-            tabbing + "if (context->entityToken.length() > 0)\n" +
+        return tabbing + "String authKey, authValue;\n" +
+            tabbing + "if (m_context->entityToken.length() > 0)\n" +
             tabbing + "{\n" +
-            tabbing + "    authKey = \"X-EntityToken\"; authValue = context->entityToken;\n" +
+            tabbing + "    authKey = \"X-EntityToken\"; authValue = m_context->entityToken.data();\n" +
             tabbing + "}\n" +
-            tabbing + "else if (context->clientSessionTicket.length() > 0)\n" +
+            tabbing + "else if (m_context->clientSessionTicket.length() > 0)\n" +
             tabbing + "{\n" +
-            tabbing + "    authKey = \"X-Authorization\"; authValue = context->clientSessionTicket;\n" +
+            tabbing + "    authKey = \"X-Authorization\"; authValue = m_context->clientSessionTicket.data();\n" +
             tabbing + "}\n" +
             "#if defined(ENABLE_PLAYFABSERVER_API) || defined(ENABLE_PLAYFABADMIN_API)\n" +
-            tabbing + "else if (settings->developerSecretKey.length() > 0)\n" +
+            tabbing + "else if (m_settings->developerSecretKey.length() > 0)\n" +
             tabbing + "{\n" +
-            tabbing + "    authKey = \"X-SecretKey\"; authValue = settings->developerSecretKey;\n" +
+            tabbing + "    authKey = \"X-SecretKey\"; authValue = m_settings->developerSecretKey.data();\n" +
             tabbing + "}\n" +
             "#endif\n";
 
     return "";
 }
 
-function getResultActions(tabbing, apiCall, isInstanceApi) {
+function getResultActions(tabbing, apiCall) {
     if (apiCall.url === "/Authentication/GetEntityToken")
         return tabbing + "context->HandlePlayFabLogin(\"\", \"\", outResult.Entity->Id, outResult.Entity->Type, outResult.EntityToken);\n";
     if (apiCall.result === "LoginResult")

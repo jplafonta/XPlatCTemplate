@@ -55,6 +55,11 @@ namespace PlayFabUnit
 
     int TestApp::Main()
     {
+        HRESULT hr = HCInitialize(nullptr);
+        assert(SUCCEEDED(hr));
+        HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
+        HCTraceSetTraceToDebugger(true);
+
         // Load the TestTitleData
         TestTitleData testTitleData;
         bool loadSuccessful = LoadTitleData(testTitleData);
@@ -63,11 +68,11 @@ namespace PlayFabUnit
         // comment out the return statement and fill out the TestTitleData fields manually.
         if (!loadSuccessful)
         {
-            printf("Failed to load testTitleData\n");
-            return 1;
+            //printf("Failed to load testTitleData\n");
+            //return 1;
 
             // TODO: POPULATE THIS SECTION WITH REAL INFORMATION (or set up a testTitleData file, and set your PF_TEST_TITLE_DATA_JSON to the path for that file)
-            //testTitleData.titleId = ""; // The titleId for your title, found in the "Settings" section of PlayFab Game Manager
+            testTitleData.titleId = "E18D7"; // The titleId for your title, found in the "Settings" section of PlayFab Game Manager
             //testTitleData.userEmail = ""; // This is the email for a valid user (test tries to log into it with an invalid password, and verifies error result)
         }
 
@@ -87,29 +92,29 @@ namespace PlayFabUnit
         testRunner.Add(loginTest);
 #endif // !defined(PLAYFAB_PLATFORM_IOS)
 
-        // Add PlayFab API tests.
-        PlayFabApiTest pfApiTest;
-        pfApiTest.SetTitleInfo(testTitleData);
-        testRunner.Add(pfApiTest);
-
-#if false // These tests are still too unstable, and despite passing nearly 100% in debug, still fail 100% in release
-        PlayFabEventTest pfEventTest;
-        pfEventTest.SetTitleInfo(testTitleData);
-        testRunner.Add(pfEventTest);
-#endif // false, tests are too unstable
-
-        PlayFabTestMultiUserStatic pfMultiUserStaticTest;
-        pfMultiUserStaticTest.SetTitleInfo(testTitleData);
-        testRunner.Add(pfMultiUserStaticTest);
-
-        PlayFabTestMultiUserInstance pfMultiUserInstanceTest;
-        pfMultiUserInstanceTest.SetTitleInfo(testTitleData);
-        testRunner.Add(pfMultiUserInstanceTest);
-#if !defined(PLAYFAB_PLATFORM_GDK) && (defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX))
-        PlayFabQoSTest pfQosTest;
-        pfQosTest.SetTitleInfo(testTitleData);
-        testRunner.Add(pfQosTest);
-#endif //defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+//        // Add PlayFab API tests.
+//        PlayFabApiTest pfApiTest;
+//        pfApiTest.SetTitleInfo(testTitleData);
+//        testRunner.Add(pfApiTest);
+//
+//#if false // These tests are still too unstable, and despite passing nearly 100% in debug, still fail 100% in release
+//        PlayFabEventTest pfEventTest;
+//        pfEventTest.SetTitleInfo(testTitleData);
+//        testRunner.Add(pfEventTest);
+//#endif // false, tests are too unstable
+//
+//        PlayFabTestMultiUserStatic pfMultiUserStaticTest;
+//        pfMultiUserStaticTest.SetTitleInfo(testTitleData);
+//        testRunner.Add(pfMultiUserStaticTest);
+//
+//        PlayFabTestMultiUserInstance pfMultiUserInstanceTest;
+//        pfMultiUserInstanceTest.SetTitleInfo(testTitleData);
+//        testRunner.Add(pfMultiUserInstanceTest);
+//#if !defined(PLAYFAB_PLATFORM_GDK) && (defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX))
+//        PlayFabQoSTest pfQosTest;
+//        pfQosTest.SetTitleInfo(testTitleData);
+//        testRunner.Add(pfQosTest);
+//#endif //defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
 #endif // !defined(DISABLE_PLAYFABCLIENT_API)
 
         // Run the tests (blocks until all tests have finished).
@@ -120,11 +125,11 @@ namespace PlayFabUnit
 
 #if !defined(DISABLE_PLAYFABCLIENT_API)
         // Publish the test report via cloud script (and wait for it to finish).
-        PlayFab::PlayFabSettings::staticSettings->titleId = testTitleData.titleId;
 
         PlayFab::ClientModels::LoginWithCustomIDRequest request;
         request.CustomId = PlayFab::PlayFabSettings::buildIdentifier;
         request.CreateAccount = true;
+        request.TitleId = testTitleData.titleId;
         this->clientApi->LoginWithCustomID(request,
             std::bind(&TestApp::OnPostReportLogin, this, std::placeholders::_1, std::placeholders::_2),
             std::bind(&TestApp::OnPostReportError, this, std::placeholders::_1, std::placeholders::_2),
