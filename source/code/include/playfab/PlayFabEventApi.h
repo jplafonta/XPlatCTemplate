@@ -16,16 +16,16 @@ namespace PlayFab
     public:
         PlayFabEventAPI(bool threadedEventPipeline=true);
 
-        std::shared_ptr<IPlayFabEventRouter> GetEventRouter() const;
+        SharedPtr<IPlayFabEventRouter> GetEventRouter() const;
 
         /// <summary>
         /// Emits a single event.
         /// - event is a pointer to user's playstream event.
         /// - callback is a pointer to user's function to receive a notification about the outcome of the operation when the event is sent out or any error occurred.
         /// </summary>
-        void EmitEvent(std::unique_ptr<const IPlayFabEvent> event, const PlayFabEmitEventCallback callback) const;
+        void EmitEvent(UniquePtr<const IPlayFabEvent> event, const PlayFabEmitEventCallback callback) const;
 
-        void EmitEvent(std::unique_ptr<const IPlayFabEvent> event, std::function<void(std::shared_ptr<const IPlayFabEvent>, std::shared_ptr<const IPlayFabEmitEventResponse>)> callback) const;
+        void EmitEvent(UniquePtr<const IPlayFabEvent> event, std::function<void(SharedPtr<const IPlayFabEvent>, SharedPtr<const IPlayFabEmitEventResponse>)> callback) const;
 
         /// <summary>
         /// Updates the underlying event router which in turn will update the eventpipeline.
@@ -34,7 +34,7 @@ namespace PlayFab
         void Update();
 
     private:
-        std::shared_ptr<IPlayFabEventRouter> eventRouter;
+        SharedPtr<IPlayFabEventRouter> eventRouter;
     };
 }
 

@@ -16,7 +16,7 @@ namespace PlayFab
 {
     class PlayFabAuthenticationContext;
 
-    template<typename ResType> using ProcessApiCallback = std::function<void(const ResType& result, void* customData)>;
+    template<typename ResType> using ProcessApiCallback = std::function<void(const ResType& result)>;
 
     /// <summary>
     /// Base class for all PlayFab Models
@@ -60,7 +60,7 @@ namespace PlayFab
     // Utilities for [de]serializing time_t to/from json
     inline void ToJsonUtilT(const time_t input, Json::Value& output)
     {
-        output = Json::Value(TimeTToIso8601String(input));
+        output = Json::Value(TimeTToIso8601String(input).data());
     }
     inline void FromJsonUtilT(const Json::Value& input, time_t& output)
     {
@@ -68,18 +68,18 @@ namespace PlayFab
         {
             return;
         }
-        output = Iso8601StringToTimeT(input.asString());
+        output = Iso8601StringToTimeT(input.asCString());
     }
 
     inline void ToJsonUtilT(const StdExtra::optional<time_t>& input, Json::Value& output)
     {
-        if (input.isNull())
+        if (!input)
         {
             output = Json::Value();
         }
         else
         {
-            ToJsonUtilT(static_cast<time_t>(input), output);
+            ToJsonUtilT(input.operator*(), output);
         }
     }
 
@@ -87,7 +87,7 @@ namespace PlayFab
     {
         if (input == Json::Value::null)
         {
-            output.setNull();
+            output.reset();
         }
         else
         {
@@ -139,7 +139,7 @@ namespace PlayFab
         for (auto iter = input.begin(); iter != input.end(); ++iter)
         {
             ToJsonUtilT(iter->second, eachOutput);
-            output[iter->first] = eachOutput;
+            output[iter->first.data()] = eachOutput;
         }
     }
 
@@ -155,20 +155,20 @@ namespace PlayFab
         for (auto iter = input.begin(); iter != input.end(); ++iter)
         {
             FromJsonUtilT(*iter, eachOutput);
-            output[iter.key().asString()] = eachOutput;
+            output[iter.key().asCString()] = eachOutput;
         }
     }
 
     // Utilities for [de]serializing EnumType to/from json
     template <typename EnumType> inline void ToJsonUtilE(const StdExtra::optional<EnumType>& input, Json::Value& output)
     {
-        if (input.isNull())
+        if (!input)
         {
             output = Json::Value();
         }
         else
         {
-            ToJsonEnum(input, output);
+            ToJsonEnum(*input, output);
         }
     }
 
@@ -176,7 +176,7 @@ namespace PlayFab
     {
         if (input == Json::Value::null)
         {
-            output.setNull();
+            output.reset();
         }
         else
         {
@@ -257,7 +257,7 @@ namespace PlayFab
         }
         else
         {
-            output = Json::Value(input);
+            output = Json::Value(input.data());
         }
     }
 
@@ -269,7 +269,7 @@ namespace PlayFab
         }
         else
         {
-            output = input.asString();
+            output = input.asCString();
         }
     }
 
@@ -315,7 +315,7 @@ namespace PlayFab
         for (auto iter = input.begin(); iter != input.end(); ++iter)
         {
             ToJsonUtilS(iter->second, eachOutput);
-            output[iter->first] = eachOutput;
+            output[iter->first.data()] = eachOutput;
         }
     }
 
@@ -331,7 +331,7 @@ namespace PlayFab
         for (auto iter = input.begin(); iter != input.end(); ++iter)
         {
             FromJsonUtilS(*iter, eachOutput);
-            output[iter.key().asString()] = eachOutput;
+            output[iter.key().asCString()] = eachOutput;
         }
     }
 
@@ -346,15 +346,15 @@ namespace PlayFab
         output.FromJson(input);
     }
 
-    template <typename ObjectType> inline void ToJsonUtilO(const StdExtra::optional<ObjectType> input, Json::Value& output)
+    template <typename ObjectType> inline void ToJsonUtilO(const StdExtra::optional<ObjectType>& input, Json::Value& output)
     {
-        if (input.isNull())
+        if (!input)
         {
             output = Json::Value();
         }
         else
         {
-            output = static_cast<ObjectType>(input).ToJson();
+            output = input->ToJson();
         }
     }
 
@@ -362,7 +362,7 @@ namespace PlayFab
     {
         if (input == Json::Value::null)
         {
-            output.setNull();
+            output.reset();
         }
         else
         {
@@ -414,7 +414,7 @@ namespace PlayFab
         for (auto iter = input.begin(); iter != input.end(); ++iter)
         {
             ToJsonUtilO(iter->second, eachOutput);
-            output[iter->first] = eachOutput;
+            output[iter->first.data()] = eachOutput;
         }
     }
 
@@ -430,7 +430,7 @@ namespace PlayFab
         for (auto iter = input.begin(); iter != input.end(); ++iter)
         {
             FromJsonUtilO(*iter, eachOutput);
-            output[iter.key().asString()] = eachOutput;
+            output[iter.key().asCString()] = eachOutput;
         }
     }
 
@@ -487,13 +487,13 @@ namespace PlayFab
 
     template <typename PrimitiveType> inline void ToJsonUtilP(const StdExtra::optional<PrimitiveType>& input, Json::Value& output)
     {
-        if (input.isNull())
+        if (!input)
         {
             output = Json::Value();
         }
         else
         {
-            ToJsonUtilP(static_cast<PrimitiveType>(input), output);
+            ToJsonUtilP(input.operator*(), output);
         }
     }
 
@@ -501,7 +501,7 @@ namespace PlayFab
     {
         if (input == Json::Value::null)
         {
-            output.setNull();
+            output.reset();
         }
         else
         {
@@ -553,7 +553,7 @@ namespace PlayFab
         for (auto iter = input.begin(); iter != input.end(); ++iter)
         {
             ToJsonUtilP(iter->second, eachOutput);
-            output[iter->first] = eachOutput;
+            output[iter->first.data()] = eachOutput;
         }
     }
 
@@ -569,7 +569,7 @@ namespace PlayFab
         for (auto iter = input.begin(); iter != input.end(); ++iter)
         {
             FromJsonUtilP(*iter, eachOutput);
-            output[iter.key().asString()] = eachOutput;
+            output[iter.key().asCString()] = eachOutput;
         }
     }
 }

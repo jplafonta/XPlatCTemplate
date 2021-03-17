@@ -25,10 +25,10 @@ namespace PlayFab
         :
         disabled(false),
         buffMask(AdjustBufferSize(bufferSize) - 1),
-        bufferArray(std::unique_ptr<uint8_t[]>(new uint8_t[buffMask + 1])),
-        buffStart((uint64_t)(bufferArray.get())),
+        bufferArray(buffMask + 1),
+        buffStart((uint64_t)(bufferArray.data())),
         buffEnd(buffStart + buffMask + 1),
-        eventIndex(std::make_shared<std::atomic<uint64_t>>(0))
+        eventIndex(MakeShared<std::atomic<uint64_t>>(0))
     {
         uint8_t *buffer = (uint8_t*)buffStart;
         memset(buffer, 0, buffMask + 1);
@@ -57,7 +57,7 @@ namespace PlayFab
         }
     }
 
-    PlayFabEventBuffer::EventProducingResult PlayFabEventBuffer::TryPut(std::shared_ptr<const IPlayFabEmitEventRequest> request) // This must be thread-safe
+    PlayFabEventBuffer::EventProducingResult PlayFabEventBuffer::TryPut(SharedPtr<const IPlayFabEmitEventRequest> request) // This must be thread-safe
     {
         SpinLock lock(atomicSpin);
 
@@ -105,7 +105,7 @@ namespace PlayFab
         return EventProducingResult::Success;
     }
 
-    PlayFabEventBuffer::EventConsumingResult PlayFabEventBuffer::TryTake(std::shared_ptr<const IPlayFabEmitEventRequest>& request)
+    PlayFabEventBuffer::EventConsumingResult PlayFabEventBuffer::TryTake(SharedPtr<const IPlayFabEmitEventRequest>& request)
     {
         if (disabled.load(std::memory_order_consume))
         {
@@ -133,7 +133,7 @@ namespace PlayFab
         return EventConsumingResult::Success;
     }
 
-    PlayFabEventPacket* PlayFabEventBuffer::CreateEventPacket(uint8_t *location, const uint64_t index, std::shared_ptr<const IPlayFabEmitEventRequest> request)
+    PlayFabEventPacket* PlayFabEventBuffer::CreateEventPacket(uint8_t *location, const uint64_t index, SharedPtr<const IPlayFabEmitEventRequest> request)
     {
         // Use placement new to allocate an event packet in the buffer
         return new(location)PlayFabEventPacket(index, request);

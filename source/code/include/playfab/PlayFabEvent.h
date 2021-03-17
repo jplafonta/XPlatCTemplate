@@ -47,21 +47,21 @@ namespace PlayFab
     {
     public:
         PlayFabEvent();
-        void SetName(const std::string& eventName); // Sets the event name
-        const std::string& GetName() const; // Gets the event name
-        void SetNamespace(const std::string& eventNamespace); // Sets the event namespace
+        void SetName(const String& eventName); // Sets the event name
+        const String& GetName() const; // Gets the event name
+        void SetNamespace(const String& eventNamespace); // Sets the event namespace
         void SetEntity(const EventsModels::EntityKey& entity); // Set EntityToken
-        void SetProperty(const std::string& name, const std::string& value); // Sets a value of a string property by name
-        void SetProperty(const std::string& name, const bool value); // Sets a value of a bool property by name
-        void SetProperty(const std::string& name, const int8_t value); // Sets a value of a int8_t property by name
-        void SetProperty(const std::string& name, const int16_t value); // Sets a value of a int16_t property by name
-        void SetProperty(const std::string& name, const int32_t value); // Sets a value of a int32_t property by name
-        void SetProperty(const std::string& name, const int64_t value); // Sets a value of a int64_t property by name
-        void SetProperty(const std::string& name, const uint8_t value); // Sets a value of a uint8_t property by name
-        void SetProperty(const std::string& name, const uint16_t value); // Sets a value of a uint16_t property by name
-        void SetProperty(const std::string& name, const uint32_t value); // Sets a value of a uint32_t property by name
-        void SetProperty(const std::string& name, const uint64_t value); // Sets a value of a uint64_t property by name
-        void SetProperty(const std::string& name, const double value); // Sets a value of a double property by name
+        void SetProperty(const String& name, const String& value); // Sets a value of a string property by name
+        void SetProperty(const String& name, const bool value); // Sets a value of a bool property by name
+        void SetProperty(const String& name, const int8_t value); // Sets a value of a int8_t property by name
+        void SetProperty(const String& name, const int16_t value); // Sets a value of a int16_t property by name
+        void SetProperty(const String& name, const int32_t value); // Sets a value of a int32_t property by name
+        void SetProperty(const String& name, const int64_t value); // Sets a value of a int64_t property by name
+        void SetProperty(const String& name, const uint8_t value); // Sets a value of a uint8_t property by name
+        void SetProperty(const String& name, const uint16_t value); // Sets a value of a uint16_t property by name
+        void SetProperty(const String& name, const uint32_t value); // Sets a value of a uint32_t property by name
+        void SetProperty(const String& name, const uint64_t value); // Sets a value of a uint64_t property by name
+        void SetProperty(const String& name, const double value); // Sets a value of a double property by name
 
     public:
         PlayFabEventType eventType;
@@ -91,7 +91,7 @@ namespace PlayFab
 
     // A callback that can be used in asynchronous emit event operations that take IPlayFabEvent as a parameter
     // and return back an IPlayFabEmitEventResponse. The callback procedure must be thread-safe.
-    using PlayFabEmitEventCallback = void(*)(std::shared_ptr<const IPlayFabEvent>, std::shared_ptr<const IPlayFabEmitEventResponse>);
+    using PlayFabEmitEventCallback = void(*)(SharedPtr<const IPlayFabEvent>, SharedPtr<const IPlayFabEmitEventResponse>);
 
     /// <summary>
     /// PlayFab-specific implementation of an emit event request
@@ -99,9 +99,9 @@ namespace PlayFab
     class PlayFabEmitEventRequest : public IPlayFabEmitEventRequest
     {
     public:
-        std::shared_ptr<const PlayFabEvent> event; // a pointer to the user's event object itself
+        SharedPtr<const PlayFabEvent> event; // a pointer to the user's event object itself
         PlayFabEmitEventCallback callback; // user's callback function to return the final result of emit event operation after event is completely sent out or any error occurred
-        std::function<void(std::shared_ptr<const IPlayFabEvent>, std::shared_ptr<const IPlayFabEmitEventResponse>)> stdCallback; // same as EventCallback but can be used with member variables if needed.
+        std::function<void(SharedPtr<const IPlayFabEvent>, SharedPtr<const IPlayFabEmitEventResponse>)> stdCallback; // same as EventCallback but can be used with member variables if needed.
     };
 
     /// <summary>
@@ -111,9 +111,9 @@ namespace PlayFab
     {
     public:
         EmitEventResult emitEventResult; // result of immediate "emit event" operation
-        std::shared_ptr<const PlayFabError> playFabError; // error information and/or operation result
-        std::shared_ptr<const EventsModels::WriteEventsResponse> writeEventsResponse; // additional data with the outcome of the operation
-        std::shared_ptr<const std::vector<std::shared_ptr<const IPlayFabEmitEventRequest>>> batch; // the batch this event was part of
+        SharedPtr<const PlayFabError> playFabError; // error information and/or operation result
+        SharedPtr<const EventsModels::WriteEventsResponse> writeEventsResponse; // additional data with the outcome of the operation
+        SharedPtr<const Vector<SharedPtr<const IPlayFabEmitEventRequest>>> batch; // the batch this event was part of
         size_t batchNumber; // the incremental batch number
     };
 }

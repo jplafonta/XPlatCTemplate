@@ -5,6 +5,7 @@
 #include <set>
 #include <queue>
 #include <unordered_set>
+#include <map>
 
 namespace PlayFab
 {
@@ -99,7 +100,7 @@ void Deleter<T>::operator()(T* ptr) const noexcept
 {
     ptr->~T(); // destroy
     Allocator<T> alloc{};
-    alloc.deallocate(ptr, 1);
+    alloc.deallocate((void*)ptr, 1);
 }
 
 template<class T, class... TArgs>

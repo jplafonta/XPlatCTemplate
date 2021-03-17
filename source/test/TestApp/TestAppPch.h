@@ -2,11 +2,15 @@
 
 #pragma once
 
+#include <httpClient/pal.h>
+#include <playfab/InternalMemory.h>
 #include <playfab/PlayFabPlatformMacros.h>
 #include <playfab/PlayFabPlatformTypes.h>
 #include <playfab/PlayFabPlatformUtils.h>
 #include <playfab/PlayFabApiSettings.h>
 #include <playfab/PlayFabAuthenticationContext.h>
+#include <functional>
+#include <playfab/TaskQueue.h>
 
 #if defined (_XBOX_ONE)
 

@@ -15,7 +15,7 @@ namespace PlayFabUnit
     TestRunner::TestRunner() :
         suiteState(TestActiveState::PENDING),
         suiteTestCase(nullptr),
-        suiteTestReport(PlayFab::PlayFabSettings::buildIdentifier)
+        suiteTestReport(PlayFab::PlayFabSettings::buildIdentifier.data())
     {
         PlayFab::PlayFabSettings::threadedCallbacks = true;
     }

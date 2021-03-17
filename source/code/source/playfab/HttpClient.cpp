@@ -183,18 +183,18 @@ namespace PlayFab
 
         Json::Value responseJson;
         Json::CharReaderBuilder jsonReaderFactory;
-        std::unique_ptr<Json::CharReader> jsonReader(jsonReaderFactory.newCharReader());
-        JSONCPP_STRING jsonParseErrors;
+        std::unique_ptr<Json::CharReader> jsonReader(jsonReaderFactory.newCharReader()); // Non memhook
+        JSONCPP_STRING jsonParseErrors; // Non memhook
         const bool parsedSuccessfully = jsonReader->parse(responseString, responseString + strlen(responseString), &responseJson, &jsonParseErrors);
         if (parsedSuccessfully)
         {
             // fully successful response
             call->m_result.serviceResponse.HttpCode = responseJson.get("code", Json::Value::null).asInt();
-            call->m_result.serviceResponse.HttpStatus = responseJson.get("status", Json::Value::null).asString();
+            call->m_result.serviceResponse.HttpStatus = responseJson.get("status", Json::Value::null).asCString();
             call->m_result.serviceResponse.Data = responseJson.get("data", Json::Value::null);
-            call->m_result.serviceResponse.ErrorName = responseJson.get("error", Json::Value::null).asString();
+            call->m_result.serviceResponse.ErrorName = responseJson.get("error", Json::Value::null).asCString();
             call->m_result.serviceResponse.ErrorCode = static_cast<PlayFabErrorCode>(responseJson.get("errorCode", Json::Value::null).asInt());
-            call->m_result.serviceResponse.ErrorMessage = responseJson.get("errorMessage", Json::Value::null).asString();
+            call->m_result.serviceResponse.ErrorMessage = responseJson.get("errorMessage", Json::Value::null).asCString();
             call->m_result.serviceResponse.ErrorDetails = responseJson.get("errorDetails", Json::Value::null);
         }
         else
@@ -203,7 +203,7 @@ namespace PlayFab
             call->m_result.serviceResponse.HttpStatus = responseString;
             call->m_result.serviceResponse.ErrorCode = PlayFabErrorCode::PlayFabErrorPartialFailure;
             call->m_result.serviceResponse.ErrorName = "Failed to parse PlayFab response";
-            call->m_result.serviceResponse.ErrorMessage = jsonParseErrors;
+            call->m_result.serviceResponse.ErrorMessage = jsonParseErrors.data();
         }
 
         // Get requestId response header

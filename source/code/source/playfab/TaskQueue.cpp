@@ -63,16 +63,6 @@ XTaskQueueHandle TaskQueue::GetHandle() const noexcept
     return m_handle;
 }
 
-void CALLBACK XTaskQueueTerminatedCallback(void* context)
-{
-    // Be sure to retake ownership of the callback here
-    std::unique_ptr<std::function<void()>> callback{ reinterpret_cast<std::function<void()>*>(context) };
-    if (*callback)
-    {
-        (*callback)();
-    }
-}
-
 HRESULT TaskQueue::Terminate(
     _In_ bool wait,
     _In_opt_ std::function<void()> queueTerminatedCallback

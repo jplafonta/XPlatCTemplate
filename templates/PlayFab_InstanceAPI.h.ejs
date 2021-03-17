@@ -3,8 +3,8 @@
 <%- getApiDefine(api) %>
 
 #include <playfab/PlayFab<%- api.name %>DataModels.h>
-#include <playfab/PlayFabError.h>
 #include <playfab/HttpClient.h>
+#include <playfab/TaskQueue.h>
 
 namespace PlayFab
 {
@@ -53,12 +53,12 @@ namespace PlayFab
 <% } %>
         // ------------ Generated API calls
 <% for (var callIdx = 0; callIdx < api.calls.length; callIdx++) { var apiCall = api.calls[callIdx];
-%>        void <%- apiCall.name %>(<%- api.name %>Models::<%- apiCall.request %>& request, const ProcessApiCallback<<%- api.name %>Models::<%- apiCall.result %>> callback, const ErrorCallback errorCallback = nullptr, void* customData = nullptr);
+%>        void <%- apiCall.name %>(<%- api.name %>Models::<%- apiCall.request %>& request, const TaskQueue& queue, const ProcessApiCallback<<%- api.name %>Models::<%- apiCall.result %>> callback, const ErrorCallback errorCallback = nullptr);
 <% }
 if (hasClientOptions) { %>
         // Private, Client-Specific
         void MultiStepClientLogin(SharedPtr<PlayFabAuthenticationContext> context, bool needsAttribution);
-<% } %>        static bool ParseResult(PlayFabResultCommon& resultCommon, const HttpResult& httpResult, const ErrorCallback& errorHandler, void* customData);
+<% } %>        static bool ParseResult(PlayFabResultCommon& resultCommon, const HttpResult& httpResult, const ErrorCallback& errorHandler);
     };
 }
 

@@ -21,19 +21,19 @@ namespace PlayFab
         const Json::Value HttpStatus_member = input["status"];
         if (HttpStatus_member != Json::Value::null)
         {
-            HttpStatus = HttpStatus_member.asString();
+            HttpStatus = HttpStatus_member.asCString();
         }
 
         const Json::Value ErrorName_member = input["error"];
         if (ErrorName_member != Json::Value::null)
         {
-            ErrorName = ErrorName_member.asString();
+            ErrorName = ErrorName_member.asCString();
         }
 
         const Json::Value ErrorMessage_member = input["errorMessage"];
         if (ErrorMessage_member != Json::Value::null)
         {
-            ErrorMessage = ErrorMessage_member.asString();
+            ErrorMessage = ErrorMessage_member.asCString();
         }
 
         ErrorDetails = input["errorDetails"];
@@ -46,17 +46,17 @@ namespace PlayFab
         Json::Value output;
         output["code"] = Json::Value(HttpCode);
         output["errorCode"] = Json::Value(static_cast<int>(ErrorCode));
-        output["status"] = Json::Value(HttpStatus);
-        output["error"] = Json::Value(ErrorName);
-        output["errorMessage"] = Json::Value(ErrorMessage);
+        output["status"] = Json::Value(HttpStatus.data());
+        output["error"] = Json::Value(ErrorName.data());
+        output["errorMessage"] = Json::Value(ErrorMessage.data());
         output["errorDetails"] = ErrorDetails;
         output["data"] = Data;
         return output;
     }
 
-    std::string PlayFabError::GenerateErrorReport() const
+    String PlayFabError::GenerateErrorReport() const
     {
-        std::string output;
+        String output;
         output.reserve(1024);
         output += ErrorMessage;
         if (ErrorDetails != Json::Value::null && ErrorDetails.isObject())
@@ -69,7 +69,7 @@ namespace PlayFab
                 }
 
                 output += "\n";
-                output += detailIter.key().asString();
+                output += detailIter.key().asCString();
                 output += ": ";
                 int valueIndex = 0;
                 for (auto valueIter = detailIter->begin(); valueIter != detailIter->end(); ++valueIter)
@@ -84,7 +84,7 @@ namespace PlayFab
                         output += ", ";
                     }
 
-                    output += valueIter->asString();
+                    output += valueIter->asCString();
                     valueIndex++;
                 }
             }
