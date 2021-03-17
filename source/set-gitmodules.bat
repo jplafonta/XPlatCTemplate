@@ -8,8 +8,8 @@ if exist ".git" (
     if /I "%ERRORLEVEL%" gtr "1" (
         exit /B %ERRORLEVEL%
     )
-	git submodule add https://github.com/microsoft/libHttpClient.git ./external/libHttpClient
-	if /I "%ERRORLEVEL%" gtr "1" (
+    git submodule add https://github.com/microsoft/libHttpClient.git ./external/libHttpClient
+    if /I "%ERRORLEVEL%" gtr "1" (
         exit /B %ERRORLEVEL%
     )
 )

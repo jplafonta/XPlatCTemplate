@@ -45,7 +45,7 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <Import Project="..\..\external\libHttpClient\libHttpClient.props" />
+  <Import Project="$(ExternalDir)\libHttpClient\libHttpClient.props" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -111,6 +111,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\AsyncProvider.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\HttpClient.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\InternalMemory.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabPlatformMacros.h" />
@@ -130,9 +131,10 @@
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabError.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabSettings.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabSpinLock.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabTransportHeaders.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabJsonHeaders.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\ResultMacros.h" />
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\StdOptional.h" />
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\TaskQueue.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\RegionResult.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\PingResult.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\PlayFabQoSApi.h" />
@@ -143,7 +145,8 @@
     <ClInclude Include="$(SdkSourceDir)\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-	<ClCompile Include="$(SdkSourceDir)\source\playfab\HttpClient.cpp" />
+    <ClCompile Include="$(SdkSourceDir)\source\playfab\AsyncProvider.cpp" />
+    <ClCompile Include="$(SdkSourceDir)\source\playfab\HttpClient.cpp" />
     <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabAuthenticationContext.cpp" />
     <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabApiSettings.cpp" />
 <% for(var i in apis) { var api = apis[i];%>
@@ -156,6 +159,7 @@
     <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabError.cpp" />
     <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabSettings.cpp" />
     <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabSpinLock.cpp" />
+    <ClCompile Include="$(SdkSourceDir)\source\playfab\TaskQueue.cpp" />
     <ClCompile Include="$(SdkSourceDir)\source\playfab\QoS\RegionResult.cpp" />
     <ClCompile Include="$(SdkSourceDir)\source\playfab\QoS\PlayFabQoSApi.cpp" />
     <ClCompile Include="$(SdkSourceDir)\source\playfab\QoS\QoSSocket.cpp" />

@@ -5,6 +5,7 @@
 #include <playfab/PlayFabJsonHeaders.h>
 #include <playfab/PlayFabPlatformTypes.h>
 #include <playfab/PlayFabPlatformUtils.h>
+#include <playfab/StdOptional.h>
 
 #include <assert.h>
 #include <functional>
@@ -14,26 +15,6 @@
 namespace PlayFab
 {
     class PlayFabAuthenticationContext;
-
-    template <typename BoxedType>
-    class Boxed
-    {
-    public:
-        Boxed() : boxedValue(), isSet(false) {}
-        Boxed(BoxedType value) : boxedValue(value), isSet(true) {}
-
-        inline Boxed& operator=(BoxedType value) { boxedValue = value; isSet = true; return *this; }
-        inline operator const BoxedType& () const { assert(notNull()); return *operator->(); }
-        inline BoxedType* operator->() { return isSet ? &boxedValue : nullptr; }
-        inline const BoxedType* operator->() const { return isSet ? &boxedValue : nullptr; }
-
-        inline void setNull() { isSet = false; }
-        inline bool notNull() const { return isSet; }
-        inline bool isNull() const { return !isSet; }
-    private:
-        BoxedType boxedValue;
-        bool isSet;
-    };
 
     template<typename ResType> using ProcessApiCallback = std::function<void(const ResType& result, void* customData)>;
 
@@ -56,7 +37,7 @@ namespace PlayFab
         /// <summary>
         /// An optional authentication context, it can used in multi-user scenarios
         /// </summary>
-        std::shared_ptr<PlayFabAuthenticationContext> authenticationContext;
+        SharedPtr<PlayFabAuthenticationContext> authenticationContext;
     };
 
     /// <summary>
@@ -73,7 +54,7 @@ namespace PlayFab
         /// <summary>
         /// An authentication context returned by Login methods, it can used in multi-user scenarios
         /// </summary>
-        std::shared_ptr<PlayFabAuthenticationContext> authenticationContext;
+        SharedPtr<PlayFabAuthenticationContext> authenticationContext;
     };
 
     // Utilities for [de]serializing time_t to/from json
@@ -90,7 +71,7 @@ namespace PlayFab
         output = Iso8601StringToTimeT(input.asString());
     }
 
-    inline void ToJsonUtilT(const Boxed<time_t>& input, Json::Value& output)
+    inline void ToJsonUtilT(const StdExtra::optional<time_t>& input, Json::Value& output)
     {
         if (input.isNull())
         {
@@ -102,7 +83,7 @@ namespace PlayFab
         }
     }
 
-    inline void FromJsonUtilT(const Json::Value& input, Boxed<time_t>& output)
+    inline void FromJsonUtilT(const Json::Value& input, StdExtra::optional<time_t>& output)
     {
         if (input == Json::Value::null)
         {
@@ -116,7 +97,7 @@ namespace PlayFab
         }
     }
 
-    inline void ToJsonUtilT(const std::list<time_t>& input, Json::Value& output)
+    inline void ToJsonUtilT(const List<time_t>& input, Json::Value& output)
     {
         if (input.size() == 0)
         {
@@ -135,7 +116,7 @@ namespace PlayFab
         }
     }
 
-    inline void FromJsonUtilT(const Json::Value& input, std::list<time_t>& output)
+    inline void FromJsonUtilT(const Json::Value& input, List<time_t>& output)
     {
         output.clear();
         if (input == Json::Value::null || !input.isArray())
@@ -151,7 +132,7 @@ namespace PlayFab
         }
     }
 
-    inline void ToJsonUtilT(const std::map<std::string, time_t>& input, Json::Value& output)
+    inline void ToJsonUtilT(const Map<String, time_t>& input, Json::Value& output)
     {
         output = Json::Value(Json::objectValue);
         Json::Value eachOutput;
@@ -162,7 +143,7 @@ namespace PlayFab
         }
     }
 
-    inline void FromJsonUtilT(const Json::Value& input, std::map<std::string, time_t>& output)
+    inline void FromJsonUtilT(const Json::Value& input, Map<String, time_t>& output)
     {
         output.clear();
         if (input == Json::Value::null)
@@ -179,7 +160,7 @@ namespace PlayFab
     }
 
     // Utilities for [de]serializing EnumType to/from json
-    template <typename EnumType> inline void ToJsonUtilE(const Boxed<EnumType>& input, Json::Value& output)
+    template <typename EnumType> inline void ToJsonUtilE(const StdExtra::optional<EnumType>& input, Json::Value& output)
     {
         if (input.isNull())
         {
@@ -191,7 +172,7 @@ namespace PlayFab
         }
     }
 
-    template <typename EnumType> inline void FromJsonUtilE(const Json::Value& input, Boxed<EnumType>& output)
+    template <typename EnumType> inline void FromJsonUtilE(const Json::Value& input, StdExtra::optional<EnumType>& output)
     {
         if (input == Json::Value::null)
         {
@@ -205,7 +186,7 @@ namespace PlayFab
         }
     }
 
-    template <typename EnumType> inline void ToJsonUtilE(const std::list<EnumType>& input, Json::Value& output)
+    template <typename EnumType> inline void ToJsonUtilE(const List<EnumType>& input, Json::Value& output)
     {
         if (input.size() == 0)
         {
@@ -224,7 +205,7 @@ namespace PlayFab
         }
     }
 
-    template <typename EnumType> inline void FromJsonUtilE(const Json::Value& input, std::list<EnumType>& output)
+    template <typename EnumType> inline void FromJsonUtilE(const Json::Value& input, List<EnumType>& output)
     {
         output.clear();
         if (input == Json::Value::null)
@@ -240,7 +221,7 @@ namespace PlayFab
         }
     }
 
-    template <typename EnumType> inline void ToJsonUtilE(const std::map<std::string, EnumType>& input, Json::Value& output)
+    template <typename EnumType> inline void ToJsonUtilE(const Map<String, EnumType>& input, Json::Value& output)
     {
         output = Json::Value(Json::objectValue);
         Json::Value eachOutput;
@@ -251,7 +232,7 @@ namespace PlayFab
         }
     }
 
-    template <typename EnumType> inline void FromJsonUtilE(const Json::Value& input, std::map<std::string, EnumType>& output)
+    template <typename EnumType> inline void FromJsonUtilE(const Json::Value& input, Map<String, EnumType>& output)
     {
         output.clear();
         if (input == Json::Value::null)
@@ -268,7 +249,7 @@ namespace PlayFab
     }
 
     // Utilities for [de]serializing string to/from json
-    inline void ToJsonUtilS(const std::string& input, Json::Value& output)
+    inline void ToJsonUtilS(const String& input, Json::Value& output)
     {
         if (input.length() == 0)
         {
@@ -280,7 +261,7 @@ namespace PlayFab
         }
     }
 
-    inline void FromJsonUtilS(const Json::Value& input, std::string& output)
+    inline void FromJsonUtilS(const Json::Value& input, String& output)
     {
         if (input == Json::Value::null)
         {
@@ -292,7 +273,7 @@ namespace PlayFab
         }
     }
 
-    inline void ToJsonUtilS(const std::list<std::string>& input, Json::Value& output)
+    inline void ToJsonUtilS(const List<String>& input, Json::Value& output)
     {
         if (input.size() == 0)
         {
@@ -311,7 +292,7 @@ namespace PlayFab
         }
     }
 
-    inline void FromJsonUtilS(const Json::Value& input, std::list<std::string>& output)
+    inline void FromJsonUtilS(const Json::Value& input, List<String>& output)
     {
         output.clear();
         if (input == Json::Value::null)
@@ -319,7 +300,7 @@ namespace PlayFab
             return;
         }
 
-        std::string eachOutput;
+        String eachOutput;
         for (auto iter = input.begin(); iter != input.end(); ++iter)
         {
             FromJsonUtilS(*iter, eachOutput);
@@ -327,7 +308,7 @@ namespace PlayFab
         }
     }
 
-    inline void ToJsonUtilS(const std::map<std::string, std::string>& input, Json::Value& output)
+    inline void ToJsonUtilS(const Map<String, String>& input, Json::Value& output)
     {
         output = Json::Value(Json::objectValue);
         Json::Value eachOutput;
@@ -338,7 +319,7 @@ namespace PlayFab
         }
     }
 
-    inline void FromJsonUtilS(const Json::Value& input, std::map<std::string, std::string>& output)
+    inline void FromJsonUtilS(const Json::Value& input, Map<String, String>& output)
     {
         output.clear();
         if (input == Json::Value::null)
@@ -346,7 +327,7 @@ namespace PlayFab
             return;
         }
 
-        std::string eachOutput;
+        String eachOutput;
         for (auto iter = input.begin(); iter != input.end(); ++iter)
         {
             FromJsonUtilS(*iter, eachOutput);
@@ -365,7 +346,7 @@ namespace PlayFab
         output.FromJson(input);
     }
 
-    template <typename ObjectType> inline void ToJsonUtilO(const Boxed<ObjectType> input, Json::Value& output)
+    template <typename ObjectType> inline void ToJsonUtilO(const StdExtra::optional<ObjectType> input, Json::Value& output)
     {
         if (input.isNull())
         {
@@ -377,7 +358,7 @@ namespace PlayFab
         }
     }
 
-    template <typename ObjectType> inline void FromJsonUtilO(const Json::Value& input, Boxed<ObjectType>& output)
+    template <typename ObjectType> inline void FromJsonUtilO(const Json::Value& input, StdExtra::optional<ObjectType>& output)
     {
         if (input == Json::Value::null)
         {
@@ -391,7 +372,7 @@ namespace PlayFab
         }
     }
 
-    template <typename ObjectType> inline void ToJsonUtilO(const std::list<ObjectType>& input, Json::Value& output)
+    template <typename ObjectType> inline void ToJsonUtilO(const List<ObjectType>& input, Json::Value& output)
     {
         if (input.size() == 0)
         {
@@ -410,7 +391,7 @@ namespace PlayFab
         }
     }
 
-    template <typename ObjectType> inline void FromJsonUtilO(const Json::Value& input, std::list<ObjectType>& output)
+    template <typename ObjectType> inline void FromJsonUtilO(const Json::Value& input, List<ObjectType>& output)
     {
         output.clear();
         if (input == Json::Value::null)
@@ -426,7 +407,7 @@ namespace PlayFab
         }
     }
 
-    template <typename ObjectType> inline void ToJsonUtilO(const std::map<std::string, ObjectType>& input, Json::Value& output)
+    template <typename ObjectType> inline void ToJsonUtilO(const Map<String, ObjectType>& input, Json::Value& output)
     {
         output = Json::Value(Json::objectValue);
         Json::Value eachOutput;
@@ -437,7 +418,7 @@ namespace PlayFab
         }
     }
 
-    template <typename ObjectType> inline void FromJsonUtilO(const Json::Value& input, std::map<std::string, ObjectType>& output)
+    template <typename ObjectType> inline void FromJsonUtilO(const Json::Value& input, Map<String, ObjectType>& output)
     {
         output.clear();
         if (input == Json::Value::null)
@@ -504,7 +485,7 @@ namespace PlayFab
         output = input == Json::Value::null ? 0 : input.asDouble();
     }
 
-    template <typename PrimitiveType> inline void ToJsonUtilP(const Boxed<PrimitiveType>& input, Json::Value& output)
+    template <typename PrimitiveType> inline void ToJsonUtilP(const StdExtra::optional<PrimitiveType>& input, Json::Value& output)
     {
         if (input.isNull())
         {
@@ -516,7 +497,7 @@ namespace PlayFab
         }
     }
 
-    template <typename PrimitiveType> inline void FromJsonUtilP(const Json::Value& input, Boxed<PrimitiveType>& output)
+    template <typename PrimitiveType> inline void FromJsonUtilP(const Json::Value& input, StdExtra::optional<PrimitiveType>& output)
     {
         if (input == Json::Value::null)
         {
@@ -530,7 +511,7 @@ namespace PlayFab
         }
     }
 
-    template <typename PrimitiveType> inline void ToJsonUtilP(const std::list<PrimitiveType>& input, Json::Value& output)
+    template <typename PrimitiveType> inline void ToJsonUtilP(const List<PrimitiveType>& input, Json::Value& output)
     {
         if (input.size() == 0)
         {
@@ -549,7 +530,7 @@ namespace PlayFab
         }
     }
 
-    template <typename PrimitiveType> inline void FromJsonUtilP(const Json::Value& input, std::list<PrimitiveType>& output)
+    template <typename PrimitiveType> inline void FromJsonUtilP(const Json::Value& input, List<PrimitiveType>& output)
     {
         output.clear();
         if (input == Json::Value::null)
@@ -565,7 +546,7 @@ namespace PlayFab
         }
     }
 
-    template <typename PrimitiveType> inline void ToJsonUtilP(const std::map<std::string, PrimitiveType>& input, Json::Value& output)
+    template <typename PrimitiveType> inline void ToJsonUtilP(const Map<String, PrimitiveType>& input, Json::Value& output)
     {
         output = Json::Value(Json::objectValue);
         Json::Value eachOutput;
@@ -576,7 +557,7 @@ namespace PlayFab
         }
     }
 
-    template <typename PrimitiveType> inline void FromJsonUtilP(const Json::Value& input, std::map<std::string, PrimitiveType>& output)
+    template <typename PrimitiveType> inline void FromJsonUtilP(const Json::Value& input, Map<String, PrimitiveType>& output)
     {
         output.clear();
         if (input == Json::Value::null)
