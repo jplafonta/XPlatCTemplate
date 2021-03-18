@@ -6,7 +6,6 @@
 
 #include <thread>
 #include <chrono>
-#include <playfab/PlayFabClientApi.h>
 #include <playfab/PlayFabClientDataModels.h>
 #include <playfab/PlayFabClientInstanceApi.h>
 #include <playfab/PlayFabEventsDataModels.h>
@@ -33,7 +32,8 @@ namespace PlayFabUnit
 
         std::atomic_bool isLoggedIn = false;
 
-        PlayFabClientAPI::LoginWithCustomID(request,
+        PlayFabClientInstanceAPI clientApi;
+        clientApi.LoginWithCustomID(request,
             [&isLoggedIn](const LoginResult& loginResult, void*) {
                 PlayFabSettings::staticPlayer->clientSessionTicket = loginResult.SessionTicket;
                 isLoggedIn.exchange(true);

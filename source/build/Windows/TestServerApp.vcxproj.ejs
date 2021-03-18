@@ -76,8 +76,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>XPlatCppWindows.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\XPlatCppWindows</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XPlatCWindows.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\XPlatCWindows</AdditionalLibraryDirectories>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -100,8 +100,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>XPlatCppWindows.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\XPlatCppWindows</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XPlatCWindows.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\XPlatCWindows</AdditionalLibraryDirectories>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -142,7 +142,7 @@
     <ClCompile Include="TestAppWin32.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="XPlatCppWindows.vcxproj">
+    <ProjectReference Include="XPlatCWindows.vcxproj">
       <Project>{92f6ec5f-b66c-4572-a74d-79329aff3129}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -151,8 +151,8 @@
   </ImportGroup>
   <Target Name="CopyDependencies" AfterTargets="AfterBuild">
     <ItemGroup>
-      <Dependency Include="$(TFS_BinariesDirectory)\$(Configuration)\$(Platform)\XPlatCppWindows\*.dll" />
-      <Dependency Include="$(SolutionDir)$(Platform)\$(Configuration)\XPlatCppWindows\*.dll" />
+      <Dependency Include="$(TFS_BinariesDirectory)\$(Configuration)\$(Platform)\XPlatCWindows\*.dll" />
+      <Dependency Include="$(SolutionDir)$(Platform)\$(Configuration)\XPlatCWindows\*.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(Dependency)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
   </Target>

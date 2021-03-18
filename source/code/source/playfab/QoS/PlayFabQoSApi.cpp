@@ -12,7 +12,6 @@
 #include <playfab/PlayFabEventsInstanceApi.h>
 #include <playfab/PlayFabEventsDataModels.h>
 #include <playfab/PlayFabSettings.h>
-#include <playfab/PlayFabPluginManager.h>
 
 using namespace std;
 using namespace PlayFab::MultiplayerModels;
@@ -27,29 +26,6 @@ namespace PlayFab
         {
             eventsApi = std::make_shared<PlayFabEventsInstanceAPI>(PlayFabSettings::staticPlayer);
             multiplayerApi = std::make_shared<PlayFabMultiplayerInstanceAPI>(PlayFabSettings::staticPlayer);
-        }
-
-        bool ValidateResult(PlayFabResultCommon& resultCommon, const CallRequestContainer& container)
-        {
-            if (container.errorWrapper.HttpCode == 200)
-            {
-                resultCommon.FromJson(container.errorWrapper.Data);
-                resultCommon.Request = container.errorWrapper.Request;
-                return true;
-            }
-            else // Process the error case
-            {
-                if (PlayFabSettings::globalErrorHandler != nullptr)
-                {
-                    PlayFabSettings::globalErrorHandler(container.errorWrapper, container.GetCustomData());
-                }
-
-                if (container.errorCallback != nullptr)
-                {
-                    container.errorCallback(container.errorWrapper, container.GetCustomData());
-                }
-                return false;
-            }
         }
 
         std::future<QoSResult> PlayFabQoSApi::GetQoSResultAsync(unsigned int numThreads, unsigned int timeoutMs)

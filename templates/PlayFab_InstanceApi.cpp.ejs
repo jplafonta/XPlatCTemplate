@@ -3,7 +3,6 @@
 <%- getApiDefine(api) %>
 
 #include <playfab/PlayFab<%- api.name %>InstanceApi.h>
-#include <playfab/PlayFabPluginManager.h>
 #include <playfab/PlayFabSettings.h>
 
 #if defined(PLAYFAB_PLATFORM_WINDOWS)
@@ -14,65 +13,81 @@ namespace PlayFab
 {
     using namespace <%- api.name %>Models;
 <% if( api.name === "Admin" || api.name === "Server" ) { %>
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI()
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI() :
+        m_settings(MakeShared<PlayFabApiSettings>()),
+        m_httpClient(m_settings)
     {
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings)
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings) :
+        m_settings(apiSettings),
+        m_context(MakeShared<PlayFabAuthenticationContext>()),
+        m_httpClient(m_settings)
     {
-        this->m_settings = apiSettings;
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext)
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+        m_settings(MakeShared<PlayFabApiSettings>()),
+        m_context(authenticationContext),
+        m_httpClient(m_settings)
     {
-        this->m_context = authenticationContext;
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings, const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext)
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings, const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+        m_settings(apiSettings),
+        m_context(authenticationContext),
+        m_httpClient(m_settings)
     {
-        this->m_settings = apiSettings;
-        this->m_context = authenticationContext;
     }
 <% } else if( api.name === "Client" || api.name === "Authentication" ) { %>
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI()
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI() :
+        m_settings(MakeShared<PlayFabApiSettings>()),
+        m_context(MakeShared<PlayFabAuthenticationContext>()),
+        m_httpClient(m_settings)
     {
-        this->m_context = std::make_shared<PlayFabAuthenticationContext>();
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings)
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings) :
+        m_settings(apiSettings),
+        m_context(MakeShared<PlayFabAuthenticationContext>()),
+        m_httpClient(m_settings)
     {
-        this->m_settings = apiSettings;
-        this->m_context = std::make_shared<PlayFabAuthenticationContext>();
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext)
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+        m_settings(MakeShared<PlayFabApiSettings>()),
+        m_context(authenticationContext),
+        m_httpClient(m_settings)
     {
-        this->m_context = authenticationContext;
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings, const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext)
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings, const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+        m_settings(apiSettings),
+        m_context(authenticationContext),
+        m_httpClient(m_settings)
     {
-        this->m_settings = apiSettings;
-        this->m_context = authenticationContext;
     }
 <% } else { %>
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext)
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+        m_settings(MakeShared<PlayFabApiSettings>()),
+        m_context(authenticationContext),
+        m_httpClient(m_settings)
     {
-        if (authenticationContext == nullptr)
+        if (m_context == nullptr)
         {
             throw PlayFabException(PlayFabExceptionCode::AuthContextRequired, "Context cannot be null, create a PlayFabAuthenticationContext for each player in advance, or get <PlayFabClientInstanceAPI>.authenticationContext");
         }
-        this->m_context = authenticationContext;
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings, const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext)
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings, const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+        m_settings(apiSettings),
+        m_context(authenticationContext),
+        m_httpClient(m_settings)
     {
-        if (authenticationContext == nullptr)
+        if (m_context == nullptr)
         {
             throw PlayFabException(PlayFabExceptionCode::AuthContextRequired, "Context cannot be null, create a PlayFabAuthenticationContext for each player in advance, or get <PlayFabClientInstanceAPI>.authenticationContext");
         }
-        this->m_settings = apiSettings;
-        this->m_context = authenticationContext;
     }
 <% } %>
     std::shared_ptr<PlayFabApiSettings> PlayFab<%- api.name %>InstanceAPI::GetSettings() const
@@ -83,12 +98,6 @@ namespace PlayFab
     std::shared_ptr<PlayFabAuthenticationContext> PlayFab<%- api.name %>InstanceAPI::GetAuthenticationContext() const
     {
         return this->m_context;
-    }
-
-    size_t PlayFab<%- api.name %>InstanceAPI::Update()
-    {
-        IPlayFabHttpPlugin& http = *PlayFabPluginManager::GetPlugin<IPlayFabHttpPlugin>(PlayFabPluginContract::PlayFab_Transport);
-        return http.Update();
     }
 
     void PlayFab<%- api.name %>InstanceAPI::ForgetAllCredentials()
@@ -108,49 +117,32 @@ namespace PlayFab
         void* customData
     )
     {
-        std::shared_ptr<PlayFabAuthenticationContext> context = request.authenticationContext != nullptr ? request.authenticationContext : this->m_context;
-        std::shared_ptr<PlayFabApiSettings> settings = this->m_settings != nullptr ? this->m_settings : PlayFabSettings::staticSettings;
-<%- getRequestActions("        ", apiCall, true) %>
-        IPlayFabHttpPlugin& http = *PlayFabPluginManager::GetPlugin<IPlayFabHttpPlugin>(PlayFabPluginContract::PlayFab_Transport);
-        const Json::Value requestJson = request.ToJson();
+<%- getRequestActions("        ", apiCall) %>        const Json::Value requestJson = request.ToJson();
         std::string jsonAsString = requestJson.toStyledString();
 
-        std::shared_ptr<PlayFabAuthenticationContext> authenticationContext = request.authenticationContext == nullptr ? this->m_context : request.authenticationContext;
-        std::unordered_map<std::string, std::string> headers;
+        UnorderedMap<String, String> headers;
 <% if (hasAuthParams(apiCall)) {
-%>        headers.emplace(<%- getAuthParams(apiCall, true) %>);
+%>        headers.emplace(<%- getAuthParams(apiCall) %>);
 <% } %>
-        auto reqContainer = std::unique_ptr<CallRequestContainer>(new CallRequestContainer(
+        // TODO bug: There is a lifetime issue with capturing this here since the client owns the object
+        auto callComplete = [ this, callback, errorCallback, context{ m_context }, customData ](const HttpResult& httpResult)
+        {
+            <%- apiCall.result %> outResult;
+            if (ParseResult(outResult, httpResult, errorCallback, customData))
+            {
+<%- getResultActions("                ", apiCall)   %>                if (callback)
+                {
+                    callback(outResult, customData);
+                }
+            }
+        };
+
+        m_httpClient.MakePostRequest(
             "<%- apiCall.url %>",
             headers,
-            jsonAsString,
-            std::bind(&PlayFab<%- api.name %>InstanceAPI::On<%- apiCall.name %>Result, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-            settings,
-            context,
-            customData));
-
-        reqContainer->successCallback = std::shared_ptr<void>((callback == nullptr) ? nullptr : new ProcessApiCallback<<%- apiCall.result %>>(callback));
-        reqContainer->errorCallback = errorCallback;
-
-        http.MakePostRequest(std::unique_ptr<CallRequestContainerBase>(static_cast<CallRequestContainerBase*>(reqContainer.release())));
-    }
-
-    void PlayFab<%- api.name %>InstanceAPI::On<%- apiCall.name %>Result(int /*httpCode*/, const std::string& /*result*/, const std::shared_ptr<CallRequestContainerBase>& reqContainer)
-    {
-        CallRequestContainer& container = static_cast<CallRequestContainer&>(*reqContainer);
-        std::shared_ptr<PlayFabAuthenticationContext> context = container.GetContext();
-
-        <%- apiCall.result %> outResult;
-        if (ValidateResult(outResult, container))
-        {<%- getResultActions("            ", apiCall, true)
-%>
-            std::shared_ptr<void> internalPtr = container.successCallback;
-            if (internalPtr.get() != nullptr)
-            {
-                const auto& callback = *static_cast<ProcessApiCallback<<%- apiCall.result %>> *>(internalPtr.get());
-                callback(outResult, container.GetCustomData());
-            }
-        }
+            jsonAsString.data(),
+            callComplete
+        );
     }
 <% } %><% if (hasClientOptions) { %>
     // Private PlayFabClientInstanceAPI specific
@@ -177,24 +169,23 @@ namespace PlayFab
         }
     }
 <% } %>
-    bool PlayFab<%- api.name %>InstanceAPI::ValidateResult(PlayFabResultCommon& resultCommon, const CallRequestContainer& container)
+    bool PlayFab<%- api.name %>InstanceAPI::ParseResult(PlayFabResultCommon& resultCommon, const HttpResult& httpResult, const ErrorCallback& errorHandler, void* customData)
     {
-        if (container.errorWrapper.HttpCode == 200)
+        if (httpResult.serviceResponse.HttpCode == 200)
         {
-            resultCommon.FromJson(container.errorWrapper.Data);
-            resultCommon.Request = container.errorWrapper.Request;
+            resultCommon.FromJson(httpResult.serviceResponse.Data);
+            resultCommon.Request = httpResult.requestBody;
             return true;
         }
         else // Process the error case
         {
             if (PlayFabSettings::globalErrorHandler != nullptr)
             {
-                PlayFabSettings::globalErrorHandler(container.errorWrapper, container.GetCustomData());
+                PlayFabSettings::globalErrorHandler(httpResult.serviceResponse, customData);
             }
-
-            if (container.errorCallback != nullptr)
+            if (errorHandler)
             {
-                container.errorCallback(container.errorWrapper, container.GetCustomData());
+                errorHandler(httpResult.serviceResponse, customData);
             }
             return false;
         }

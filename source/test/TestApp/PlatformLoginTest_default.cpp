@@ -37,6 +37,7 @@ namespace PlayFabUnit
         LoginWithCustomIDRequest request;
         request.CustomId = PlayFabSettings::buildIdentifier;
         request.CreateAccount = true;
+        request.TitleId = testTitleData.titleId;
 
         clientApi->LoginWithCustomID(request,
             OnPlatformLogin,
@@ -50,7 +51,6 @@ namespace PlayFabUnit
         AddTest("TestPlatformSpecificLogin", &PlatformLoginTest::TestPlatformSpecificLogin);
         // Make sure PlayFab state is clean.
         PlayFabSettings::ForgetAllCredentials();
-        PlayFabSettings::staticSettings->titleId = testTitleData.titleId;
     }
 
     void PlatformLoginTest::ClassSetUp()
