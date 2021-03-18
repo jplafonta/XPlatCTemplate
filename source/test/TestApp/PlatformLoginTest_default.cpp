@@ -39,8 +39,8 @@ namespace PlayFabUnit
 
         clientApi->LoginWithCustomID(request,
             PlayFab::TaskQueue(),
-            std::bind(OnPlatformLogin, std::placeholders::_1, testContext),
-            std::bind(OnErrorSharedCallback, std::placeholders::_1, testContext)
+            std::bind(OnPlatformLogin, std::placeholders::_1, std::ref(testContext)),
+            std::bind(OnErrorSharedCallback, std::placeholders::_1, std::ref(testContext))
         );
     }
 
