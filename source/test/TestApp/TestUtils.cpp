@@ -30,4 +30,6 @@ namespace PlayFabUnit
             default: return "UNKNOWN";
         }
     }
+
+    PlayFab::JsonAllocator s_jsonAllocator{};
 }

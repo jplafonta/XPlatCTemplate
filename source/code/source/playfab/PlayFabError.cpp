@@ -1,101 +1,78 @@
 #include <stdafx.h>
 
 #include <playfab/PlayFabError.h>
+#include <JsonUtils.h>
 
 namespace PlayFab
 {
-    void PlayFabError::FromJson(const Json::Value& input)
+    void PlayFabError::FromJson(const JsonValue& input)
     {
-        const Json::Value HttpCode_member = input["code"];
-        if (HttpCode_member != Json::Value::null)
+        JsonUtils::ObjectGetMember(input, "code", HttpCode);
+        JsonUtils::ObjectGetMember(input, "status", HttpStatus);
+        StdExtra::optional<int64_t> errorCode{};
+        JsonUtils::ObjectGetMember(input, "errorCode", errorCode);
+        if (errorCode)
         {
-            HttpCode = HttpCode_member.asInt();
+            ErrorCode = static_cast<PlayFabErrorCode>(*errorCode);
         }
-
-        const Json::Value ErrorCode_member = input["errorCode"];
-        if (ErrorCode_member != Json::Value::null)
-        {
-            ErrorCode = PlayFabErrorCode(ErrorCode_member.asInt());
-        }
-
-        const Json::Value HttpStatus_member = input["status"];
-        if (HttpStatus_member != Json::Value::null)
-        {
-            HttpStatus = HttpStatus_member.asCString();
-        }
-
-        const Json::Value ErrorName_member = input["error"];
-        if (ErrorName_member != Json::Value::null)
-        {
-            ErrorName = ErrorName_member.asCString();
-        }
-
-        const Json::Value ErrorMessage_member = input["errorMessage"];
-        if (ErrorMessage_member != Json::Value::null)
-        {
-            ErrorMessage = ErrorMessage_member.asCString();
-        }
-
-        ErrorDetails = input["errorDetails"];
-        Data = input["data"];
+        JsonUtils::ObjectGetMember(input, "error", ErrorName);
+        JsonUtils::ObjectGetMember(input, "errorMessage", ErrorMessage);
+        JsonUtils::ObjectGetMember(input, "errorDetails", ErrorDetails);
+        JsonUtils::ObjectGetMember(input, "data", Data);
     }
 
-    Json::Value PlayFabError::ToJson() const
+    JsonValue PlayFabError::ToJson() const
     {
         // This is not expected to be used, but implemented for completeness
-        Json::Value output;
-        output["code"] = Json::Value(HttpCode);
-        output["errorCode"] = Json::Value(static_cast<int>(ErrorCode));
-        output["status"] = Json::Value(HttpStatus.data());
-        output["error"] = Json::Value(ErrorName.data());
-        output["errorMessage"] = Json::Value(ErrorMessage.data());
-        output["errorDetails"] = ErrorDetails;
-        output["data"] = Data;
+        JsonValue output{ rapidjson::kObjectType };
+        JsonUtils::ObjectAddMember(output, "code", HttpCode);
+        JsonUtils::ObjectAddMember(output, "status", HttpStatus);
+        JsonUtils::ObjectAddMember(output, "errorCode", static_cast<int>(ErrorCode));
+        JsonUtils::ObjectAddMember(output, "error", ErrorName);
+        JsonUtils::ObjectAddMember(output, "errorMessage", ErrorMessage);
+        JsonUtils::ObjectAddMember(output, "errorDetails", ErrorDetails);
+        JsonUtils::ObjectAddMember(output, "data", Data);
         return output;
     }
 
     String PlayFabError::GenerateErrorReport() const
     {
-        String output;
-        output.reserve(1024);
-        output += ErrorMessage;
-        if (ErrorDetails != Json::Value::null && ErrorDetails.isObject())
+        Stringstream output;
+        output << ErrorMessage;
+        if (ErrorDetails.IsObject())
         {
-            for (auto detailIter = ErrorDetails.begin(); detailIter != ErrorDetails.end(); ++detailIter)
+            for (auto& pair : ErrorDetails.GetObject())
             {
-                if (!detailIter->isArray())
+                if (!pair.value.IsArray())
                 {
                     continue;
                 }
 
-                output += "\n";
-                output += detailIter.key().asCString();
-                output += ": ";
+                output << "\n" << pair.name.GetString() << ": ";
                 int valueIndex = 0;
-                for (auto valueIter = detailIter->begin(); valueIter != detailIter->end(); ++valueIter)
+                for (auto& value : pair.value.GetArray())
                 {
-                    if (!valueIter->isString())
+                    if (!value.IsString())
                     {
                         continue;
                     }
 
-                    if (valueIndex != 0)
+                    if (valueIndex++ != 0)
                     {
-                        output += ", ";
+                        output << ", ";
                     }
 
-                    output += valueIter->asCString();
-                    valueIndex++;
+                    output << value.GetString();
                 }
             }
         }
 
-        if(RequestId != "")
+        if(!RequestId.empty())
         {
-            output += " \n RequestId: " + RequestId + "\n";
+            output << " \n RequestId: " << RequestId << "\n";
         }
 
-        return output;
+        return output.str();
     }
 
     PlayFabException::PlayFabException(PlayFabExceptionCode code, const char* const message) : std::runtime_error(message)

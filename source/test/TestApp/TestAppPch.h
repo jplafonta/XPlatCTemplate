@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <array>
 #include <httpClient/pal.h>
 #include <playfab/InternalMemory.h>
 #include <playfab/PlayFabPlatformMacros.h>

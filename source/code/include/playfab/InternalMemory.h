@@ -6,6 +6,7 @@
 #include <queue>
 #include <unordered_set>
 #include <map>
+#include <playfab/PlayFabJsonHeaders.h>
 
 namespace PlayFab
 {
@@ -39,6 +40,35 @@ template<class T>
 struct Deleter
 {
     void operator()(T* ptr) const noexcept;
+};
+
+//------------------------------------------------------------------------------
+// rapidjson Allocator
+//------------------------------------------------------------------------------
+struct JsonAllocator
+{
+public:
+    static const bool kNeedFree = true;
+
+    void* Malloc(size_t size)
+    {
+        return malloc(size);
+    }
+    void* Realloc(void* originalPtr, size_t originalSize, size_t newSize)
+    {
+        void* newPtr = nullptr;
+        if (newSize > 0)
+        {
+            newPtr = Malloc(newSize);
+            memcpy(newPtr, originalPtr, (originalSize < newSize ? originalSize : newSize));
+        }
+        Free(originalPtr);
+        return newPtr;
+    }
+    static void Free(void* ptr)
+    {
+        free(ptr);
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -160,5 +190,10 @@ using Queue = std::queue<T, Deque<T>>;
 
 template<class T>
 using List = std::list<T, Allocator<T>>;
+
+using JsonDocument = rapidjson::GenericDocument<rapidjson::UTF8<>, JsonAllocator>;
+using JsonValue = rapidjson::GenericValue<rapidjson::UTF8<>, JsonAllocator>;
+using JsonStringBuffer = rapidjson::GenericStringBuffer<rapidjson::UTF8<>, JsonAllocator>;
+using JsonWriter = rapidjson::Writer<JsonStringBuffer>;
 
 }

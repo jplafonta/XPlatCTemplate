@@ -30,6 +30,6 @@ namespace PlayFab
         PlayFabApiSettings& operator=(PlayFabApiSettings&& other) = delete;
         ~PlayFabApiSettings() = default;
 
-        String GetUrl(const String& urlPath) const;
+        String GetUrl(const char* urlPath) const;
     };
 }

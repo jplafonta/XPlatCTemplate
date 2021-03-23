@@ -1,6 +1,7 @@
 #include <stdafx.h>
 #include <playfab/HttpClient.h>
 #include <playfab/PlayFabSettings.h>
+#include <JsonUtils.h>
 
 namespace PlayFab
 {
@@ -9,9 +10,9 @@ namespace PlayFab
     {
     public:
         static void Perform(
-            const char* url,
+            String&& url,
             const UnorderedMap<String, String>& headers,
-            const char* requestBody,
+            JsonValue&& requestBody,
             const TaskQueue& queue,
             HttpClient::HttpCallback&& callback
         );
@@ -24,9 +25,9 @@ namespace PlayFab
         HCHttpCall& operator=(HCHttpCall other) = delete;
 
         HRESULT Initialize(
-            const char* url,
+            String&& url,
             const UnorderedMap<String, String>& headers,
-            const char* requestBody
+            JsonValue&& requestBody
         );
 
         // Complete request should be invoked for every HCHttpCall. It is responsible for invoking
@@ -50,8 +51,8 @@ namespace PlayFab
     void HttpClient::MakePostRequest(
         const char* path,
         const UnorderedMap<String, String>& headers,
-        const char* requestBody,
-        const TaskQueue& queue,
+        JsonValue&& requestBody,
+        const TaskQueue & queue,
         HttpCallback&& callback
     ) const
     {
@@ -60,7 +61,7 @@ namespace PlayFab
             throw new PlayFabException(PlayFabExceptionCode::TitleNotSet, "PlayFabSettings::staticSettings->titleId has not been set properly. It must not be empty.");
         }
         auto fullUrl = m_settings->GetUrl(path);
-        HCHttpCall::Perform(fullUrl.data(), headers, requestBody, queue, std::move(callback));
+        HCHttpCall::Perform(fullUrl.data(), headers, std::move(requestBody), queue, std::move(callback));
     }
 
     HCHttpCall::HCHttpCall(const TaskQueue& queue, HttpClient::HttpCallback&& callback) :
@@ -78,9 +79,9 @@ namespace PlayFab
     }
 
     void HCHttpCall::Perform(
-        const char* url,
+        String&& url,
         const UnorderedMap<String, String>& headers,
-        const char* requestBody,
+        JsonValue&& requestBody,
         const TaskQueue& queue,
         HttpClient::HttpCallback&& callback
     )
@@ -88,7 +89,7 @@ namespace PlayFab
         // Non-owning pointer. Ownership will always be taken in CompleteRequest
         auto call = new (Allocator<HCHttpCall>{}.allocate(1)) HCHttpCall(queue, std::move(callback));
 
-        HRESULT hr = call->Initialize(url, headers, requestBody);
+        HRESULT hr = call->Initialize(std::move(url), headers, std::move(requestBody));
         if (FAILED(hr))
         {
             call->CompleteRequest(hr);
@@ -107,25 +108,18 @@ namespace PlayFab
     }
 
     HRESULT HCHttpCall::Initialize(
-        const char* url,
+        String&& url,
         const UnorderedMap<String, String>& headers,
-        const char* requestBody
+        JsonValue&& requestBody
     )
     {
-        // Initialize result
-        m_result.requestUrl = url;
+        // Initialize result. Url & request body moved into m_result and should be used from there
+        m_result.requestUrl = std::move(url);
+        m_result.requestBody = std::move(requestBody);
 
-        Json::CharReaderBuilder builder;
-        std::unique_ptr<Json::CharReader> reader(builder.newCharReader()); // Non memhook
-
-        if (!reader->parse(requestBody, requestBody + strlen(requestBody), &m_result.requestBody, nullptr))
-        {
-            // Set request body to null if parsing fails. Request likely to fail, but continue anyhow.
-            m_result.requestBody = Json::Value::null;
-        }
-
+        // Set up HCHttpCallHandle
         RETURN_IF_FAILED(HCHttpCallCreate(&m_callHandle));
-        RETURN_IF_FAILED(HCHttpCallRequestSetUrl(m_callHandle, "POST", url));
+        RETURN_IF_FAILED(HCHttpCallRequestSetUrl(m_callHandle, "POST", m_result.requestUrl.data()));
 
         // Add default PlayFab headers
         RETURN_IF_FAILED(HCHttpCallRequestSetHeader(m_callHandle, "Accept", "application/json", true));
@@ -141,7 +135,11 @@ namespace PlayFab
             }
         }
 
-        RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyString(m_callHandle, requestBody));
+        JsonStringBuffer jsonString;
+        JsonWriter writer{ jsonString };
+        m_result.requestBody.Accept(writer);
+
+        RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyString(m_callHandle, jsonString.GetString()));
         return S_OK;
     }
 
@@ -184,29 +182,21 @@ namespace PlayFab
             return;
         }
 
-        Json::Value responseJson;
-        Json::CharReaderBuilder jsonReaderFactory;
-        std::unique_ptr<Json::CharReader> jsonReader(jsonReaderFactory.newCharReader()); // Non memhook
-        JSONCPP_STRING jsonParseErrors; // Non memhook
-        const bool parsedSuccessfully = jsonReader->parse(responseString, responseString + strlen(responseString), &responseJson, &jsonParseErrors);
-        if (parsedSuccessfully)
+        JsonDocument responseJson{ &JsonUtils::allocator };
+        responseJson.Parse(responseString);
+        if (!responseJson.HasParseError())
         {
             // fully successful response
-            call->m_result.serviceResponse.HttpCode = responseJson.get("code", Json::Value::null).asInt();
-            call->m_result.serviceResponse.HttpStatus = responseJson.get("status", Json::Value{ "" }).asCString();
-            call->m_result.serviceResponse.Data = responseJson.get("data", Json::Value::null);
-            call->m_result.serviceResponse.ErrorName = responseJson.get("error", Json::Value{ "" }).asCString();
-            call->m_result.serviceResponse.ErrorCode = static_cast<PlayFabErrorCode>(responseJson.get("errorCode", Json::Value::null).asInt());
-            call->m_result.serviceResponse.ErrorMessage = responseJson.get("errorMessage", Json::Value{ "" }).asCString();
-            call->m_result.serviceResponse.ErrorDetails = responseJson.get("errorDetails", Json::Value::null);
+            call->m_result.serviceResponse.FromJson(responseJson);
         }
         else
         {
+            // TODO Weird to deliver this error via "serviceResponse" field.
             call->m_result.serviceResponse.HttpCode = httpCode;
             call->m_result.serviceResponse.HttpStatus = responseString;
             call->m_result.serviceResponse.ErrorCode = PlayFabErrorCode::PlayFabErrorPartialFailure;
             call->m_result.serviceResponse.ErrorName = "Failed to parse PlayFab response";
-            call->m_result.serviceResponse.ErrorMessage = jsonParseErrors.data();
+            call->m_result.serviceResponse.ErrorMessage = rapidjson::GetParseError_En(responseJson.GetParseError());
         }
 
         // Get requestId response header
@@ -224,5 +214,4 @@ namespace PlayFab
 
         call->CompleteRequest(S_OK);
     }
-
 }

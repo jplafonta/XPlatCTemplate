@@ -2,42 +2,43 @@
 #include <memory>
 
 #include "TestAppPch.h"
-
-#include <playfab/PlayFabJsonHeaders.h>
-
 #include "TestReport.h"
 #include "TestUtils.h"
 
+using namespace PlayFab;
+
 namespace PlayFabUnit
 {
-    void TestCaseReport::ToJson(Json::Value& json)
+    JsonValue TestCaseReport::ToJson()
     {
-        json["classname"] = classname;
-        json["name"] = name;
-        json["time"] = time;
-        json["message"] = message;
-        json["failureText"] = failureText;
-        json["finishState"] = ToString(finishState);
+        JsonValue json{ rapidjson::kObjectType };
+        json.AddMember("classname", JsonValue{ classname.data(), s_jsonAllocator }, s_jsonAllocator);
+        json.AddMember("name", JsonValue{ name.data(), s_jsonAllocator }, s_jsonAllocator);
+        json.AddMember("time", time, s_jsonAllocator);
+        json.AddMember("message", JsonValue{ message.data(), s_jsonAllocator }, s_jsonAllocator);
+        json.AddMember("failureText", JsonValue{ failureText.data(), s_jsonAllocator }, s_jsonAllocator);
+        json.AddMember("finishState", JsonValue{ JsonValue::StringRefType{ ToString(finishState) } }, s_jsonAllocator);
+        return json;
     }
 
-    void TestSuiteReport::ToJson(Json::Value& json)
+    JsonValue TestSuiteReport::ToJson()
     {
-        json["name"] = name;
-        json["tests"] = tests;
-        json["failures"] = failures;
-        json["errors"] = errors;
-        json["skipped"] = skipped;
-        json["time"] = time;
-        json["testResults"];
-        Json::Value init(Json::arrayValue);
-        json["testResults"].swapPayload(init);
+        JsonValue json{ rapidjson::kObjectType };
+        json.AddMember("name", JsonValue{ name.data(), s_jsonAllocator }, s_jsonAllocator);
+        json.AddMember("tests", tests, s_jsonAllocator);
+        json.AddMember("failures", failures, s_jsonAllocator);
+        json.AddMember("errors", errors, s_jsonAllocator);
+        json.AddMember("skipped", skipped, s_jsonAllocator);
+        json.AddMember("time", time, s_jsonAllocator);
 
-        int testResultIndex = 0;
+        JsonValue testResultsJson{ rapidjson::kArrayType };
         for (auto testResult : testResults)
         {
-            testResult->ToJson(json["testResults"][testResultIndex]);
-            testResultIndex += 1;
+            testResultsJson.PushBack(testResult->ToJson(), s_jsonAllocator);
         }
+        json.AddMember("testResults", testResultsJson, s_jsonAllocator);
+
+        return json;
     }
 
     TestReport::TestReport(const std::string& className)

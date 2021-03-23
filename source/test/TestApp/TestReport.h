@@ -6,11 +6,6 @@
 #include <string>
 #include "TestDataTypes.h"
 
-namespace Json
-{
-    class Value;
-}
-
 namespace PlayFabUnit
 {
     /// <summary>
@@ -29,7 +24,7 @@ namespace PlayFabUnit
         std::string failureText;
         TestFinishState finishState;
 
-        void ToJson(Json::Value& json);
+        PlayFab::JsonValue ToJson();
     };
 
     /// <summary>
@@ -49,7 +44,7 @@ namespace PlayFabUnit
         int passed; // Could be calculated from the others, but sometimes knowing if they don't add up means something
         std::list<std::shared_ptr<TestCaseReport>> testResults;
 
-        void ToJson(Json::Value& json);
+        PlayFab::JsonValue ToJson();
     };
 
     class TestReport

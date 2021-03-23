@@ -117,10 +117,7 @@ namespace PlayFab
         const ErrorCallback errorCallback
     )
     {
-<%- getRequestActions("        ", apiCall) %>        const Json::Value requestJson = request.ToJson();
-        std::string jsonAsString = requestJson.toStyledString(); // Non memhook
-
-        UnorderedMap<String, String> headers;
+<%- getRequestActions("        ", apiCall) %>        UnorderedMap<String, String> headers;
 <% if (hasAuthParams(apiCall)) {
 %>        headers.emplace(<%- getAuthParams(apiCall) %>);
 <% } %>
@@ -140,7 +137,7 @@ namespace PlayFab
         m_httpClient.MakePostRequest(
             "<%- apiCall.url %>",
             headers,
-            jsonAsString.data(),
+            request.ToJson(),
             queue,
             callComplete
         );
@@ -175,7 +172,7 @@ namespace PlayFab
         if (httpResult.serviceResponse.HttpCode == 200)
         {
             resultCommon.FromJson(httpResult.serviceResponse.Data);
-            resultCommon.Request = httpResult.requestBody;
+            resultCommon.Request.CopyFrom(httpResult.requestBody, JsonUtils::allocator);
             return true;
         }
         else // Process the error case

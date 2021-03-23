@@ -27,15 +27,18 @@ namespace PlayFab
         PlayFabErrorCode ErrorCode;
         String ErrorName;
         String ErrorMessage;
-        Json::Value ErrorDetails;
-        Json::Value Data;
-        String RequestId;
-        // Non-serialized fields
-        String UrlPath;
-        Json::Value Request;
+        JsonValue ErrorDetails;
+        JsonValue Data;
 
-        void FromJson(const Json::Value& input) override;
-        Json::Value ToJson() const override;
+        // Non-serialized fields
+        String RequestId;
+
+        PlayFabError() = default;
+        PlayFabError(const PlayFabError&) {};
+        ~PlayFabError() = default;
+
+        void FromJson(const JsonValue& input) override;
+        JsonValue ToJson() const override;
 
         String GenerateErrorReport() const;
     };

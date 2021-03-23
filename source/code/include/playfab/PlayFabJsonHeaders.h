@@ -4,17 +4,12 @@
 
 #pragma once
 
-#include <playfab/PlayFabPlatformMacros.h>
+#define RAPIDJSON_NAMESPACE PlayFab::rapidjson
+#define RAPIDJSON_NAMESPACE_BEGIN namespace PlayFab { namespace rapidjson {
+#define RAPIDJSON_NAMESPACE_END } }
 
-#if defined(PLAYFAB_PLATFORM_SWITCH)
-#include <json/json.h>
-#include <json/json-forwards.h>
-#elif defined(PLAYFAB_PLATFORM_LINUX)
-#include <jsoncpp/json/json.h>
-#include <jsoncpp/json/reader.h>
-#include <jsoncpp/json/value.h>
-#else
-#include <json/json.h>
-#include <json/reader.h>
-#include <json/value.h>
-#endif
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/error/en.h>

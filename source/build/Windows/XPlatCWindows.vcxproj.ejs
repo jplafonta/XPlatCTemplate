@@ -10,7 +10,6 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <Import Project="SetDirectoryPaths.props" />
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{92F6EC5F-B66C-4572-A74D-79329AFF3129}</ProjectGuid>
@@ -45,7 +44,7 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <Import Project="$(ExternalDir)\libHttpClient\libHttpClient.props" />
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), PlayFabXPlatC.props))\PlayFabXPlatC.props" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -66,7 +65,6 @@
       <PreprocessorDefinitions>_DEBUG;_LIB;<%- libDefines %>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SdkSourceDir);$(ExternalDir)/jsoncpp/include;$(SdkSourceDir)/include</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MinimalRebuild>false</MinimalRebuild>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -80,9 +78,6 @@
     </Link>
     <ProjectReference />
     <ProjectReference />
-    <Lib>
-      <AdditionalDependencies>ws2_32.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -92,7 +87,6 @@
       <PreprocessorDefinitions>_LIB;<%- libDefines %>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SdkSourceDir);$(ExternalDir)/jsoncpp/include;$(SdkSourceDir)/include</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MinimalRebuild>false</MinimalRebuild>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -104,11 +98,6 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
-    <ProjectReference />
-    <ProjectReference />
-    <Lib>
-      <AdditionalDependencies>ws2_32.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="$(SdkSourceDir)\include\playfab\AsyncProvider.h" />
@@ -143,10 +132,13 @@
     <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\QoSSocket.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\XPlatSocket.h" />
     <ClInclude Include="$(SdkSourceDir)\stdafx.h" />
+    <ClInclude Include="$(SdkSourceDir)\source\playfab\EnumTraits.h" />
+    <ClInclude Include="$(SdkSourceDir)\source\playfab\JsonUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(SdkSourceDir)\source\playfab\AsyncProvider.cpp" />
     <ClCompile Include="$(SdkSourceDir)\source\playfab\HttpClient.cpp" />
+	<ClCompile Include="$(SdkSourceDir)\source\playfab\JsonUtils.cpp" />
     <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabAuthenticationContext.cpp" />
     <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabApiSettings.cpp" />
 <% for(var i in apis) { var api = apis[i];%>
@@ -170,9 +162,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\external\jsoncpp-build\lib_json.vcxproj">
-      <Project>{1e6c2c1c-6453-4129-ae3f-0ee8e6599c89}</Project>
-    </ProjectReference>
+    <Natvis Include="$(ExternalDir)\rapidjson.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

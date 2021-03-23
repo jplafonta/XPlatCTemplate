@@ -17,33 +17,28 @@ namespace PlayFab
         }
     }
 
-    String PlayFabApiSettings::GetUrl(const String& urlPath) const
+    String PlayFabApiSettings::GetUrl(const char* urlPath) const
     {
-        String fullUrl;
-        fullUrl.reserve(1000);
-
-        fullUrl += "https://";
-        fullUrl += titleId;
-        fullUrl += baseServiceHost;
-        fullUrl += urlPath;
+        Stringstream fullUrl;
+        fullUrl << "https://" << titleId << baseServiceHost << urlPath;
 
         bool firstParam = true;
         for (auto const& paramPair : requestGetParams)
         {
             if (firstParam)
             {
-                fullUrl += "?";
+                fullUrl << "?";
                 firstParam = false;
             }
             else
             {
-                fullUrl += "&";
+                fullUrl << "&";
             }
-            fullUrl += paramPair.first;
-            fullUrl += "=";
-            fullUrl += paramPair.second;
+            fullUrl << paramPair.first;
+            fullUrl << "=";
+            fullUrl << paramPair.second;
         }
 
-        return fullUrl;
+        return fullUrl.str();
     }
 }
