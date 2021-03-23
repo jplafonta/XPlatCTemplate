@@ -111,7 +111,8 @@
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabBaseModel.h" />
 <% for(var i in apis) { var api = apis[i];%>
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>InstanceApi.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>DataModels.h" /><% } %>
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>DataModels.h" />
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>DataModels_c.h" /><% } %>
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabEvent.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabEventApi.h" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabEventBuffer.h" />

@@ -18,7 +18,7 @@ constexpr char jsonString[] = R"(
     "ArrayValue":[0,1,2,3,4,5],
     "SubObjectValue": 
     {
-        "AdActivity":"AdActivityStart"
+        "CountryCode":"IN"
     }
 }
 )";
@@ -29,17 +29,17 @@ namespace PlayFabUnit
     {
         struct SubObjectModel : public PlayFabBaseModel
         {
-            ClientModels::AdActivity AdActivity;
+            PlayFabCountryCode CountryCode;
 
             void FromJson(const JsonValue& input)
             {
-                JsonUtils::ObjectGetMember(input, "AdActivity", AdActivity);
+                JsonUtils::ObjectGetMember(input, "CountryCode", CountryCode);
             }
 
             JsonValue ToJson() const 
             {
                 JsonValue output{ rapidjson::kObjectType };
-                JsonUtils::ObjectAddMember(output, "AdActivity", AdActivity);
+                JsonUtils::ObjectAddMember(output, "CountryCode", CountryCode);
                 return output;
             }
         };

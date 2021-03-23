@@ -1,0 +1,17 @@
+#pragma once
+
+#include <playfab/PlayFabBaseModel_c.h>
+
+#pragma push_macro("IN")
+#undef IN
+
+// <%- api.name %> Enums<%
+for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { var enumtype = enumtypes[enumIdx]; %>
+enum class PlayFab<%- enumtype.name %> : uint32_t
+{
+    <% for(var i=0; i<enumtype.enumvalues.length-1; i++) { var enumval = enumtype.enumvalues[i] %><%- enumval.name %>,
+    <% } %><%- enumtype.enumvalues[enumtype.enumvalues.length-1].name %>
+};
+<% } %>
+
+#pragma pop_macro("IN")

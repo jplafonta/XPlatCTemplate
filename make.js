@@ -44,7 +44,6 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         getPropertyDefinition: getPropertyDefinition,
         getPropertyFromJson: getPropertyFromJson,
         getPropertyToJson: getPropertyToJson,
-        getPropertySafeName: getPropertySafeName,
         getRequestActions: getRequestActions,
         getResultActions: getResultActions,
         canDefaultCopyConstructor: canDefaultCopyConstructor,
@@ -66,6 +65,9 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
 
     var dataModelTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels.h.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "DataModels.h"), dataModelTemplate(locals));
+
+    var dataModelTemplate_c = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels_c.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "DataModels_c.h"), dataModelTemplate_c(locals));
 }
 
 // *************************** Internal utility methods ***************************
@@ -175,47 +177,40 @@ function getPropertyCppType(property, datatype, needOptional) {
     else if (property.actualtype === "DateTime")
         return isOptional ? "StdExtra::optional<time_t>" : "time_t";
     else if (property.isenum)
-        return isOptional ? ("StdExtra::optional<" + property.actualtype + ">") : property.actualtype;
+        return isOptional ? ("StdExtra::optional<PlayFab" + property.actualtype + ">") : ("PlayFab" + property.actualtype);
     throw Error("getPropertyCppType: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
 }
 
 function getPropertyDefinition(tabbing, property, datatype) {
     var cppType = getPropertyCppType(property, datatype, !property.collection);
-    var safePropName = getPropertySafeName(property);
 
     if (!property.collection) {
-        return tabbing + cppType + " " + safePropName + ";";
+        return tabbing + cppType + " " + property.name + ";";
     } else if (property.jsontype === "Object" && property.actualtype === "object") {
-        return tabbing + cppType + " " + safePropName + ";";
+        return tabbing + cppType + " " + property.name + ";";
     } else if (property.collection === "array") {
-        return tabbing + "List<" + cppType + "> " + safePropName + ";";
+        return tabbing + "List<" + cppType + "> " + property.name + ";";
     } else if (property.collection === "map") {
-        return tabbing + "Map<String, " + cppType + "> " + safePropName + ";";
+        return tabbing + "Map<String, " + cppType + "> " + property.name + ";";
     }
     throw Error("getPropertyDefinition: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
 }
 
 function getPropertyFromJson(tabbing, property, datatype) {
-    var safePropName = getPropertySafeName(property);
     if (property.actualtype === "DateTime") {
         // Special case needed for time since we are translating from JsonString -> c++ time_t
-        return tabbing + "JsonUtils::ObjectGetMemberTime(input, \"" + property.name + "\", " + safePropName + ");";
+        return tabbing + "JsonUtils::ObjectGetMemberTime(input, \"" + property.name + "\", " + property.name + ");";
     }
 
-    return tabbing + "JsonUtils::ObjectGetMember(input, \"" + property.name + "\", " + safePropName + ");";
+    return tabbing + "JsonUtils::ObjectGetMember(input, \"" + property.name + "\", " + property.name + ");";
 }
 
 function getPropertyToJson(tabbing, property, datatype) {
-    var safePropName = getPropertySafeName(property);
     if (property.actualtype === "DateTime") {
         // Special case needed for time since we are translating from c++ time_t -> JsonString
-        return tabbing + "JsonUtils::ObjectAddMemberTime(output, \"" + property.name + "\", " + safePropName + ");";
+        return tabbing + "JsonUtils::ObjectAddMemberTime(output, \"" + property.name + "\", " + property.name + ");";
     }
-    return tabbing + "JsonUtils::ObjectAddMember(output, \"" + property.name + "\", " + safePropName + ");";
-}
-
-function getPropertySafeName(property) {
-    return (property.actualtype === property.name) ? "pf" + property.name : property.name;
+    return tabbing + "JsonUtils::ObjectAddMember(output, \"" + property.name + "\", " + property.name + ");";
 }
 
 function canDefaultCopyConstructor(datatype) {
@@ -236,12 +231,11 @@ function getCopyConstructorInitializationList(tabbing, datatype) {
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
         var property = datatype.properties[propIdx];
         if (!(property.jsontype === "Object" && property.actualtype === "object")) {
-            var safeName = getPropertySafeName(property);
             if (firstProp) {
                 firstProp = false;
-                initializationList += (tabbing + ": " + safeName + "{ src." + safeName + " }");
+                initializationList += (tabbing + ": " + property.name + "{ src." + property.name + " }");
             } else {
-                initializationList += (",\n" + tabbing + safeName + "{ src." + safeName + " }");
+                initializationList += (",\n" + tabbing + property.name + "{ src." + property.name + " }");
             }
         }
     }
@@ -254,12 +248,11 @@ function getCopyConstructorBody(tabbing, datatype) {
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
         var property = datatype.properties[propIdx];
         if (property.jsontype === "Object" && property.actualtype === "object") {
-            var safeName = getPropertySafeName(property);
             if (firstProp) {
                 firstProp = false;
-                constructorBody += (tabbing + "JsonUtils::FromJson(src." + safeName + ", " + safeName + ");");
+                constructorBody += (tabbing + "JsonUtils::FromJson(src." + property.name + ", " + property.name + ");");
             } else {
-                constructorBody += ("\n" + tabbing + "JsonUtils::FromJson(src." + safeName + ", " + safeName + ");");
+                constructorBody += ("\n" + tabbing + "JsonUtils::FromJson(src." + property.name + ", " + property.name + ");");
             }
         }
     }

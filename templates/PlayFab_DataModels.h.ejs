@@ -2,6 +2,7 @@
 
 <%- getApiDefine(api) %>
 
+#include <playfab/PlayFab<%- api.name %>DataModels_c.h>
 #include <playfab/PlayFabBaseModel.h>
 #include <JsonUtils.h>
 
@@ -9,14 +10,6 @@ namespace PlayFab
 {
     namespace <%- api.name %>Models
     {
-        // <%- api.name %> Enums<%
-for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { var enumtype = enumtypes[enumIdx]; %>
-        enum class <%- enumtype.name %>
-        {
-            <% for(var i=0; i<enumtype.enumvalues.length-1; i++) { var enumval = enumtype.enumvalues[i] %><%- enumtype.name %><%- enumval.name %>,
-            <% } %><%- enumtype.name %><%- enumtype.enumvalues[enumtype.enumvalues.length-1].name %>
-        };
-<% } %>
         // <%- api.name %> Classes<%
 for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype = sortedClasses[typeIdx]; %>
         struct <%- datatype.name %> : public <%- getBaseType(datatype) %>
@@ -55,9 +48,9 @@ for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype 
 
     // EnumRange definitions used for Enum (de)serialization <%
 for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { var enumtype = enumtypes[enumIdx]; var maxval = enumtype.enumvalues[enumtype.enumvalues.length-1]; %>
-    template<> struct EnumRange<<%- api.name %>Models::<%- enumtype.name %>>
+    template<> struct EnumRange<PlayFab<%- enumtype.name %>>
     {
-        static constexpr <%- api.name %>Models::<%- enumtype.name %> maxValue = <%- api.name %>Models::<%- enumtype.name %>::<%- enumtype.name %><%- maxval.name %>;
+        static constexpr PlayFab<%- enumtype.name %> maxValue = PlayFab<%- enumtype.name %>::<%- maxval.name %>;
     };
 <% } %>
 }
