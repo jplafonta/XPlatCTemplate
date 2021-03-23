@@ -16,7 +16,7 @@ namespace PlayFab
     class PlayFabEventPacket final
     {
     public:
-        PlayFabEventPacket(const uint64_t index, const std::shared_ptr<const IPlayFabEmitEventRequest>& request) :
+        PlayFabEventPacket(const uint64_t index, const SharedPtr<const IPlayFabEmitEventRequest>& request) :
             next(nullptr),
             eventIndex(index),
             timestamp(std::time(nullptr)), // current time
@@ -29,7 +29,7 @@ namespace PlayFab
         uint64_t eventIndex; // the incremental index of an event
         std::time_t timestamp; // the timestamp of event packet creation
 
-        std::shared_ptr<const IPlayFabEmitEventRequest> eventRequest; // the event request
+        SharedPtr<const IPlayFabEmitEventRequest> eventRequest; // the event request
     };
 #pragma pack(pop)
 
@@ -67,14 +67,14 @@ namespace PlayFab
         PlayFabEventBuffer& operator=(PlayFabEventBuffer&& other) = delete; // disable move assignment
 
         // Attempts to put an event in buffer (add to the tail). This method must be thread-safe.
-        EventProducingResult TryPut(std::shared_ptr<const IPlayFabEmitEventRequest> request);
+        EventProducingResult TryPut(SharedPtr<const IPlayFabEmitEventRequest> request);
 
         // Attempts to take an event from buffer (update the head).
-        EventConsumingResult TryTake(std::shared_ptr<const IPlayFabEmitEventRequest>& request);
+        EventConsumingResult TryTake(SharedPtr<const IPlayFabEmitEventRequest>& request);
 
     private:
         // Creates (allocates and calls constructor) an event packet object in the buffer
-        PlayFabEventPacket* CreateEventPacket(uint8_t* location, const uint64_t index, std::shared_ptr<const IPlayFabEmitEventRequest> request);
+        PlayFabEventPacket* CreateEventPacket(uint8_t* location, const uint64_t index, SharedPtr<const IPlayFabEmitEventRequest> request);
 
         // Deletes (calls destructor) an event packet object from the buffer
         void DeleteEventPacket(PlayFabEventPacket* eventPacket);
@@ -88,7 +88,7 @@ namespace PlayFab
                                // (or 100000000 and 011111111 in binary form). Performing binary "&" operations
                                // with a mask like that allows for efficient pointer adjustments in a circular buffer.
 
-        std::unique_ptr<uint8_t[]> bufferArray;
+        Vector<uint8_t> bufferArray;
         const uint64_t buffStart; // A pointer to the beginning of buffer (first byte of the buffer).
         const uint64_t buffEnd; // A pointer to the byte immediately after the last byte of buffer, i.e. (buffEnd - buffStart) gives the length of the buffer.
 
@@ -101,6 +101,6 @@ namespace PlayFab
         PlayFabEventPacket* tail; // A pointer to the last event packet added to the buffer.
                                   // Newly added events are added to the tail (tail is growing as new events are added).
 
-        std::shared_ptr<std::atomic<uint64_t>> eventIndex; // The counter of produced events
+        SharedPtr<std::atomic<uint64_t>> eventIndex; // The counter of produced events
     };
 }

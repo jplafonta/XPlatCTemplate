@@ -19,21 +19,21 @@ namespace PlayFab
     {
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings) :
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings) :
         m_settings(apiSettings),
         m_context(MakeShared<PlayFabAuthenticationContext>()),
         m_httpClient(m_settings)
     {
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
         m_settings(MakeShared<PlayFabApiSettings>()),
         m_context(authenticationContext),
         m_httpClient(m_settings)
     {
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings, const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings, const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
         m_settings(apiSettings),
         m_context(authenticationContext),
         m_httpClient(m_settings)
@@ -47,28 +47,28 @@ namespace PlayFab
     {
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings) :
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings) :
         m_settings(apiSettings),
         m_context(MakeShared<PlayFabAuthenticationContext>()),
         m_httpClient(m_settings)
     {
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
         m_settings(MakeShared<PlayFabApiSettings>()),
         m_context(authenticationContext),
         m_httpClient(m_settings)
     {
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings, const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings, const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
         m_settings(apiSettings),
         m_context(authenticationContext),
         m_httpClient(m_settings)
     {
     }
 <% } else { %>
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
         m_settings(MakeShared<PlayFabApiSettings>()),
         m_context(authenticationContext),
         m_httpClient(m_settings)
@@ -79,7 +79,7 @@ namespace PlayFab
         }
     }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const std::shared_ptr<PlayFabApiSettings>& apiSettings, const std::shared_ptr<PlayFabAuthenticationContext>& authenticationContext) :
+    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings, const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
         m_settings(apiSettings),
         m_context(authenticationContext),
         m_httpClient(m_settings)
@@ -90,12 +90,12 @@ namespace PlayFab
         }
     }
 <% } %>
-    std::shared_ptr<PlayFabApiSettings> PlayFab<%- api.name %>InstanceAPI::GetSettings() const
+    SharedPtr<PlayFabApiSettings> PlayFab<%- api.name %>InstanceAPI::GetSettings() const
     {
         return this->m_settings;
     }
 
-    std::shared_ptr<PlayFabAuthenticationContext> PlayFab<%- api.name %>InstanceAPI::GetAuthenticationContext() const
+    SharedPtr<PlayFabAuthenticationContext> PlayFab<%- api.name %>InstanceAPI::GetAuthenticationContext() const
     {
         return this->m_context;
     }
@@ -112,27 +112,27 @@ namespace PlayFab
 <% for (var callIdx = 0; callIdx < api.calls.length; callIdx++) { var apiCall = api.calls[callIdx]; %>
     void PlayFab<%- api.name %>InstanceAPI::<%- apiCall.name %>(
         <%- apiCall.request %>& request,
+        const TaskQueue& queue,
         const ProcessApiCallback<<%- apiCall.result %>> callback,
-        const ErrorCallback errorCallback,
-        void* customData
+        const ErrorCallback errorCallback
     )
     {
 <%- getRequestActions("        ", apiCall) %>        const Json::Value requestJson = request.ToJson();
-        std::string jsonAsString = requestJson.toStyledString();
+        std::string jsonAsString = requestJson.toStyledString(); // Non memhook
 
         UnorderedMap<String, String> headers;
 <% if (hasAuthParams(apiCall)) {
 %>        headers.emplace(<%- getAuthParams(apiCall) %>);
 <% } %>
         // TODO bug: There is a lifetime issue with capturing this here since the client owns the object
-        auto callComplete = [ this, callback, errorCallback, context{ m_context }, customData ](const HttpResult& httpResult)
+        auto callComplete = [ this, callback, errorCallback, context{ m_context } ](const HttpResult& httpResult)
         {
             <%- apiCall.result %> outResult;
-            if (ParseResult(outResult, httpResult, errorCallback, customData))
+            if (ParseResult(outResult, httpResult, errorCallback))
             {
 <%- getResultActions("                ", apiCall)   %>                if (callback)
                 {
-                    callback(outResult, customData);
+                    callback(outResult);
                 }
             }
         };
@@ -141,6 +141,7 @@ namespace PlayFab
             "<%- apiCall.url %>",
             headers,
             jsonAsString.data(),
+            queue,
             callComplete
         );
     }
@@ -151,7 +152,7 @@ namespace PlayFab
         return !this->m_context->clientSessionTicket.empty();
     }
 
-    void PlayFabClientInstanceAPI::MultiStepClientLogin(std::shared_ptr<PlayFabAuthenticationContext> context, bool needsAttribution)
+    void PlayFabClientInstanceAPI::MultiStepClientLogin(SharedPtr<PlayFabAuthenticationContext> context, bool needsAttribution)
     {
         if (needsAttribution && !context->disableAdvertising && context->advertisingIdType.length() > 0 && context->advertisingIdValue.length() > 0)
         {
@@ -169,7 +170,7 @@ namespace PlayFab
         }
     }
 <% } %>
-    bool PlayFab<%- api.name %>InstanceAPI::ParseResult(PlayFabResultCommon& resultCommon, const HttpResult& httpResult, const ErrorCallback& errorHandler, void* customData)
+    bool PlayFab<%- api.name %>InstanceAPI::ParseResult(PlayFabResultCommon& resultCommon, const HttpResult& httpResult, const ErrorCallback& errorHandler)
     {
         if (httpResult.serviceResponse.HttpCode == 200)
         {
@@ -181,11 +182,11 @@ namespace PlayFab
         {
             if (PlayFabSettings::globalErrorHandler != nullptr)
             {
-                PlayFabSettings::globalErrorHandler(httpResult.serviceResponse, customData);
+                PlayFabSettings::globalErrorHandler(httpResult.serviceResponse);
             }
             if (errorHandler)
             {
-                errorHandler(httpResult.serviceResponse, customData);
+                errorHandler(httpResult.serviceResponse);
             }
             return false;
         }

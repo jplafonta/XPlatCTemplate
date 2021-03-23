@@ -23,24 +23,24 @@ namespace PlayFab
     {
         // Serialized fields
         int HttpCode;
-        std::string HttpStatus;
+        String HttpStatus;
         PlayFabErrorCode ErrorCode;
-        std::string ErrorName;
-        std::string ErrorMessage;
+        String ErrorName;
+        String ErrorMessage;
         Json::Value ErrorDetails;
         Json::Value Data;
-        std::string RequestId;
+        String RequestId;
         // Non-serialized fields
-        std::string UrlPath;
+        String UrlPath;
         Json::Value Request;
 
         void FromJson(const Json::Value& input) override;
         Json::Value ToJson() const override;
 
-        std::string GenerateErrorReport() const;
+        String GenerateErrorReport() const;
     };
 
-    typedef std::function<void(const PlayFabError& error, void* customData)> ErrorCallback;
+    typedef std::function<void(const PlayFabError& error)> ErrorCallback;
     typedef std::function<void(std::exception exception)> ExceptionCallback;
 
     enum class PlayFabExceptionCode

@@ -31,32 +31,32 @@ namespace PlayFab
             QoSResult GetQoSResult(unsigned int numThreads, unsigned int timeoutMs = DEFAULT_TIMEOUT_MS);
 
         private:
-            std::shared_ptr<PlayFabEventsInstanceAPI> eventsApi;
-            std::shared_ptr<PlayFabMultiplayerInstanceAPI> multiplayerApi;
+            SharedPtr<PlayFabEventsInstanceAPI> eventsApi;
+            SharedPtr<PlayFabMultiplayerInstanceAPI> multiplayerApi;
 
-            std::vector<std::string> GetPingList(unsigned int serverCount);
-            void InitializeAccumulatedPingResults(std::unordered_map<std::string, PingResult>& accumulatedPingResults);
-            int SetupSockets(std::vector<std::shared_ptr<QoSSocket>>& sockets, unsigned int numThreads, unsigned int timeoutMs);
-            void InitializeAsyncPingResults(std::vector<std::future<PingResult>>& asyncPingResults);
-            void PingServers(const std::vector<std::string>& pings, std::vector<std::future<PingResult>>& asyncPingResults, const std::vector<std::shared_ptr<QoSSocket>>& sockets, std::unordered_map<std::string, PingResult>& accumulatedPingResults, unsigned int timeoutMs);
-            void UpdateAccumulatedPingResult(const PingResult& result, const std::string& region, std::unordered_map<std::string, PingResult>& accumulatedPingResults, unsigned int timeoutMs);
+            Vector<String> GetPingList(unsigned int serverCount);
+            void InitializeAccumulatedPingResults(UnorderedMap<String, PingResult>& accumulatedPingResults);
+            int SetupSockets(Vector<SharedPtr<QoSSocket>>& sockets, unsigned int numThreads, unsigned int timeoutMs);
+            void InitializeAsyncPingResults(Vector<std::future<PingResult>>& asyncPingResults);
+            void PingServers(const Vector<String>& pings, Vector<std::future<PingResult>>& asyncPingResults, const Vector<SharedPtr<QoSSocket>>& sockets, UnorderedMap<String, PingResult>& accumulatedPingResults, unsigned int timeoutMs);
+            void UpdateAccumulatedPingResult(const PingResult& result, const String& region, UnorderedMap<String, PingResult>& accumulatedPingResults, unsigned int timeoutMs);
             QoSResult GetResult(unsigned int numThreads, unsigned int timeoutMs);
 
             void PingThunderheadForServerList();
-            static void ListQosServersForTitleSuccessCallBack(const PlayFab::MultiplayerModels::ListQosServersForTitleResponse& result, void* customData);
-            static void ListQosServersForTitleFailureCallBack(const PlayFab::PlayFabError& error, void* customData);
+            void ListQosServersForTitleSuccessCallBack(const PlayFab::MultiplayerModels::ListQosServersForTitleResponse& result);
+            void ListQosServersForTitleFailureCallBack(const PlayFab::PlayFabError& error);
 
             void SendResultsToPlayFab(const QoSResult& result);
-            static void WriteEventsSuccessCallBack(const PlayFab::EventsModels::WriteEventsResponse& result, void*);
-            static void WriteEventsFailureCallBack(const PlayFab::PlayFabError& error, void*);
+            static void WriteEventsSuccessCallBack(const PlayFab::EventsModels::WriteEventsResponse& result);
+            static void WriteEventsFailureCallBack(const PlayFab::PlayFabError& error);
 
-            static PingResult GetQoSResultForRegion(std::shared_ptr<QoSSocket> socket);
+            static PingResult GetQoSResultForRegion(SharedPtr<QoSSocket> socket);
 
         private:
             const int numOfPingIterations = NUM_OF_PING_ITERATIONS; // Number of pings to do to each server, to calculate an average latency.
             const std::chrono::milliseconds threadWaitTimespan = std::chrono::milliseconds(THREAD_WAIT_MS);
 
-            std::unordered_map<std::string, std::string> regionMap;
+            UnorderedMap<String, String> regionMap;
             bool listQosServersCompleted;
         };
     }

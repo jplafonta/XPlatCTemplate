@@ -7,7 +7,7 @@
 #include <mutex>
 #include <string>
 
-#include "TestDataTypes.h"
+#include "TestReport.h"
 
 namespace PlayFab
 {
@@ -39,9 +39,9 @@ namespace PlayFabUnit
         std::condition_variable cloudResponseConditionVar;
 
         std::shared_ptr<PlayFab::PlayFabClientInstanceAPI> clientApi;
-        void OnPostReportLogin(const PlayFab::ClientModels::LoginResult& result, void* customData);
-        void OnPostReportComplete(const PlayFab::ClientModels::ExecuteCloudScriptResult& result, void* /*customData*/);
-        void OnPostReportError(const PlayFab::PlayFabError& error, void* /*customData*/);
+        void OnPostReportLogin(const PlayFab::ClientModels::LoginResult& result, TestReport& testReport);
+        void OnPostReportComplete(const PlayFab::ClientModels::ExecuteCloudScriptResult& result);
+        void OnPostReportError(const PlayFab::PlayFabError& error);
 #endif
 
         // Utility

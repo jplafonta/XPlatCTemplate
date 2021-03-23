@@ -11,8 +11,8 @@ else
     then
         exit $?
     fi
-	git submodule add https://github.com/microsoft/libHttpClient.git ./external/libHttpClient
-	if [ $? != 0 ]
+    git submodule add https://github.com/microsoft/libHttpClient.git ./external/libHttpClient
+    if [ $? != 0 ]
     then
         exit $?
     fi

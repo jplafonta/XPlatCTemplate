@@ -22,7 +22,7 @@ namespace PlayFab
         entityToken.clear();
     }
 
-    void SetIfNotNull(const std::string& input, std::string& output)
+    void SetIfNotNull(const String& input, String& output)
     {
         if (!input.empty())
         {
@@ -31,11 +31,11 @@ namespace PlayFab
     }
 
     void PlayFabAuthenticationContext::HandlePlayFabLogin(
-        const std::string& _playFabId,
-        const std::string& _clientSessionTicket,
-        const std::string& _entityId,
-        const std::string& _entityType,
-        const std::string& _entityToken
+        const String& _playFabId,
+        const String& _clientSessionTicket,
+        const String& _entityId,
+        const String& _entityType,
+        const String& _entityToken
     )
     {
         SetIfNotNull(_playFabId, playFabId);

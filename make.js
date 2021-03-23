@@ -146,33 +146,33 @@ function getPropertyCppType(property, datatype, needOptional) {
     var isOptional = property.optional && needOptional;
 
     if (property.actualtype === "String")
-        return "std::string";
+        return "String";
     else if (property.isclass)
-        return isOptional ? ("Boxed<" + property.actualtype + ">") : property.actualtype;
+        return isOptional ? ("StdExtra::optional<" + property.actualtype + ">") : property.actualtype;
     else if (property.jsontype === "Object" && property.actualtype === "object")
         return "Json::Value";
     else if (property.actualtype === "Boolean")
-        return isOptional ? "Boxed<bool>" : "bool";
+        return isOptional ? "StdExtra::optional<bool>" : "bool";
     else if (property.actualtype === "int16")
-        return isOptional ? "Boxed<Int16>" : "Int16";
+        return isOptional ? "StdExtra::optional<Int16>" : "Int16";
     else if (property.actualtype === "uint16")
-        return isOptional ? "Boxed<Uint16>" : "Uint16";
+        return isOptional ? "StdExtra::optional<Uint16>" : "Uint16";
     else if (property.actualtype === "int32")
-        return isOptional ? "Boxed<Int32>" : "Int32";
+        return isOptional ? "StdExtra::optional<Int32>" : "Int32";
     else if (property.actualtype === "uint32")
-        return isOptional ? "Boxed<Uint32>" : "Uint32";
+        return isOptional ? "StdExtra::optional<Uint32>" : "Uint32";
     else if (property.actualtype === "int64")
-        return isOptional ? "Boxed<Int64>" : "Int64";
+        return isOptional ? "StdExtra::optional<Int64>" : "Int64";
     else if (property.actualtype === "uint64")
-        return isOptional ? "Boxed<Uint64>" : "Uint64";
+        return isOptional ? "StdExtra::optional<Uint64>" : "Uint64";
     else if (property.actualtype === "float")
-        return isOptional ? "Boxed<float>" : "float";
+        return isOptional ? "StdExtra::optional<float>" : "float";
     else if (property.actualtype === "double")
-        return isOptional ? "Boxed<double>" : "double";
+        return isOptional ? "StdExtra::optional<double>" : "double";
     else if (property.actualtype === "DateTime")
-        return isOptional ? "Boxed<time_t>" : "time_t";
+        return isOptional ? "StdExtra::optional<time_t>" : "time_t";
     else if (property.isenum)
-        return isOptional ? ("Boxed<" + property.actualtype + ">") : property.actualtype;
+        return isOptional ? ("StdExtra::optional<" + property.actualtype + ">") : property.actualtype;
     throw Error("getPropertyCppType: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
 }
 
@@ -185,9 +185,9 @@ function getPropertyDefinition(tabbing, property, datatype) {
     } else if (property.jsontype === "Object" && property.actualtype === "object") {
         return tabbing + cppType + " " + safePropName + "; // Not truly arbitrary. See documentation for restrictions on format";
     } else if (property.collection === "array") {
-        return tabbing + "std::list<" + cppType + "> " + safePropName + ";";
+        return tabbing + "List<" + cppType + "> " + safePropName + ";";
     } else if (property.collection === "map") {
-        return tabbing + "std::map<std::string, " + cppType + "> " + safePropName + ";";
+        return tabbing + "Map<String, " + cppType + "> " + safePropName + ";";
     }
     throw Error("getPropertyDefinition: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
 }

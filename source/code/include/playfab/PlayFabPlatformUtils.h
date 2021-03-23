@@ -96,38 +96,38 @@ namespace PlayFab
     }
 
     // Time Serialization
-    inline std::string UtcTmToIso8601String(const tm& input)
+    inline String UtcTmToIso8601String(const tm& input)
     {
         char buff[TIMESTAMP_BUFFER_SIZE];
         strftime(buff, TIMESTAMP_BUFFER_SIZE, TIMESTAMP_WRITE_FORMAT, &input);
         return buff;
     }
 
-    inline tm Iso8601StringToTm(const std::string& utcString)
+    inline tm Iso8601StringToTm(const String& utcString)
     {
         tm timeInfo{ 0 };
-        std::istringstream iss(utcString);
-        iss >> std::get_time(&timeInfo, TIMESTAMP_READ_FORMAT);
+        Stringstream ss(utcString);
+        ss >> std::get_time(&timeInfo, TIMESTAMP_READ_FORMAT);
         return timeInfo;
     }
 
-    inline std::string TimeTToIso8601String(time_t input)
+    inline String TimeTToIso8601String(time_t input)
     {
         return UtcTmToIso8601String(TimeTToUtcTm(input));
     }
 
-    inline time_t Iso8601StringToTimeT(const std::string& input)
+    inline time_t Iso8601StringToTimeT(const String& input)
     {
         return UtcTmToTimeT(Iso8601StringToTm(input));
     }
 
     // TODO: Invert this conversion at some point, and serialize the milliseconds as well
-    inline std::string TimePointToIso8601String(const TimePoint& input)
+    inline String TimePointToIso8601String(const TimePoint& input)
     {
         return UtcTmToIso8601String(TimePointToUtcTm(input));
     }
 
-    inline TimePoint Iso8601StringToTimePoint(const std::string& input)
+    inline TimePoint Iso8601StringToTimePoint(const String& input)
     {
         return UtcTmToTimePoint(Iso8601StringToTm(input));
     }

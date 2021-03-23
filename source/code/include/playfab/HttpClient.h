@@ -3,6 +3,7 @@
 #include <httpClient/httpClient.h>
 #include <playfab/PlayFabError.h>
 #include <playfab/InternalMemory.h>
+#include <playfab/TaskQueue.h>
 
 namespace PlayFab
 {
@@ -29,6 +30,7 @@ namespace PlayFab
             const char* url,
             const UnorderedMap<String, String>& headers,
             const char* requestBody,
+            const TaskQueue& queue,
             HttpCallback&& callback
         ) const;
 

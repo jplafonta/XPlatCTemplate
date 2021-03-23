@@ -11,25 +11,25 @@ namespace PlayFab
     {
     }
 
-    std::shared_ptr<IPlayFabEventRouter> PlayFabEventAPI::GetEventRouter() const
+    SharedPtr<IPlayFabEventRouter> PlayFabEventAPI::GetEventRouter() const
     {
         return this->eventRouter;
     }
 
-    void PlayFabEventAPI::EmitEvent(std::unique_ptr<const IPlayFabEvent> event, const PlayFabEmitEventCallback callback) const
+    void PlayFabEventAPI::EmitEvent(UniquePtr<const IPlayFabEvent> event, const PlayFabEmitEventCallback callback) const
     {
-        auto eventRequest = std::shared_ptr<PlayFabEmitEventRequest>(new PlayFabEmitEventRequest());
-        std::shared_ptr<const IPlayFabEvent> sharedGenericEvent = std::move(event);
+        auto eventRequest = MakeShared<PlayFabEmitEventRequest>();
+        SharedPtr<const IPlayFabEvent> sharedGenericEvent = std::move(event);
         eventRequest->event = std::dynamic_pointer_cast<const PlayFabEvent>(sharedGenericEvent);
         eventRequest->callback = callback;
 
         this->eventRouter->RouteEvent(eventRequest);
     }
 
-    void PlayFabEventAPI::EmitEvent(std::unique_ptr<const IPlayFabEvent> event, std::function<void(std::shared_ptr<const IPlayFabEvent>, std::shared_ptr<const IPlayFabEmitEventResponse>)> callback) const
+    void PlayFabEventAPI::EmitEvent(UniquePtr<const IPlayFabEvent> event, std::function<void(SharedPtr<const IPlayFabEvent>, SharedPtr<const IPlayFabEmitEventResponse>)> callback) const
     {
-        auto eventRequest = std::shared_ptr<PlayFabEmitEventRequest>(new PlayFabEmitEventRequest());
-        std::shared_ptr<const IPlayFabEvent> sharedGenericEvent = std::move(event);
+        auto eventRequest = MakeShared<PlayFabEmitEventRequest>();
+        SharedPtr<const IPlayFabEvent> sharedGenericEvent = std::move(event);
         eventRequest->event = std::dynamic_pointer_cast<const PlayFabEvent>(sharedGenericEvent);
         eventRequest->stdCallback = callback;
 

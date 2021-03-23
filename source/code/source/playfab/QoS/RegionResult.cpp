@@ -7,7 +7,7 @@ namespace PlayFab
 {
     namespace QoS
     {
-        RegionResult::RegionResult(const std::string& region, int latencyMs, int errorCode) :
+        RegionResult::RegionResult(const String& region, int latencyMs, int errorCode) :
             region(region), latencyMs(latencyMs), errorCode(errorCode)
         {
         }

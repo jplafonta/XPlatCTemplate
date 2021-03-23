@@ -22,7 +22,7 @@ namespace PlayFab
             QoSResult& operator=(const QoSResult&) = delete;
 
             // A list of datacenter results. Each element contains a ping result for a datacenter.
-            std::vector<RegionResult> regionResults;
+            Vector<RegionResult> regionResults;
 
             // An error code of the whole QoS operation.
             int errorCode;

@@ -12,13 +12,14 @@ namespace PlayFab
             const char* url,
             const UnorderedMap<String, String>& headers,
             const char* requestBody,
+            const TaskQueue& queue,
             HttpClient::HttpCallback&& callback
         );
 
         virtual ~HCHttpCall() noexcept;
 
     private:
-        HCHttpCall(HttpClient::HttpCallback&& callback);
+        HCHttpCall(const TaskQueue& queue, HttpClient::HttpCallback&& callback);
         HCHttpCall(const HCHttpCall& other) = delete;
         HCHttpCall& operator=(HCHttpCall other) = delete;
 
@@ -27,14 +28,18 @@ namespace PlayFab
             const UnorderedMap<String, String>& headers,
             const char* requestBody
         );
+
+        // Complete request should be invoked for every HCHttpCall. It is responsible for invoking
+        // the client's callback and releasing the HCHttpCall object
         void CompleteRequest(HRESULT networkErrorCode);
 
         static void CALLBACK HCPerformComplete(XAsyncBlock* async);
 
+        TaskQueue const m_queue;
+        HttpClient::HttpCallback const m_callback;
         HCCallHandle m_callHandle{ nullptr };
-        HttpClient::HttpCallback m_callback;
-        HttpResult m_result;
         XAsyncBlock m_asyncBlock{};
+        HttpResult m_result{};
     };
 
     HttpClient::HttpClient(SharedPtr<PlayFabApiSettings> settings) :
@@ -46,6 +51,7 @@ namespace PlayFab
         const char* path,
         const UnorderedMap<String, String>& headers,
         const char* requestBody,
+        const TaskQueue& queue,
         HttpCallback&& callback
     ) const
     {
@@ -54,11 +60,12 @@ namespace PlayFab
             throw new PlayFabException(PlayFabExceptionCode::TitleNotSet, "PlayFabSettings::staticSettings->titleId has not been set properly. It must not be empty.");
         }
         auto fullUrl = m_settings->GetUrl(path);
-        HCHttpCall::Perform(fullUrl.data(), headers, requestBody, std::move(callback));
+        HCHttpCall::Perform(fullUrl.data(), headers, requestBody, queue, std::move(callback));
     }
 
-    HCHttpCall::HCHttpCall(HttpClient::HttpCallback&& callback) :
-        m_callback(std::move(callback))
+    HCHttpCall::HCHttpCall(const TaskQueue& queue, HttpClient::HttpCallback&& callback) :
+        m_callback(std::move(callback)),
+        m_queue(queue)
     {
     }
 
@@ -74,10 +81,13 @@ namespace PlayFab
         const char* url,
         const UnorderedMap<String, String>& headers,
         const char* requestBody,
+        const TaskQueue& queue,
         HttpClient::HttpCallback&& callback
     )
     {
-        auto call = UniquePtr<HCHttpCall>(new (Allocator<HCHttpCall>{}.allocate(1)) HCHttpCall(std::move(callback)));
+        // Non-owning pointer. Ownership will always be taken in CompleteRequest
+        auto call = new (Allocator<HCHttpCall>{}.allocate(1)) HCHttpCall(queue, std::move(callback));
+
         HRESULT hr = call->Initialize(url, headers, requestBody);
         if (FAILED(hr))
         {
@@ -86,15 +96,11 @@ namespace PlayFab
         }
 
         call->m_asyncBlock.callback = HCPerformComplete;
-        call->m_asyncBlock.context = call.get();
-        call->m_asyncBlock.queue = nullptr; // TODO
+        call->m_asyncBlock.context = call;
+        call->m_asyncBlock.queue = call->m_queue.GetHandle();
 
         hr = HCHttpCallPerformAsync(call->m_callHandle, &call->m_asyncBlock);
-        if (SUCCEEDED(hr))
-        {
-            call.release();
-        }
-        else
+        if (FAILED(hr))
         {
             call->CompleteRequest(hr);
         }
@@ -142,27 +148,24 @@ namespace PlayFab
     void HCHttpCall::CompleteRequest(HRESULT networkErrorCode)
     {
         m_result.networkErrorCode = networkErrorCode;
-        m_callback(m_result);
 
-        // Invoke the callback on the correct TaskQueue port
-        /*queue.RunCompletion([requestContainer{ m_requestContainer.release() }]()
+        // Invoke the callback on the correct TaskQueue port. In cases where CompleteRequest is called
+        // from the libHttpClient callback we should already be on the correct thread, but queue the callback
+        // regardless in case we are in an error case.
+        m_queue.RunCompletion([this]()
         {
-            CallRequestContainerCallback callback = requestContainer->GetCallback();
-            if (callback)
+            // Take ownership of the HCHttpCall and release it after invoking callback
+            UniquePtr<HCHttpCall> call{ this };
+            if (m_callback)
             {
-                callback(
-                    requestContainer->responseJson.get("code", Json::Value::null).asInt(),
-                    requestContainer->responseString,
-                    std::unique_ptr<CallRequestContainerBase>(static_cast<CallRequestContainerBase*>(requestContainer))
-                );
+                m_callback(m_result);
             }
-        });*/
+        });
     }
 
     void HCHttpCall::HCPerformComplete(XAsyncBlock* async)
     {
-        // Re-Take ownership of HCHttpCall released in Perform
-        UniquePtr<HCHttpCall> call{ static_cast<HCHttpCall*>(async->context) };
+        auto call{ static_cast<HCHttpCall*>(async->context) };
 
         // Get Http code and response string
         uint32_t httpCode{ 0 };
@@ -183,18 +186,18 @@ namespace PlayFab
 
         Json::Value responseJson;
         Json::CharReaderBuilder jsonReaderFactory;
-        std::unique_ptr<Json::CharReader> jsonReader(jsonReaderFactory.newCharReader());
-        JSONCPP_STRING jsonParseErrors;
+        std::unique_ptr<Json::CharReader> jsonReader(jsonReaderFactory.newCharReader()); // Non memhook
+        JSONCPP_STRING jsonParseErrors; // Non memhook
         const bool parsedSuccessfully = jsonReader->parse(responseString, responseString + strlen(responseString), &responseJson, &jsonParseErrors);
         if (parsedSuccessfully)
         {
             // fully successful response
             call->m_result.serviceResponse.HttpCode = responseJson.get("code", Json::Value::null).asInt();
-            call->m_result.serviceResponse.HttpStatus = responseJson.get("status", Json::Value::null).asString();
+            call->m_result.serviceResponse.HttpStatus = responseJson.get("status", Json::Value{ "" }).asCString();
             call->m_result.serviceResponse.Data = responseJson.get("data", Json::Value::null);
-            call->m_result.serviceResponse.ErrorName = responseJson.get("error", Json::Value::null).asString();
+            call->m_result.serviceResponse.ErrorName = responseJson.get("error", Json::Value{ "" }).asCString();
             call->m_result.serviceResponse.ErrorCode = static_cast<PlayFabErrorCode>(responseJson.get("errorCode", Json::Value::null).asInt());
-            call->m_result.serviceResponse.ErrorMessage = responseJson.get("errorMessage", Json::Value::null).asString();
+            call->m_result.serviceResponse.ErrorMessage = responseJson.get("errorMessage", Json::Value{ "" }).asCString();
             call->m_result.serviceResponse.ErrorDetails = responseJson.get("errorDetails", Json::Value::null);
         }
         else
@@ -203,7 +206,7 @@ namespace PlayFab
             call->m_result.serviceResponse.HttpStatus = responseString;
             call->m_result.serviceResponse.ErrorCode = PlayFabErrorCode::PlayFabErrorPartialFailure;
             call->m_result.serviceResponse.ErrorName = "Failed to parse PlayFab response";
-            call->m_result.serviceResponse.ErrorMessage = jsonParseErrors;
+            call->m_result.serviceResponse.ErrorMessage = jsonParseErrors.data();
         }
 
         // Get requestId response header
@@ -220,8 +223,6 @@ namespace PlayFab
         }
 
         call->CompleteRequest(S_OK);
-
-        // HCHttpCall will be destroyed now
     }
 
 }

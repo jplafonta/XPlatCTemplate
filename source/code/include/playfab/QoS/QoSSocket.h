@@ -44,7 +44,7 @@ namespace PlayFab
             PingResult GetQoSServerLatencyMs();
 
         private:
-            std::unique_ptr<XPlatSocket> xPlatSocket;
+            UniquePtr<XPlatSocket> xPlatSocket;
 
             // Message sent. Should start with 2 bytes set to 255 each (all bits set to 1)
             const char message[BUFLEN]{ static_cast<char>(MSGHEADER), static_cast<char>(MSGHEADER) };

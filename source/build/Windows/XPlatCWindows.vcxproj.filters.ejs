@@ -23,6 +23,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\AsyncProvider.h">
+      <Filter>Header Files\playfab</Filter>
+    </ClInclude>
     <ClInclude Include="$(SdkSourceDir)\include\playfab\HttpClient.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>
@@ -84,15 +87,18 @@
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabEventPipeline.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabTransportHeaders.h">
-      <Filter>Header Files\playfab</Filter>
-    </ClInclude>
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabJsonHeaders.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>
     <ClInclude Include="$(SdkSourceDir)\include\playfab\ResultMacros.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\StdOptional.h">
+      <Filter>Header Files\playfab</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\TaskQueue.h">
+      <Filter>Header Files\playfab</Filter>
+    </ClInclude>	
     <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\RegionResult.h">
       <Filter>Header Files\playfab\QoS</Filter>
     </ClInclude>
@@ -116,6 +122,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+  	<ClCompile Include="$(SdkSourceDir)\source\playfab\AsyncProvider.cpp">
+      <Filter>Source Files\playfab</Filter>
+    </ClCompile>  
   	<ClCompile Include="$(SdkSourceDir)\source\playfab\HttpClient.cpp">
       <Filter>Source Files\playfab</Filter>
     </ClCompile>
@@ -159,6 +168,9 @@
     <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabEventPipeline.cpp">
       <Filter>Source Files\playfab</Filter>
     </ClCompile>
+  	<ClCompile Include="$(SdkSourceDir)\source\playfab\TaskQueue.cpp">
+      <Filter>Source Files\playfab</Filter>
+    </ClCompile>	
     <ClCompile Include="$(SdkSourceDir)\source\playfab\QoS\RegionResult.cpp">
       <Filter>Source Files\playfab\QoS</Filter>
     </ClCompile>
