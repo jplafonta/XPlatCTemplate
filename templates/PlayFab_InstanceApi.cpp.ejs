@@ -172,7 +172,7 @@ namespace PlayFab
         if (httpResult.serviceResponse.HttpCode == 200)
         {
             resultCommon.FromJson(httpResult.serviceResponse.Data);
-            resultCommon.Request.CopyFrom(httpResult.requestBody, JsonUtils::allocator);
+            JsonUtils::FromJson(httpResult.requestBody, resultCommon.Request);
             return true;
         }
         else // Process the error case
