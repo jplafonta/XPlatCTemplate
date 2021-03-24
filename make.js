@@ -34,15 +34,15 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
 
 function makeApiFiles(api, sourceDir, apiOutputDir) {
     var remStaticDefine = ""; // " && !defined(DISABLE_PLAYFAB_STATIC_API)";
+    var prefix = "PlayFab" + api.name;
 
     var locals = {
         api: api,
-        prefix: getPrefix(api.name),
+        prefix: prefix,
         enumtypes: getEnumTypes(api.datatypes),
         getApiDefine: getApiDefine,
         getAuthParams: getAuthParams,
         getBaseType: getBaseType,
-        getPrefix: getPrefix,
         getPropertyDefinition: getPropertyDefinition,
         getPropertyDefinitionC: getPropertyDefinitionC,
         getPropertyFromJson: getPropertyFromJson,
@@ -57,7 +57,8 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         ifHasProps: ifHasProps,
         remStaticDefine: remStaticDefine,
         sdkVersion: sdkGlobals.sdkVersion,
-        sortedClasses: getSortedClasses(api.datatypes)
+        sortedClasses: getSortedClasses(api.datatypes),
+        dictionaryEntryTypes: getDictionaryEntryTypes(api.datatypes)
     };
 
     var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_InstanceApi.h.ejs"));
@@ -107,6 +108,26 @@ function getSortedClasses(datatypes) {
     return sortedClasses;
 }
 
+function getDictionaryEntryTypes(datatypes) {
+    // Gets all (non-primitive) types which appear as a Value in a map
+    var dictionaryEntryTypes = [];
+    var addedTypes = new Set();
+
+    for (var typeIdx in datatypes) {
+        var datatype = datatypes[typeIdx];
+        if (datatype.properties) {
+            for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
+                var property = datatype.properties[propIdx];
+                if (property.collection === "map" && (property.isclass || property.isenum) && !addedTypes.has(property.actualtype)) {
+                    dictionaryEntryTypes.push(datatypes[property.actualtype]);
+                    addedTypes.add(property.actualtype);
+                }
+            }
+        }
+    }
+    return dictionaryEntryTypes;
+}
+
 // *************************** ejs-exposed methods ***************************
 function getApiDefine(api) {
     if (api.name === "Client")
@@ -150,7 +171,7 @@ function getBaseType(datatype) {
     return "PlayFabBaseModel";
 }
 
-function getPropertyCppType(property, datatype, needOptional, apiName) {
+function getPropertyCppType(property, datatype, needOptional, prefix) {
     var isOptional = property.optional && needOptional;
 
     if (property.actualtype === "String")
@@ -180,12 +201,12 @@ function getPropertyCppType(property, datatype, needOptional, apiName) {
     else if (property.actualtype === "DateTime")
         return isOptional ? "StdExtra::optional<time_t>" : "time_t";
     else if (property.isenum)
-        return isOptional ? ("StdExtra::optional<" + getPrefix(apiName) + property.actualtype + ">") : (getPrefix(apiName) + property.actualtype);
+        return isOptional ? ("StdExtra::optional<" + prefix + property.actualtype + ">") : (prefix + property.actualtype);
     throw Error("getPropertyCppType: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
 }
 
-function getPropertyDefinition(tabbing, property, datatype, apiName) {
-    var cppType = getPropertyCppType(property, datatype, !property.collection, apiName);
+function getPropertyDefinition(tabbing, property, datatype, prefix) {
+    var cppType = getPropertyCppType(property, datatype, !property.collection, prefix);
 
     if (!property.collection) {
         return tabbing + cppType + " " + property.name + ";";
@@ -199,90 +220,90 @@ function getPropertyDefinition(tabbing, property, datatype, apiName) {
     throw Error("getPropertyDefinition: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
 }
 
-function getPrefix(apiName) {
-    return "PlayFab" + apiName;
-}
+function getPropertyCType(property, prefix) {
 
-function getDictionaryEntryTypeName(property) {
-    return "PlayFab" + property.actualtype + "DictionaryEntry";
-}
-
-function getPropertyCType(property, apiName) {
-
-    if (property.collection === "map") {
-        return "struct " + getDictionaryEntryTypeName(property) + "*";
-    } else if (property.actualtype === "String") {
-        if (!property.collection) {
-            return "const char*";
+    if (property.isclass) {
+        // By design class properties are always pointers (whether or not they are optional). This allows us to use a derived class internally which can help with
+        // lifetime management, copying models, etc. by implementing copy constructors & destructors
+        if (property.collection === "map") {
+            // array of dictionary entries
+            return "struct " + prefix + property.actualtype + "DictionaryEntry*";
+        } else if (property.collection === "array") {
+            // array of pointers
+            return prefix + property.actualtype + "**";
         } else {
-            return "const char**";
+            return prefix + property.actualtype + "*";
         }
     } else if (property.jsontype === "Object" && property.actualtype === "object") {
         return "PlayFabJsonString";
-    } else if (property.isclass) {
-        // By design class properties are always pointers. This allows us to use a derived class internally which can help with
-        // lifetime management, copying models, etc. by implementing copy constructors & destructors
-        if (!property.collection) {
-            return getPrefix(apiName) + property.actualtype + "*";
-        } else {
-            // array of pointers
-            return getPrefix(apiName) + property.actualtype + "**";
-        }
     } else if (property.isenum) {
-        if (!property.collection && !property.optional) {
-            return getPrefix(apiName) + property.actualtype;
+        if (property.collection === "map") {
+            // array of dictionary entries
+            return "struct " + prefix + property.actualtype + "DictionaryEntry*";
+        } else if (property.collection === "array" || property.optional) {
+            // type for optional value & array value happens to be the same: pointer to enum type
+            return prefix + property.actualtype + "*";
         } else {
-            // type for optional value & array value happens to be the same
-            return getPrefix(apiName) + property.actualtype + "*";
+            return prefix + property.actualtype;
         }
     } else {
         var type;
+        var isDictionary = (property.collection === "map") ? true : false;
         switch (property.actualtype) {
+            case "String": {
+                type = isDictionary ? "String" : "const char*";
+                break;
+            }
             case "Boolean": {
-                type = "bool";
+                type = isDictionary ? "Bool" : "bool";
                 break;
             }
             case "int16": {
-                type = "int16_t";
+                type = isDictionary ? "Int16" : "int16_t";
                 break;
             }
             case "uint16": {
-                type = "uint16_t";
+                type = isDictionary ? "Uint16" : "uint16_t";
                 break;
             }
             case "int32": {
-                type = "int32_t";
+                type = isDictionary ? "Int32" : "int32_t";
                 break;
             }
             case "uint32": {
-                type = "uint32_t";
+                type = isDictionary ? "Uint32" : "uint32_t";
                 break;
             }
             case "int64": {
-                type = "int64_t";
+                type = isDictionary ? "Int64" : "int64_t";
                 break;
             }
             case "uint64": {
-                type = "uint64_t";
+                type = isDictionary ? "Uint64" : "uint64_t";
                 break;
             }
             case "float": {
-                type = "float";
+                type = isDictionary ? "Float" : "float";
                 break;
             }
             case "double": {
-                type = "double";
+                type = isDictionary ? "Double" : "double";
                 break;
             }
             case "DateTime": {
-                type = "time_t";
+                type = isDictionary ? "Time" : "time_t";
                 break;
             }
             default: {
                 throw Error("Unexpected type: " + property.actualtype);
             }
         }
-        if (property.collection === "array" || property.optional) {
+        if (property.collection === "map") {
+            type = "PlayFab" + type + "DictionaryEntry*";
+        } else if (property.collection === "array") {
+            type += "*";
+        } else if (property.optional && !(property.actualtype === "String")) {
+            // We don't distinguish between optional and non-optional string properties since const char* can already be null
             type += "*";
         }
         return type;
@@ -306,8 +327,8 @@ function getPropertyName(property) {
     return name;
 }
 
-function getPropertyDefinitionC(tabbing, property, apiName) {
-    var type = getPropertyCType(property, apiName);
+function getPropertyDefinitionC(tabbing, property, prefix) {
+    var type = getPropertyCType(property, prefix);
     var propName = getPropertyName(property);
     var output = tabbing + type + " " + propName + ";";
 
@@ -317,6 +338,10 @@ function getPropertyDefinitionC(tabbing, property, apiName) {
     }
 
     return output;
+}
+
+function dictionaryEntryDefinitionNeeded(datatype) {
+    //for ()
 }
 
 function getPropertyFromJson(tabbing, property, datatype) {

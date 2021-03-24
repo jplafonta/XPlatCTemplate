@@ -15,7 +15,7 @@ for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype 
         struct <%- datatype.name %> : public <%- getBaseType(datatype) %>
         {
 <% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
-%><%- getPropertyDefinition("            ", property, datatype, api.name) %>
+%><%- getPropertyDefinition("            ", property, datatype, prefix) %>
 <% } %>
             <%- datatype.name %>() = default;
 <% if (canDefaultCopyConstructor(datatype)) { %>

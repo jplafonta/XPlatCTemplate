@@ -29,7 +29,7 @@ namespace PlayFabUnit
     {
         struct SubObjectModel : public PlayFabBaseModel
         {
-            PlayFabCountryCode CountryCode;
+            PlayFabClientCountryCode CountryCode;
 
             void FromJson(const JsonValue& input)
             {
