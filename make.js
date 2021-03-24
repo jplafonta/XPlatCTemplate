@@ -37,11 +37,14 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
 
     var locals = {
         api: api,
+        prefix: getPrefix(api.name),
         enumtypes: getEnumTypes(api.datatypes),
         getApiDefine: getApiDefine,
         getAuthParams: getAuthParams,
         getBaseType: getBaseType,
+        getPrefix: getPrefix,
         getPropertyDefinition: getPropertyDefinition,
+        getPropertyDefinitionC: getPropertyDefinitionC,
         getPropertyFromJson: getPropertyFromJson,
         getPropertyToJson: getPropertyToJson,
         getRequestActions: getRequestActions,
@@ -147,7 +150,7 @@ function getBaseType(datatype) {
     return "PlayFabBaseModel";
 }
 
-function getPropertyCppType(property, datatype, needOptional) {
+function getPropertyCppType(property, datatype, needOptional, apiName) {
     var isOptional = property.optional && needOptional;
 
     if (property.actualtype === "String")
@@ -177,12 +180,12 @@ function getPropertyCppType(property, datatype, needOptional) {
     else if (property.actualtype === "DateTime")
         return isOptional ? "StdExtra::optional<time_t>" : "time_t";
     else if (property.isenum)
-        return isOptional ? ("StdExtra::optional<PlayFab" + property.actualtype + ">") : ("PlayFab" + property.actualtype);
+        return isOptional ? ("StdExtra::optional<" + getPrefix(apiName) + property.actualtype + ">") : (getPrefix(apiName) + property.actualtype);
     throw Error("getPropertyCppType: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
 }
 
-function getPropertyDefinition(tabbing, property, datatype) {
-    var cppType = getPropertyCppType(property, datatype, !property.collection);
+function getPropertyDefinition(tabbing, property, datatype, apiName) {
+    var cppType = getPropertyCppType(property, datatype, !property.collection, apiName);
 
     if (!property.collection) {
         return tabbing + cppType + " " + property.name + ";";
@@ -194,6 +197,126 @@ function getPropertyDefinition(tabbing, property, datatype) {
         return tabbing + "Map<String, " + cppType + "> " + property.name + ";";
     }
     throw Error("getPropertyDefinition: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
+}
+
+function getPrefix(apiName) {
+    return "PlayFab" + apiName;
+}
+
+function getDictionaryEntryTypeName(property) {
+    return "PlayFab" + property.actualtype + "DictionaryEntry";
+}
+
+function getPropertyCType(property, apiName) {
+
+    if (property.collection === "map") {
+        return "struct " + getDictionaryEntryTypeName(property) + "*";
+    } else if (property.actualtype === "String") {
+        if (!property.collection) {
+            return "const char*";
+        } else {
+            return "const char**";
+        }
+    } else if (property.jsontype === "Object" && property.actualtype === "object") {
+        return "PlayFabJsonString";
+    } else if (property.isclass) {
+        // By design class properties are always pointers. This allows us to use a derived class internally which can help with
+        // lifetime management, copying models, etc. by implementing copy constructors & destructors
+        if (!property.collection) {
+            return getPrefix(apiName) + property.actualtype + "*";
+        } else {
+            // array of pointers
+            return getPrefix(apiName) + property.actualtype + "**";
+        }
+    } else if (property.isenum) {
+        if (!property.collection && !property.optional) {
+            return getPrefix(apiName) + property.actualtype;
+        } else {
+            // type for optional value & array value happens to be the same
+            return getPrefix(apiName) + property.actualtype + "*";
+        }
+    } else {
+        var type;
+        switch (property.actualtype) {
+            case "Boolean": {
+                type = "bool";
+                break;
+            }
+            case "int16": {
+                type = "int16_t";
+                break;
+            }
+            case "uint16": {
+                type = "uint16_t";
+                break;
+            }
+            case "int32": {
+                type = "int32_t";
+                break;
+            }
+            case "uint32": {
+                type = "uint32_t";
+                break;
+            }
+            case "int64": {
+                type = "int64_t";
+                break;
+            }
+            case "uint64": {
+                type = "uint64_t";
+                break;
+            }
+            case "float": {
+                type = "float";
+                break;
+            }
+            case "double": {
+                type = "double";
+                break;
+            }
+            case "DateTime": {
+                type = "time_t";
+                break;
+            }
+            default: {
+                throw Error("Unexpected type: " + property.actualtype);
+            }
+        }
+        if (property.collection === "array" || property.optional) {
+            type += "*";
+        }
+        return type;
+    }
+}
+
+function getPropertyName(property) {
+    var name = property.name;
+
+    // Don't allow property name to be a C++ reserved word
+    if (name.localeCompare("namespace", undefined, { sensitivity: 'accent' }) === 0) {
+        name = "playfab" + name;
+    }
+
+    // GameCore design guideline is to use camelcase for property names (service is using Pascal case)
+    name = name.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function (match, index) {
+        if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
+        return index === 0 ? match.toLowerCase() : match.toUpperCase();
+    });
+
+    return name;
+}
+
+function getPropertyDefinitionC(tabbing, property, apiName) {
+    var type = getPropertyCType(property, apiName);
+    var propName = getPropertyName(property);
+    var output = tabbing + type + " " + propName + ";";
+
+    // For collection properties add an addition "count" property
+    if (property.collection) {
+        output += ("\n" + tabbing + "uint32_t " + propName + "Count;"); 
+    }
+
+    return output;
 }
 
 function getPropertyFromJson(tabbing, property, datatype) {

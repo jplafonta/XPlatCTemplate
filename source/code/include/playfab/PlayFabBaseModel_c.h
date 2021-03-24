@@ -2,7 +2,9 @@
 
 #include <httpClient/pal.h>
 
-struct PlayFabDictionaryEntry
+typedef const char* PlayFabJsonString;
+
+struct PlayFabStringDictionaryEntry
 {
     const char* key;
     const char* value;

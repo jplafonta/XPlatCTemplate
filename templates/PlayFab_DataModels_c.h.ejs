@@ -5,13 +5,22 @@
 #pragma push_macro("IN")
 #undef IN
 
-// <%- api.name %> Enums<%
+// <%- api.name %> enums<%
 for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { var enumtype = enumtypes[enumIdx]; %>
-enum class PlayFab<%- enumtype.name %> : uint32_t
+enum class <%- prefix %><%- enumtype.name %> : uint32_t
 {
     <% for(var i=0; i<enumtype.enumvalues.length-1; i++) { var enumval = enumtype.enumvalues[i] %><%- enumval.name %>,
     <% } %><%- enumtype.enumvalues[enumtype.enumvalues.length-1].name %>
 };
 <% } %>
 
+// <%- api.name %> structs<%
+for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype = sortedClasses[typeIdx]; %>
+typedef struct <%- prefix %><%- datatype.name %>
+{
+<% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
+%><%- getPropertyDefinitionC("    ", property, api.name) %>
+<% } %>
+} <%- prefix %><%- datatype.name %>;
+<% } %>
 #pragma pop_macro("IN")

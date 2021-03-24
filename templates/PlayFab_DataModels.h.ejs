@@ -15,7 +15,7 @@ for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype 
         struct <%- datatype.name %> : public <%- getBaseType(datatype) %>
         {
 <% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
-%><%- getPropertyDefinition("            ", property, datatype) %>
+%><%- getPropertyDefinition("            ", property, datatype, api.name) %>
 <% } %>
             <%- datatype.name %>() = default;
 <% if (canDefaultCopyConstructor(datatype)) { %>
@@ -48,9 +48,9 @@ for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype 
 
     // EnumRange definitions used for Enum (de)serialization <%
 for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { var enumtype = enumtypes[enumIdx]; var maxval = enumtype.enumvalues[enumtype.enumvalues.length-1]; %>
-    template<> struct EnumRange<PlayFab<%- enumtype.name %>>
+    template<> struct EnumRange<<%- prefix %><%- enumtype.name %>>
     {
-        static constexpr PlayFab<%- enumtype.name %> maxValue = PlayFab<%- enumtype.name %>::<%- maxval.name %>;
+        static constexpr <%- prefix %><%- enumtype.name %> maxValue = <%- prefix %><%- enumtype.name %>::<%- maxval.name %>;
     };
 <% } %>
 }
