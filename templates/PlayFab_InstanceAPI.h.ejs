@@ -58,7 +58,7 @@ namespace PlayFab
 if (hasClientOptions) { %>
         // Private, Client-Specific
         void MultiStepClientLogin(SharedPtr<PlayFabAuthenticationContext> context, bool needsAttribution);
-<% } %>        static bool ParseResult(PlayFabResultCommon& resultCommon, const HttpResult& httpResult, const ErrorCallback& errorHandler);
+<% } %>        static bool ParseResult(ResultBase& result, const HttpResult& httpResult, const ErrorCallback& errorHandler);
     };
 }
 

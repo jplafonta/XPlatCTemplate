@@ -25,9 +25,11 @@ constexpr char jsonString[] = R"(
 
 namespace PlayFabUnit
 {
+
+
     void JsonParsingTests::BasicJsonParsing(TestContext& testContext)
     {
-        struct SubObjectModel : public PlayFabBaseModel
+        struct SubObjectModel : public ModelBase
         {
             PlayFabClientCountryCode CountryCode;
 
@@ -36,7 +38,7 @@ namespace PlayFabUnit
                 JsonUtils::ObjectGetMember(input, "CountryCode", CountryCode);
             }
 
-            JsonValue ToJson() const 
+            JsonValue ToJson() const
             {
                 JsonValue output{ rapidjson::kObjectType };
                 JsonUtils::ObjectAddMember(output, "CountryCode", CountryCode);
@@ -44,16 +46,18 @@ namespace PlayFabUnit
             }
         };
 
-        struct ObjectModel : public PlayFabBaseModel
+        struct ObjectModel : public ModelBase
         {
             PlayFabEnum EnumValue;
-            List<int> ArrayValue;
+            PointerArray<int, int> ArrayValue;
             SubObjectModel SubObjectValue;
 
             void FromJson(const JsonValue& input)
             {
                 JsonUtils::ObjectGetMember(input, "EnumValue", EnumValue);
-                JsonUtils::ObjectGetMember(input, "ArrayValue", ArrayValue);
+                uint32_t arraySize;
+                int** arrayPtr;
+                JsonUtils::ObjectGetMember(input, "ArrayValue", ArrayValue, arrayPtr, arraySize);
                 JsonUtils::ObjectGetMember(input, "SubObjectValue", SubObjectValue);
             }
 

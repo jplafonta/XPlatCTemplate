@@ -25,7 +25,7 @@ namespace PlayFabUnit
 
     void OnPlatformLogin(const LoginResult& result, TestContext& testContext)
     {
-        testContext.Pass("Custom: " + std::string(result.PlayFabId.data()));
+        testContext.Pass("Custom: " + std::string(result.playFabId));
     }
 
     // CLIENT API
@@ -33,9 +33,10 @@ namespace PlayFabUnit
     void PlatformLoginTest::TestPlatformSpecificLogin(TestContext& testContext)
     {
         LoginWithCustomIDRequest request;
-        request.CustomId = PlayFabSettings::buildIdentifier;
-        request.CreateAccount = true;
-        request.TitleId = testTitleData.titleId.data();
+        request.customId = PlayFabSettings::buildIdentifier.data();
+        bool createAccount = true;
+        request.createAccount = &createAccount;
+        request.titleId = testTitleData.titleId.data();
 
         clientApi->LoginWithCustomID(request,
             PlayFab::TaskQueue(),

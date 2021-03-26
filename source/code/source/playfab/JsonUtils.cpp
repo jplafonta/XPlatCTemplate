@@ -9,18 +9,32 @@ namespace PlayFab
     {
         JsonAllocator allocator{};
 
-        JsonValue ToJson(const String& string)
+        JsonValue ToJson(const char* string)
         {
-            if (string.empty())
+            if (!string)
             {
                 return JsonValue{ rapidjson::kNullType };
             }
-            return JsonValue{ string.data(), allocator };
+            return JsonValue{ string, allocator };
         }
 
-        JsonValue ToJsonTime(time_t time)
+        JsonValue ToJson(const PlayFabJsonObject& jsonObject)
         {
-            return JsonValue{ TimeTToIso8601String(time).data(), allocator };
+            // TODO Seems like there is an extra copy here. Is there is a better way to do this?
+            JsonDocument document{ &allocator };
+            document.Parse(jsonObject.stringValue);
+            JsonValue value;
+            value.CopyFrom(document, allocator);
+            return value;
+        }
+
+        JsonValue ToJson(time_t value, bool convertToIso8601String)
+        {
+            if (convertToIso8601String)
+            {
+                return JsonValue{ TimeTToIso8601String(value).data(), allocator };
+            }
+            return JsonValue{ value };
         }
 
         void FromJson(const JsonValue& input, String& output)
@@ -53,11 +67,6 @@ namespace PlayFab
             output = static_cast<Uint32>(input.GetUint());
         }
 
-        void FromJson(const JsonValue& input, Int64& output)
-        {
-            output = input.GetInt64();
-        }
-
         void FromJson(const JsonValue& input, Uint64& output)
         {
             output = input.GetUint64();
@@ -73,14 +82,21 @@ namespace PlayFab
             output = input.GetDouble();
         }
 
+        void FromJson(const JsonValue& input, time_t& output, bool convertFromIso8601String)
+        {
+            if (convertFromIso8601String)
+            {
+                output = Iso8601StringToTimeT(input.GetString());
+            }
+            else
+            {
+                output = input.GetInt64();
+            }
+        }
+
         void FromJson(const JsonValue& input, JsonValue& output)
         {
             output.CopyFrom(input, allocator); // Deep copy
-        }
-
-        void FromJsonTime(const JsonValue& jsonTime, time_t& output)
-        {
-            output = Iso8601StringToTimeT(jsonTime.GetString());
         }
 
         void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, JsonValue&& value)
@@ -93,118 +109,142 @@ namespace PlayFab
             jsonObject.AddMember(name, value, allocator);
         }
 
-        void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const JsonValue& value)
+        void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, time_t value, bool convertToIso8601String)
         {
-            jsonObject.AddMember(name, JsonValue{}.CopyFrom(value, allocator), allocator);
+            ObjectAddMember(jsonObject, name, ToJson(value, convertToIso8601String));
         }
 
-        void ObjectAddMemberTime(JsonValue& jsonObject, JsonValue::StringRefType name, time_t time)
+        void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const time_t* value, bool convertToIso8601String)
         {
-            ObjectAddMember(jsonObject, name, ToJsonTime(time));
-        }
-
-        void ObjectAddMemberTime(JsonValue& jsonObject, JsonValue::StringRefType name, const StdExtra::optional<time_t>& time)
-        {
-            if (time)
+            if (value != nullptr)
             {
-                ObjectAddMemberTime(jsonObject, name, *time);
+                ObjectAddMember(jsonObject, name, ToJson(*value, convertToIso8601String));
             }
             else
             {
-                // TODO is it necessary to add a null member for optional fields
-                jsonObject.AddMember(name, JsonValue{ rapidjson::kNullType }, allocator);
+                ObjectAddMember(jsonObject, name, JsonValue{ rapidjson::kNullType });
             }
         }
 
-        void ObjectAddMemberTime(JsonValue& jsonObject, JsonValue::StringRefType name, const List<time_t>& timeList)
+        void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const time_t* array, uint32_t arrayCount, bool convertToIso8601String)
         {
             JsonValue member{ rapidjson::kArrayType };
-            for (auto& time : timeList)
+            for (auto i = 0u; i < arrayCount; ++i)
             {
-                member.PushBack(ToJsonTime(time), allocator);
+                member.PushBack(ToJson(array[i], convertToIso8601String), allocator);
             }
-            ObjectAddMember(jsonObject, name, member);
+            ObjectAddMember(jsonObject, name, std::move(member));
         }
 
-        void ObjectAddMemberTime(JsonValue& jsonObject, JsonValue::StringRefType name, const Map<String, time_t>& timeMap)
+        void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const Vector<time_t>& vector, bool convertToIso8601String)
+        {
+            ObjectAddMember(jsonObject, name, vector.data(), static_cast<uint32_t>(vector.size()), convertToIso8601String);
+        }
+
+        void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const PlayFabDateTimeDictionaryEntry* associativeArray, uint32_t arrayCount, bool convertToIso8601String)
         {
             JsonValue member{ rapidjson::kObjectType };
-            for (auto& entry : timeMap)
+            for (auto i = 0u; i < arrayCount; ++i)
             {
-                ObjectAddMember(member, ToJson(entry.first), ToJsonTime(entry.second));
+                auto& entry{ associativeArray[i] };
+                ObjectAddMember(member, ToJson(entry.key), ToJson(entry.value, convertToIso8601String));
             }
-            ObjectAddMember(jsonObject, name, member);
+            ObjectAddMember(jsonObject, name, std::move(member));
         }
 
-        void ObjectGetMember(const JsonValue& jsonObject, const char* memberName, String& output)
+        //void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const JsonValue& value)
+        //{
+        //    jsonObject.AddMember(name, JsonValue{}.CopyFrom(value, allocator), allocator);
+        //}
+
+        void ObjectGetMember(const JsonValue& jsonObject, const char* name, String& output)
         {
-            auto iter = jsonObject.FindMember(memberName);
+            auto iter = jsonObject.FindMember(name);
             if (iter != jsonObject.MemberEnd() && iter->value.IsString())
             {
                 FromJson(iter->value, output);
             }
         }
 
-        void ObjectGetMember(const JsonValue& jsonObject, const char* memberName, JsonValue& output)
+        void ObjectGetMember(const JsonValue& jsonObject, const char* name, String& output, const char*& outputPtr)
         {
-            auto iter = jsonObject.FindMember(memberName);
+            output.clear();
+            auto iter = jsonObject.FindMember(name);
+            if (iter != jsonObject.MemberEnd() && iter->value.IsString())
+            {
+                FromJson(iter->value, output);
+            }
+            outputPtr = output.empty() ? nullptr : output.data();
+        }
+
+        void ObjectGetMember(const JsonValue& jsonObject, const char* name, JsonObject& output, PlayFabJsonObject& outputPtr)
+        {
+            auto iter = jsonObject.FindMember(name);
+            if (iter != jsonObject.MemberEnd())
+            {
+                FromJson(iter->value, output);
+            }
+            outputPtr.stringValue = output.StringValue();
+        }
+
+        void ObjectGetMember(const JsonValue& jsonObject, const char* name, JsonValue& output)
+        {
+            auto iter = jsonObject.FindMember(name);
             if (iter != jsonObject.MemberEnd())
             {
                 FromJson(iter->value, output);
             }
         }
 
-        void ObjectGetMemberTime(const JsonValue& jsonObject, const char* memberName, time_t& output)
+        void ObjectGetMember(const JsonValue& jsonObject, const char* name, time_t& output, bool convertFromIso8601String)
         {
-            FromJsonTime(jsonObject[memberName], output);
+            auto iter = jsonObject.FindMember(name);
+            if (iter != jsonObject.MemberEnd())
+            {
+                FromJson(iter->value, output, convertFromIso8601String);
+            }
         }
 
-        void ObjectGetMemberTime(const JsonValue& jsonObject, const char* memberName, StdExtra::optional<time_t>& output)
+        void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::optional<time_t>& output, bool convertFromIso8601String)
         {
             output.reset();
             if (jsonObject.IsObject())
             {
-                auto iter = jsonObject.FindMember(memberName);
-                if (iter != jsonObject.MemberEnd() && iter->value.IsString())
+                auto iter = jsonObject.FindMember(name);
+                if (iter != jsonObject.MemberEnd())
                 {
                     output.emplace();
-                    FromJsonTime(iter->value, *output);
+                    FromJson(iter->value, *output, convertFromIso8601String);
                 }
             }
         }
 
-        void ObjectGetMemberTime(const JsonValue& jsonObject, const char* memberName, List<time_t>& output)
+        void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::optional<time_t>& output, time_t*& outputPtr, bool convertFromIso8601String)
+        {
+            ObjectGetMember(jsonObject, name, output, convertFromIso8601String);
+            outputPtr = output ? output.operator->() : nullptr;
+        }
+
+        void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<time_t>& output, time_t*& outputPtr, uint32_t& outputCount, bool convertFromIso8601String)
         {
             output.clear();
             if (jsonObject.IsObject())
             {
-                auto iter = jsonObject.FindMember(memberName);
+                auto iter = jsonObject.FindMember(name);
                 if (iter != jsonObject.MemberEnd() && iter->value.IsArray())
                 {
-                    for (auto& value : iter->value.GetArray())
+                    auto jsonArray{ iter->value.GetArray() };
+                    output.reserve(jsonArray.Size());
+                    for (auto& value : jsonArray)
                     {
                         output.emplace_back();
-                        FromJsonTime(value, output.back());
+                        FromJson(value, output.back(), convertFromIso8601String);
                     }
                 }
             }
-        }
 
-        void ObjectGetMemberTime(const JsonValue& jsonObject, const char* memberName, Map<String, time_t>& output)
-        {
-            output.clear();
-            if (jsonObject.IsObject())
-            {
-                auto iter = jsonObject.FindMember(memberName);
-                if (iter != jsonObject.MemberEnd() && iter->value.IsObject())
-                {
-                    for (auto& pair : iter->value.GetObject())
-                    {
-                        auto outputIter = output.emplace(pair.name.GetString(), time_t{}).first;
-                        FromJson(pair.value, outputIter->second);
-                    }
-                }
-            }
+            outputPtr = output.data();
+            outputCount = static_cast<uint32_t>(output.size());
         }
     }
 }

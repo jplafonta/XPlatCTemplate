@@ -19,7 +19,7 @@ namespace PlayFab
     /// <summary>
     /// The wrapper around all PlayFab responses, and all fields needed in the case of an error
     /// </summary>
-    struct PlayFabError : public PlayFabBaseModel
+    struct PlayFabError : public ModelBase
     {
         // Serialized fields
         int HttpCode;

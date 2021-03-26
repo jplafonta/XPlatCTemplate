@@ -94,9 +94,10 @@ namespace PlayFabUnit
         // Publish the test report via cloud script (and wait for it to finish).
 
         PlayFab::ClientModels::LoginWithCustomIDRequest request;
-        request.CustomId = PlayFab::PlayFabSettings::buildIdentifier;
-        request.CreateAccount = true;
-        request.TitleId = testTitleData.titleId.data();
+        request.customId = PlayFab::PlayFabSettings::buildIdentifier.data();
+        bool createAccount = true;
+        request.createAccount = &createAccount;
+        request.titleId = testTitleData.titleId.data();
         this->clientApi->LoginWithCustomID(request,
             PlayFab::TaskQueue(),
             std::bind(&TestApp::OnPostReportLogin, this, std::placeholders::_1, testRunner.suiteTestReport),
@@ -153,7 +154,7 @@ namespace PlayFabUnit
     {
         // Prepare a JSON value as a param for the remote cloud script.
         JsonValue cloudReportJson{ rapidjson::kObjectType };
-        cloudReportJson.AddMember("customId", JsonValue{ result.PlayFabId.data(), s_jsonAllocator }, s_jsonAllocator);
+        cloudReportJson.AddMember("customId", JsonValue{ result.playFabId, s_jsonAllocator }, s_jsonAllocator);
 
         // The expected format is a list of TestSuiteReports, but this framework only submits one
         JsonValue arrayInit{ rapidjson::kArrayType };
@@ -163,11 +164,16 @@ namespace PlayFabUnit
 
         cloudReportJson.AddMember("testReport", arrayInit, s_jsonAllocator);
 
+        JsonStringBuffer stringBuffer;
+        JsonWriter writer{ stringBuffer };
+        cloudReportJson.Accept(writer);
+
         // Save the test results via cloud script.
-        PlayFab::ClientModels::ExecuteCloudScriptRequest request;
-        request.FunctionName = "SaveTestData";
-        request.FunctionParameter = cloudReportJson;
-        request.GeneratePlayStreamEvent = true;
+        PlayFab::ClientModels::ExecuteCloudScriptRequest request{};
+        request.functionName = "SaveTestData";
+        request.functionParameter.stringValue = stringBuffer.GetString();
+        bool generatePlayStreamEvent = true;
+        request.generatePlayStreamEvent = &generatePlayStreamEvent;
         this->clientApi->ExecuteCloudScript(request,
             PlayFab::TaskQueue(),
             std::bind(&TestApp::OnPostReportComplete, this, std::placeholders::_1),
@@ -178,14 +184,14 @@ namespace PlayFabUnit
     void TestApp::OnPostReportComplete(const PlayFab::ClientModels::ExecuteCloudScriptResult& result)
     {
         std::stringstream ss;
-        if (result.Error)
+        if (result.error)
         {
             ss << "Test report submitted via cloud script: " << PlayFab::PlayFabSettings::buildIdentifier.data() << ", " << PlayFab::PlayFabSettings::staticPlayer->playFabId.data();
             cloudResponse = ss.str();
         }
         else
         {
-            ss << "Error executing test report cloud script:\n" << result.Error->Error.data() << ": " << result.Error->Message.data();
+            ss << "Error executing test report cloud script:\n" << result.error->error << ": " << result.error->message;
             cloudResponse += ss.str();
         }
         cloudResponseConditionVar.notify_one();

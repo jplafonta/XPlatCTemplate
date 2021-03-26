@@ -156,23 +156,23 @@ namespace PlayFab
             AttributeInstallRequest request;
             if (context->advertisingIdType == PlayFabSettings::AD_TYPE_IDFA)
             {
-                request.Idfa = context->advertisingIdValue;
+                request.idfa = context->advertisingIdValue.data();
                 AttributeInstall(request, nullptr, nullptr);
             }
             else if (context->advertisingIdType == PlayFabSettings::AD_TYPE_ANDROID_ID)
             {
-                request.Adid = context->advertisingIdValue;
+                request.adid = context->advertisingIdValue.data();
                 AttributeInstall(request, nullptr, nullptr);
             }
         }
     }
 <% } %>
-    bool PlayFab<%- api.name %>InstanceAPI::ParseResult(PlayFabResultCommon& resultCommon, const HttpResult& httpResult, const ErrorCallback& errorHandler)
+    bool PlayFab<%- api.name %>InstanceAPI::ParseResult(ResultBase& result, const HttpResult& httpResult, const ErrorCallback& errorHandler)
     {
         if (httpResult.serviceResponse.HttpCode == 200)
         {
-            resultCommon.FromJson(httpResult.serviceResponse.Data);
-            JsonUtils::FromJson(httpResult.requestBody, resultCommon.Request);
+            result.FromJson(httpResult.serviceResponse.Data);
+            JsonUtils::FromJson(httpResult.requestBody, result.Request);
             return true;
         }
         else // Process the error case

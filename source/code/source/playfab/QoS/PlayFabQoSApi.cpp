@@ -140,7 +140,7 @@ namespace PlayFab
             {
                 JsonValue dcResult;
 
-                JsonUtils::ObjectAddMember(dcResult, "Region", result.regionResults[i].region);
+                JsonUtils::ObjectAddMember(dcResult, "Region", result.regionResults[i].region.data());
                 JsonUtils::ObjectAddMember(dcResult, "LatencyMs", result.regionResults[i].latencyMs);
                 JsonUtils::ObjectAddMember(dcResult, "ErrorCode",result.regionResults[i].errorCode);
 
@@ -152,10 +152,11 @@ namespace PlayFab
             PlayFab::EventsModels::WriteEventsRequest request;
             PlayFab::EventsModels::EventContents eventContents;
 
-            eventContents.Name = "qos_result";
-            eventContents.EventNamespace = "playfab.servers";
-            eventContents.Payload = value;
-            request.Events.push_back(eventContents);
+            // TODO
+            //eventContents.m_name = "qos_result";
+            //eventContents.m_eventNamespace = "playfab.servers";
+            //eventContents.m_payload = value;
+            //request.m_events.push_back(eventContents);
 
             // TODO allow setting queue here somehow
             eventsApi->WriteTelemetryEvents(request, TaskQueue(), WriteEventsSuccessCallBack, WriteEventsFailureCallBack);
@@ -191,10 +192,11 @@ namespace PlayFab
 
         void PlayFabQoSApi::ListQosServersForTitleSuccessCallBack(const ListQosServersForTitleResponse& result)
         {
-            for (const QosServer& server : result.QosServers)
-            {
-                regionMap[server.Region] = server.ServerUrl;
-            }
+            // TODO
+            //for (const QosServer& server : result.m_qosServers)
+            //{
+            //    regionMap[server.Region] = server.ServerUrl;
+            //}
 
             listQosServersCompleted = true;
         }

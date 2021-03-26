@@ -19,7 +19,7 @@ for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype 
 typedef struct <%- prefix %><%- datatype.name %>
 {
 <% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
-%><%- getPropertyDefinitionC("    ", property, prefix) %>
+%><%- getPropertyDefinition("    ", property, prefix, false) %>
 <% } %>
 } <%- prefix %><%- datatype.name %>;
 <% } %>

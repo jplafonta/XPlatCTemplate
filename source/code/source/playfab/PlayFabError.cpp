@@ -25,13 +25,13 @@ namespace PlayFab
     {
         // This is not expected to be used, but implemented for completeness
         JsonValue output{ rapidjson::kObjectType };
-        JsonUtils::ObjectAddMember(output, "code", HttpCode);
-        JsonUtils::ObjectAddMember(output, "status", HttpStatus);
-        JsonUtils::ObjectAddMember(output, "errorCode", static_cast<int>(ErrorCode));
-        JsonUtils::ObjectAddMember(output, "error", ErrorName);
-        JsonUtils::ObjectAddMember(output, "errorMessage", ErrorMessage);
-        JsonUtils::ObjectAddMember(output, "errorDetails", ErrorDetails);
-        JsonUtils::ObjectAddMember(output, "data", Data);
+        //JsonUtils::ObjectAddMember(output, "code", HttpCode);
+        //JsonUtils::ObjectAddMember(output, "status", HttpStatus);
+        //JsonUtils::ObjectAddMember(output, "errorCode", static_cast<int>(ErrorCode));
+        //JsonUtils::ObjectAddMember(output, "error", ErrorName);
+        //JsonUtils::ObjectAddMember(output, "errorMessage", ErrorMessage);
+        //JsonUtils::ObjectAddMember(output, "errorDetails", ErrorDetails);
+        //JsonUtils::ObjectAddMember(output, "data", Data);
         return output;
     }
 
