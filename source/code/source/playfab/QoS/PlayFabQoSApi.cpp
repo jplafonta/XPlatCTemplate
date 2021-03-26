@@ -132,19 +132,19 @@ namespace PlayFab
 
         void PlayFabQoSApi::SendResultsToPlayFab(const QoSResult& result)
         {
-            Json::Value value;
-            value["ErrorCode"] = Json::Value(result.errorCode);
+            JsonValue value;
+            value.AddMember("ErrorCode", JsonValue{ result.errorCode }, JsonUtils::allocator);
 
-            Json::Value each_regionCenterResult;
+            JsonValue each_regionCenterResult{ rapidjson::kArrayType };
             for (int i = 0; i < result.regionResults.size(); ++i)
             {
-                Json::Value dcResult;
+                JsonValue dcResult;
 
-                dcResult["Region"] = Json::Value(result.regionResults[i].region.data());
-                dcResult["LatencyMs"] = Json::Value(result.regionResults[i].latencyMs);
-                dcResult["ErrorCode"] = Json::Value(result.regionResults[i].errorCode);
+                JsonUtils::ObjectAddMember(dcResult, "Region", result.regionResults[i].region);
+                JsonUtils::ObjectAddMember(dcResult, "LatencyMs", result.regionResults[i].latencyMs);
+                JsonUtils::ObjectAddMember(dcResult, "ErrorCode",result.regionResults[i].errorCode);
 
-                each_regionCenterResult[i] = dcResult;
+                each_regionCenterResult.PushBack(dcResult, JsonUtils::allocator); // TODO consider helper
             }
 
             value["RegionResults"] = each_regionCenterResult;

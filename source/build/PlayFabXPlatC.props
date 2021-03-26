@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Paths">
+    <SdkRootDir>$(MSBuildThisFileDirectory)..\</SdkRootDir>
+    <ExternalDir>$(SdkRootDir)external</ExternalDir>
+    <SdkSourceDir>$(SdkRootDir)code</SdkSourceDir>
+    <TestSourceDir>$(SdkRootDir)test</TestSourceDir>
+  </PropertyGroup>
+  
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SdkSourceDir);$(SdkSourceDir)/include;$(SdkSourceDir)/source/playfab</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>ws2_32.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>  
+  
+  <!--RapidJSON dependency-->
+  <PropertyGroup Label="RapidJson">
+    <RapidJsonSdkRoot>$(SdkRootDir)External\rapidjson\</RapidJsonSdkRoot>
+    <RapidJsonSdkInclude>$(RapidJsonSdkRoot)include\</RapidJsonSdkInclude>
+  </PropertyGroup>
+  
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(RapidJsonSdkInclude)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>RAPIDJSON_NO_INT64DEFINE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!--LibHttpClient dependency-->
+  <Import Project="$(ExternalDir)\libHttpClient\libHttpClient.props" />
+</Project>

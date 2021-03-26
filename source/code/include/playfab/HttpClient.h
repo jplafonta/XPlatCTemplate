@@ -12,7 +12,7 @@ namespace PlayFab
         // Result indicating whether the request was successfully sent
         HRESULT networkErrorCode;
         String requestUrl;
-        Json::Value requestBody;
+        JsonValue requestBody;
         PlayFabError serviceResponse;
     };
 
@@ -27,10 +27,10 @@ namespace PlayFab
         ~HttpClient() = default;
 
         void MakePostRequest(
-            const char* url,
+            const char* path,
             const UnorderedMap<String, String>& headers,
-            const char* requestBody,
-            const TaskQueue& queue,
+            JsonValue&& requestBody,
+            const TaskQueue & queue,
             HttpCallback&& callback
         ) const;
 

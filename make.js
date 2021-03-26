@@ -47,6 +47,9 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         getPropertySafeName: getPropertySafeName,
         getRequestActions: getRequestActions,
         getResultActions: getResultActions,
+        canDefaultCopyConstructor: canDefaultCopyConstructor,
+        getCopyConstructorInitializationList: getCopyConstructorInitializationList,
+        getCopyConstructorBody: getCopyConstructorBody,
         hasClientOptions: getAuthMechanisms([api]).includes("SessionTicket"),
         hasAuthParams: hasAuthParams,
         ifHasProps: ifHasProps,
@@ -146,11 +149,11 @@ function getPropertyCppType(property, datatype, needOptional) {
     var isOptional = property.optional && needOptional;
 
     if (property.actualtype === "String")
-        return "String";
+        return "String"; // Do we want to distinguish optional values here?
     else if (property.isclass)
         return isOptional ? ("StdExtra::optional<" + property.actualtype + ">") : property.actualtype;
     else if (property.jsontype === "Object" && property.actualtype === "object")
-        return "Json::Value";
+        return "JsonValue";
     else if (property.actualtype === "Boolean")
         return isOptional ? "StdExtra::optional<bool>" : "bool";
     else if (property.actualtype === "int16")
@@ -183,7 +186,7 @@ function getPropertyDefinition(tabbing, property, datatype) {
     if (!property.collection) {
         return tabbing + cppType + " " + safePropName + ";";
     } else if (property.jsontype === "Object" && property.actualtype === "object") {
-        return tabbing + cppType + " " + safePropName + "; // Not truly arbitrary. See documentation for restrictions on format";
+        return tabbing + cppType + " " + safePropName + ";";
     } else if (property.collection === "array") {
         return tabbing + "List<" + cppType + "> " + safePropName + ";";
     } else if (property.collection === "map") {
@@ -194,48 +197,73 @@ function getPropertyDefinition(tabbing, property, datatype) {
 
 function getPropertyFromJson(tabbing, property, datatype) {
     var safePropName = getPropertySafeName(property);
-    if (property.jsontype === "Object" && property.actualtype === "object")
-        return tabbing + safePropName + " = input[\"" + property.name + "\"];";
-    if (property.jsontype === "Object")
-        return tabbing + "FromJsonUtilO(input[\"" + property.name + "\"], " + safePropName + ");";
-    if (property.isenum && (property.collection || property.optional))
-        return tabbing + "FromJsonUtilE(input[\"" + property.name + "\"], " + safePropName + ");";
-    if (property.isenum)
-        return tabbing + "FromJsonEnum(input[\"" + property.name + "\"], " + safePropName + ");";
-    if (property.actualtype === "DateTime")
-        return tabbing + "FromJsonUtilT(input[\"" + property.name + "\"], " + safePropName + ");";
-    if (property.actualtype === "String")
-        return tabbing + "FromJsonUtilS(input[\"" + property.name + "\"], " + safePropName + ");";
-    var primitives = new Set(["Boolean", "int16", "uint16", "int32", "uint32", "int64", "uint64", "float", "double"]);
-    if (primitives.has(property.actualtype))
-        return tabbing + "FromJsonUtilP(input[\"" + property.name + "\"], " + safePropName + ");";
+    if (property.actualtype === "DateTime") {
+        // Special case needed for time since we are translating from JsonString -> c++ time_t
+        return tabbing + "JsonUtils::ObjectGetMemberTime(input, \"" + property.name + "\", " + safePropName + ");";
+    }
 
-    throw Error("getPropertyFromJson: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
+    return tabbing + "JsonUtils::ObjectGetMember(input, \"" + property.name + "\", " + safePropName + ");";
 }
 
 function getPropertyToJson(tabbing, property, datatype) {
     var safePropName = getPropertySafeName(property);
-    if (property.jsontype === "Object" && property.actualtype === "object")
-        return tabbing + "output[\"" + property.name + "\"] = " + safePropName + ";";
-    if (property.jsontype === "Object")
-        return tabbing + "Json::Value each_" + safePropName + "; ToJsonUtilO(" + safePropName + ", each_" + safePropName + "); output[\"" + property.name + "\"] = each_" + safePropName + ";";
-    if (property.isenum && (property.collection || property.optional))
-        return tabbing + "Json::Value each_" + safePropName + "; ToJsonUtilE(" + safePropName + ", each_" + safePropName + "); output[\"" + property.name + "\"] = each_" + safePropName + ";";
-    if (property.isenum)
-        return tabbing + "Json::Value each_" + safePropName + "; ToJsonEnum(" + safePropName + ", each_" + safePropName + "); output[\"" + property.name + "\"] = each_" + safePropName + ";";
-    if (property.actualtype === "DateTime")
-        return tabbing + "Json::Value each_" + safePropName + "; ToJsonUtilT(" + property.name + ", each_" + safePropName + "); output[\"" + property.name + "\"] = each_" + safePropName + ";";
-    if (property.actualtype === "String")
-        return tabbing + "Json::Value each_" + safePropName + "; ToJsonUtilS(" + safePropName + ", each_" + safePropName + "); output[\"" + property.name + "\"] = each_" + safePropName + ";";
-    var primitives = new Set(["Boolean", "int16", "uint16", "int32", "uint32", "int64", "uint64", "float", "double"]);
-    if (primitives.has(property.actualtype))
-        return tabbing + "Json::Value each_" + safePropName + "; ToJsonUtilP(" + safePropName + ", each_" + safePropName + "); output[\"" + property.name + "\"] = each_" + safePropName + ";";
-
-    throw Error("getPropertyToJson: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
+    if (property.actualtype === "DateTime") {
+        // Special case needed for time since we are translating from c++ time_t -> JsonString
+        return tabbing + "JsonUtils::ObjectAddMemberTime(output, \"" + property.name + "\", " + safePropName + ");";
+    }
+    return tabbing + "JsonUtils::ObjectAddMember(output, \"" + property.name + "\", " + safePropName + ");";
 }
 
 function getPropertySafeName(property) {
     return (property.actualtype === property.name) ? "pf" + property.name : property.name;
+}
+
+function canDefaultCopyConstructor(datatype) {
+    if (datatype.properties) {
+        for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
+            var property = datatype.properties[propIdx];
+            if (property.jsontype === "Object" && property.actualtype === "object") {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function getCopyConstructorInitializationList(tabbing, datatype) {
+    var initializationList = "";
+    var firstProp = true;
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
+        var property = datatype.properties[propIdx];
+        if (!(property.jsontype === "Object" && property.actualtype === "object")) {
+            var safeName = getPropertySafeName(property);
+            if (firstProp) {
+                firstProp = false;
+                initializationList += (tabbing + ": " + safeName + "{ src." + safeName + " }");
+            } else {
+                initializationList += (",\n" + tabbing + safeName + "{ src." + safeName + " }");
+            }
+        }
+    }
+    return initializationList;
+}
+
+function getCopyConstructorBody(tabbing, datatype) {
+    var constructorBody = "";
+    var firstProp = true;
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
+        var property = datatype.properties[propIdx];
+        if (property.jsontype === "Object" && property.actualtype === "object") {
+            var safeName = getPropertySafeName(property);
+            if (firstProp) {
+                firstProp = false;
+                constructorBody += (tabbing + "JsonUtils::FromJson(src." + safeName + ", " + safeName + ");");
+            } else {
+                constructorBody += ("\n" + tabbing + "JsonUtils::FromJson(src." + safeName + ", " + safeName + ");");
+            }
+        }
+    }
+    return constructorBody;
 }
 
 function getRequestActions(tabbing, apiCall) {

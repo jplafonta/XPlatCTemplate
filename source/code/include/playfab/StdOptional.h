@@ -4,20 +4,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 #pragma once
 
-#if __cplusplus >= 201703L
-// on VS2017+ use the standard provided implementation
+#if _HAS_CXX17
+// use std implementation if available
 #include <optional>
 
 namespace PlayFab
 {
-
 namespace StdExtra
 {
-
 using std::optional;
-
 }
-
 }
 
 #else

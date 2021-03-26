@@ -23,12 +23,13 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <array>
 
 #include <httpClient/pal.h>
 #include <httpClient/async.h>
+#include <playfab/PlayFabJsonHeaders.h>
 #include <playfab/ResultMacros.h>
 #include <playfab/InternalMemory.h>
-#include <playfab/PlayFabJsonHeaders.h>
 #include <playfab/PlayFabPlatformMacros.h>
 #include <playfab/PlayFabPlatformTypes.h>
 #include <playfab/PlayFabApiSettings.h>

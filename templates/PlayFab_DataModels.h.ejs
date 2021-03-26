@@ -3,7 +3,7 @@
 <%- getApiDefine(api) %>
 
 #include <playfab/PlayFabBaseModel.h>
-#include <playfab/PlayFabJsonHeaders.h>
+#include <JsonUtils.h>
 
 namespace PlayFab
 {
@@ -16,30 +16,6 @@ for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { var enumtype = en
             <% for(var i=0; i<enumtype.enumvalues.length-1; i++) { var enumval = enumtype.enumvalues[i] %><%- enumtype.name %><%- enumval.name %>,
             <% } %><%- enumtype.name %><%- enumtype.enumvalues[enumtype.enumvalues.length-1].name %>
         };
-
-        inline void ToJsonEnum(const <%- enumtype.name %> input, Json::Value& output)
-        {
-<% for(var i=0; i<enumtype.enumvalues.length; i++) { var enumval = enumtype.enumvalues[i]
-%>            if (input == <%- enumtype.name %>::<%- enumtype.name %><%- enumval.name %>)
-            {
-                output = Json::Value("<%- enumval.name %>");
-                return;
-            }
-<% } %>        }
-        inline void FromJsonEnum(const Json::Value& input, <%- enumtype.name %>& output)
-        {
-            if (!input.isString())
-            {
-                return;
-            }
-            String inputStr = input.asCString();
-<% for(var i=0; i<enumtype.enumvalues.length; i++) { var enumval = enumtype.enumvalues[i]
-%>            if (inputStr == "<%- enumval.name %>")
-            {
-                output = <%- enumtype.name %>::<%- enumtype.name %><%- enumval.name %>;
-                return;
-            }
-<% } %>        }
 <% } %>
         // <%- api.name %> Classes<%
 for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype = sortedClasses[typeIdx]; %>
@@ -48,31 +24,27 @@ for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype 
 <% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
 %><%- getPropertyDefinition("            ", property, datatype) %>
 <% } %>
-            <%- datatype.name %>() :
-                <%- getBaseType(datatype) %>()<%
-for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
-%>,
-                <%- getPropertySafeName(property) %>()<% } %>
-            {}
-
-            <%- datatype.name %>(const <%- datatype.name %>&<%- ifHasProps(datatype, " src") %>) :
-                <%- getBaseType(datatype) %>()<%
-for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
-%>,
-                <%- getPropertySafeName(property) %>(src.<%- getPropertySafeName(property) %>)<% } %>
-            {}
-
+            <%- datatype.name %>() = default;
+<% if (canDefaultCopyConstructor(datatype)) { %>
+            <%- datatype.name %>(const <%- datatype.name %>&) = default;
+<% } else { %>
+            <%- datatype.name %>(const <%- datatype.name %>& src)
+<%- getCopyConstructorInitializationList("                ", datatype) %>
+            {
+<%- getCopyConstructorBody("                ", datatype) %>
+            }
+<% } %>
             ~<%- datatype.name %>() = default;
 
-            void FromJson(const Json::Value&<%- ifHasProps(datatype, " input") %>) override
+            void FromJson(const JsonValue&<%- ifHasProps(datatype, " input") %>) override
             {
 <% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
 %><%- getPropertyFromJson("                ", property, datatype) %>
 <% } %>            }
 
-            Json::Value ToJson() const override
+            JsonValue ToJson() const override
             {
-                Json::Value output;
+                JsonValue output{ rapidjson::kObjectType };
 <% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
 %><%- getPropertyToJson("                ", property, datatype) %>
 <% } %>                return output;
@@ -80,6 +52,14 @@ for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var pro
         };
 <% } %>
     }
+
+    // EnumRange definitions used for Enum (de)serialization <%
+for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { var enumtype = enumtypes[enumIdx]; var maxval = enumtype.enumvalues[enumtype.enumvalues.length-1]; %>
+    template<> struct EnumRange<<%- api.name %>Models::<%- enumtype.name %>>
+    {
+        static constexpr <%- api.name %>Models::<%- enumtype.name %> maxValue = <%- api.name %>Models::<%- enumtype.name %>::<%- enumtype.name %><%- maxval.name %>;
+    };
+<% } %>
 }
 
 #endif

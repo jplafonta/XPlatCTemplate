@@ -9,13 +9,16 @@
 #include "TestApp.h"
 #include "TestRunner.h"
 #include "TestReport.h"
+#include "TestUtils.h"
 
 #if !defined(DISABLE_PLAYFABCLIENT_API)
 #include <playfab/PlayFabSettings.h>
 #include "PlatformLoginTest.h"
 #endif
 
-#include <playfab/PlayFabJsonHeaders.h>
+#include "JsonParsingTests.h"
+
+using namespace PlayFab;
 
 namespace PlayFabUnit
 {
@@ -73,13 +76,13 @@ namespace PlayFabUnit
         // Set this up for use when the tests finish
         this->clientApi = std::make_shared<PlayFab::PlayFabClientInstanceAPI>(PlayFab::PlayFabSettings::staticPlayer);
 
-#if !defined(PLAYFAB_PLATFORM_GDK) && !defined(PLAYFAB_PLATFORM_IOS) // IOS proj doesn't include PlatformLoginTest files yet
         PlatformLoginTest loginTest;
         loginTest.SetTitleInfo(testTitleData);
         testRunner.Add(loginTest);
-#endif // !defined(PLAYFAB_PLATFORM_IOS)
-
 #endif // !defined(DISABLE_PLAYFABCLIENT_API)
+
+        JsonParsingTests jsonTests;
+        testRunner.Add(jsonTests);
 
         // Run the tests (blocks until all tests have finished).
         testRunner.Run();
@@ -132,36 +135,33 @@ namespace PlayFabUnit
         }
 
         // Parse JSON string into output TestTitleData.
-        Json::CharReaderBuilder jsonReaderFactory;
-        Json::CharReader* jsonReader(jsonReaderFactory.newCharReader());
-        JSONCPP_STRING jsonParseErrors;
-        Json::Value titleDataJson;
-        const bool parsedSuccessfully = jsonReader->parse(*titleJsonPtr, *titleJsonPtr + size + 1, &titleDataJson, &jsonParseErrors);
+        JsonDocument titleDataJson;
+        titleDataJson.Parse(*titleJsonPtr);
 
-        if (parsedSuccessfully)
+        if (!titleDataJson.HasParseError())
         {
-            titleData.titleId = titleDataJson["titleId"].asString();
-            titleData.userEmail = titleDataJson["userEmail"].asString();
-            titleData.developerSecretKey = titleDataJson["developerSecretKey"].asString();
+            titleData.titleId = titleDataJson["titleId"].GetString();
+            titleData.userEmail = titleDataJson["userEmail"].GetString();
+            titleData.developerSecretKey = titleDataJson["developerSecretKey"].GetString();
         }
 
-        return parsedSuccessfully;
+        return !titleDataJson.HasParseError();
     }
 
 #if !defined(DISABLE_PLAYFABCLIENT_API)
     void TestApp::OnPostReportLogin(const PlayFab::ClientModels::LoginResult& result, TestReport& testReport)
     {
         // Prepare a JSON value as a param for the remote cloud script.
-        Json::Value cloudReportJson;
-        cloudReportJson["customId"] = result.PlayFabId.data();
+        JsonValue cloudReportJson{ rapidjson::kObjectType };
+        cloudReportJson.AddMember("customId", JsonValue{ result.PlayFabId.data(), s_jsonAllocator }, s_jsonAllocator);
 
         // The expected format is a list of TestSuiteReports, but this framework only submits one
-        cloudReportJson["testReport"];
-        Json::Value arrayInit(Json::arrayValue);
-        cloudReportJson["testReport"].swapPayload(arrayInit);
+        JsonValue arrayInit{ rapidjson::kArrayType };
 
         // Encode the test report as JSON.
-        testReport.internalReport.ToJson(cloudReportJson["testReport"][0]);
+        arrayInit.PushBack(testReport.internalReport.ToJson(), s_jsonAllocator);
+
+        cloudReportJson.AddMember("testReport", arrayInit, s_jsonAllocator);
 
         // Save the test results via cloud script.
         PlayFab::ClientModels::ExecuteCloudScriptRequest request;
