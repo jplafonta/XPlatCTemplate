@@ -1,7 +1,7 @@
 #include <stdafx.h>
 #include <JsonUtils.h>
+#include <BaseModel.h>
 #include <playfab/PlayFabPlatformUtils.h>
-#include <EnumTraits.h>
 
 namespace PlayFab
 {
@@ -151,11 +151,6 @@ namespace PlayFab
             }
             ObjectAddMember(jsonObject, name, std::move(member));
         }
-
-        //void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const JsonValue& value)
-        //{
-        //    jsonObject.AddMember(name, JsonValue{}.CopyFrom(value, allocator), allocator);
-        //}
 
         void ObjectGetMember(const JsonValue& jsonObject, const char* name, String& output)
         {

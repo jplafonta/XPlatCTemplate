@@ -7,10 +7,10 @@
 #include <playfab/QoS/PingResult.h>
 #include <playfab/QoS/PlayFabQoSApi.h>
 
-#include <playfab/PlayFabMultiplayerInstanceApi.h>
-#include <playfab/PlayFabMultiplayerDataModels.h>
-#include <playfab/PlayFabEventsInstanceApi.h>
-#include <playfab/PlayFabEventsDataModels.h>
+#include <Multiplayer/MultiplayerApi.h>
+#include <Multiplayer/MultiplayerDataModels.h>
+#include <Events/EventsApi.h>
+#include <Events/EventsDataModels.h>
 #include <playfab/PlayFabSettings.h>
 
 using namespace PlayFab::MultiplayerModels;
@@ -192,11 +192,11 @@ namespace PlayFab
 
         void PlayFabQoSApi::ListQosServersForTitleSuccessCallBack(const ListQosServersForTitleResponse& result)
         {
-            // TODO
-            //for (const QosServer& server : result.m_qosServers)
-            //{
-            //    regionMap[server.Region] = server.ServerUrl;
-            //}
+            for (auto i = 0u; i < result.qosServersCount; ++i)
+            {
+                auto& server = result.qosServers[i];
+                regionMap[server->region] = server->serverUrl;
+            }
 
             listQosServersCompleted = true;
         }

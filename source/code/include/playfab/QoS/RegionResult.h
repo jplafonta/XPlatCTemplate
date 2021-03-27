@@ -2,7 +2,7 @@
 
 #if defined (PLAYFAB_PLATFORM_WINDOWS) || defined (PLAYFAB_PLATFORM_XBOX)
 #include <string>
-#include <playfab/PlayFabMultiplayerDataModels.h>
+#include <Multiplayer/MultiplayerDataModels.h>
 
 namespace PlayFab
 {

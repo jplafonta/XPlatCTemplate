@@ -1,13 +1,17 @@
 #pragma once
 
-#include <playfab/PlayFabBaseModel.h>
+#include <playfab/PlayFabBaseModel_c.h>
 #include <playfab/InternalMemory.h>
 #include <playfab/StdOptional.h>
 #include <EnumTraits.h>
 
 namespace PlayFab
 {
-    struct ModelBase;
+    // forward declarations
+    class BaseModel;
+    class JsonObject;
+    template<typename PointerT, typename ObjectT> class PointerArray;
+    template <typename EntryT, typename ValueT> class AssociativeArray;
 
     namespace JsonUtils
     {
@@ -35,8 +39,8 @@ namespace PlayFab
 
         JsonValue ToJson(time_t value, bool convertToIso8601String = false);
 
-        // This template method is specialized for each model type. Disabled for types with other specializations below
-        template <typename T, typename std::enable_if_t<!std::is_enum_v<T> && !std::is_fundamental_v<T> && !std::is_pointer_v<T> && !std::is_base_of_v<ModelBase, T>>* = 0>
+        // This template method is specialized for each model type. Disabled for types with specializations below
+        template <typename T, typename std::enable_if_t<!std::is_enum_v<T> && !std::is_fundamental_v<T> && !std::is_pointer_v<T> && !std::is_base_of_v<BaseModel, T>>* = 0>
         JsonValue ToJson(const T& value);
 
         // Specialization for fundamental types
@@ -48,12 +52,12 @@ namespace PlayFab
         JsonValue ToJson(EnumT value);
 
         // Specialization for Model types
-        template <typename ModelT, typename std::enable_if_t<std::is_base_of_v<ModelBase, ModelT>>* = 0>
+        template <typename ModelT, typename std::enable_if_t<std::is_base_of_v<BaseModel, ModelT>>* = 0>
         JsonValue ToJson(const ModelT& value);
 
-        // Specialization for pointers. Returns JsonValue{ kNullType } if point is null and appropriately converts to JsonValue otherwise
-        template <typename T>
-        JsonValue ToJson(const T* value);
+        // Specialization for pointers. Returns JsonValue{ kNullType } if pointer is null and appropriately converts to JsonValue otherwise
+        template <typename PtrT, typename std::enable_if_t<std::is_pointer_v<PtrT>>* = 0>
+        JsonValue ToJson(const PtrT value);
 
         //------------------------------------------------------------------------------
         // Helpers for deserializing from JsonValue
@@ -79,7 +83,7 @@ namespace PlayFab
         // Special case needed for time_t since it is an Iso8601 formatted JsonString that gets converted to a time_t
         void FromJson(const JsonValue& input, time_t& output, bool convertFromIso8601String = false);
 
-        template<typename ModelType, typename std::enable_if_t<std::is_base_of_v<ModelBase, ModelType>>* = 0>
+        template<typename ModelType, typename std::enable_if_t<std::is_base_of_v<BaseModel, ModelType>>* = 0>
         void FromJson(const JsonValue& input, ModelType& output);
 
         template <typename EnumT, typename std::enable_if_t<std::is_enum_v<EnumT>>* = 0>
@@ -124,8 +128,7 @@ namespace PlayFab
         // Unless the output field is optional, rapidjson will assert if the JsonObject is missing the requested
         // field or if the requested fields are not the expected Json type.
         //
-        // Optional parameters allow a pointer to the retrieved value to be returned as well.
-        // When the retreived value is a collection, there is also an optional parameter to get the size of the collection.
+        // Some of the methods also have output parameters where a pointer to the retreived value & (in the case of collections) the count is returned.
         //------------------------------------------------------------------------------
 
         template <typename T, typename std::enable_if_t<!std::is_same_v<T, time_t>>* = 0>
@@ -191,14 +194,14 @@ namespace PlayFab
             return JsonValue{ EnumName<EnumT>(value), allocator };
         }
 
-        template <typename ModelT, typename std::enable_if_t<std::is_base_of_v<ModelBase, ModelT>>*>
+        template <typename ModelT, typename std::enable_if_t<std::is_base_of_v<BaseModel, ModelT>>*>
         JsonValue ToJson(const ModelT& value)
         {
             return value.ToJson();
         }
 
-        template <typename T>
-        inline JsonValue ToJson(const T* value)
+        template <typename PtrT, typename std::enable_if_t<std::is_pointer_v<PtrT>>*>
+        JsonValue ToJson(const PtrT value)
         {
             if (value != nullptr)
             {
@@ -207,7 +210,7 @@ namespace PlayFab
             return JsonValue{ rapidjson::kNullType };
         }
 
-        template<typename ModelType, typename std::enable_if_t<std::is_base_of_v<ModelBase, ModelType>>*>
+        template<typename ModelType, typename std::enable_if_t<std::is_base_of_v<BaseModel, ModelType>>*>
         void FromJson(const JsonValue& input, ModelType& output)
         {
             output.FromJson(input);

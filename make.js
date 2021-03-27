@@ -24,7 +24,8 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
         vsVer: "v141", // As C++ versions change, we may need to update this
         vsYear: "2017", // As VS versions change, we may need to update this
         getVerticalNameDefault: getVerticalNameDefault,
-        winSdkVersion: "10.0.17763.0" // Which version of the Windows SDK (A VS installation option) to use
+        winSdkVersion: "10.0.17763.0", // Which version of the Windows SDK (A VS installation option) to use
+        createGuid: createGuid
     };
 
     templatizeTree(locals, path.resolve(sourceDir, "source"), apiOutputDir);
@@ -60,17 +61,17 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         dictionaryEntryTypes: getDictionaryEntryTypes(api.datatypes)
     };
 
-    var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_InstanceApi.h.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "InstanceApi.h"), iapihTemplate(locals));
+    var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "Api.h"), iapihTemplate(locals));
 
-    var iapiCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_InstanceApi.cpp.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/source/playfab", "PlayFab" + api.name + "InstanceApi.cpp"), iapiCppTemplate(locals));
+    var iapiCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.cpp.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "Api.cpp"), iapiCppTemplate(locals));
 
-    var dataModelTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels.h.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "DataModels.h"), dataModelTemplate(locals));
+    var dataModelTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "DataModels.h"), dataModelTemplate(locals));
 
     var dataModelTemplate_c = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels_c.h.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "DataModels_c.h"), dataModelTemplate_c(locals));
+    writeFile(path.resolve(apiOutputDir, "code/include/playFab", "PlayFab" + api.name + "DataModels_c.h"), dataModelTemplate_c(locals));
 }
 
 // *************************** Internal utility methods ***************************
@@ -163,12 +164,12 @@ function getAuthParams(apiCall) {
 
 function getBaseType(datatype) {
     if (datatype.className.toLowerCase().endsWith("request"))
-        return "RequestBase";
+        return "BaseRequest";
     if (datatype.className.toLowerCase().endsWith("loginresult"))
         return "PlayFabLoginResultCommon";
     if (datatype.className.toLowerCase().endsWith("response") || datatype.className.toLowerCase().endsWith("result"))
-        return "ResultBase";
-    return "ModelBase";
+        return "BaseResult";
+    return "BaseModel";
 }
 
 function getDictionaryEntryTypeFromValueType(valueType) {
@@ -478,3 +479,10 @@ function getVerticalNameDefault() {
     }
     return "";
 }
+
+function createGuid() {
+    return '{xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx}'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+} 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <playfab/PlayFabBaseModel.h>
+#include <BaseModel.h>
 #include <playfab/PlayFabJsonHeaders.h>
 
 namespace PlayFab
@@ -19,7 +19,7 @@ namespace PlayFab
     /// <summary>
     /// The wrapper around all PlayFab responses, and all fields needed in the case of an error
     /// </summary>
-    struct PlayFabError : public ModelBase
+    struct PlayFabError : public BaseModel
     {
         // Serialized fields
         int HttpCode;

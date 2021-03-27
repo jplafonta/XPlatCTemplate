@@ -17,6 +17,7 @@
 #endif
 
 #include "JsonParsingTests.h"
+#include "ModelTests.h"
 
 using namespace PlayFab;
 
@@ -83,6 +84,9 @@ namespace PlayFabUnit
 
         JsonParsingTests jsonTests;
         testRunner.Add(jsonTests);
+
+        ModelTests modelTests;
+        testRunner.Add(modelTests);
 
         // Run the tests (blocks until all tests have finished).
         testRunner.Run();

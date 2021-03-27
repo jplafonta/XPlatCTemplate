@@ -2,7 +2,7 @@
 
 <%- getApiDefine(api) %>
 
-#include <playfab/PlayFab<%- api.name %>InstanceApi.h>
+#include <<%- api.name %>/<%- api.name %>Api.h>
 #include <playfab/PlayFabSettings.h>
 
 #if defined(PLAYFAB_PLATFORM_WINDOWS)
@@ -167,7 +167,7 @@ namespace PlayFab
         }
     }
 <% } %>
-    bool PlayFab<%- api.name %>InstanceAPI::ParseResult(ResultBase& result, const HttpResult& httpResult, const ErrorCallback& errorHandler)
+    bool PlayFab<%- api.name %>InstanceAPI::ParseResult(BaseResult& result, const HttpResult& httpResult, const ErrorCallback& errorHandler)
     {
         if (httpResult.serviceResponse.HttpCode == 200)
         {

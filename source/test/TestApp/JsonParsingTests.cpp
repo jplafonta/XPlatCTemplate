@@ -1,6 +1,6 @@
 #include "TestAppPch.h"
 #include "JsonParsingTests.h"
-#include <playfab/PlayFabClientDataModels.h>
+#include <Client/ClientDataModels.h>
 
 using namespace PlayFab;
 
@@ -29,7 +29,7 @@ namespace PlayFabUnit
 
     void JsonParsingTests::BasicJsonParsing(TestContext& testContext)
     {
-        struct SubObjectModel : public ModelBase
+        struct SubObjectModel : public BaseModel
         {
             PlayFabClientCountryCode CountryCode;
 
@@ -46,7 +46,7 @@ namespace PlayFabUnit
             }
         };
 
-        struct ObjectModel : public ModelBase
+        struct ObjectModel : public BaseModel
         {
             PlayFabEnum EnumValue;
             PointerArray<int, int> ArrayValue;

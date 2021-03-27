@@ -6,6 +6,7 @@
 #include <playfab/PlayFabPlatformTypes.h>
 #include <playfab/PlayFabPlatformUtils.h>
 #include <playfab/StdOptional.h>
+#include <JsonUtils.h>
 
 #include <assert.h>
 #include <functional>
@@ -22,9 +23,10 @@ namespace PlayFab
     /// Base class for all PlayFab Models
     /// Provides interface for converting to/from json
     /// </summary>
-    struct ModelBase
+    class BaseModel
     {
-        virtual ~ModelBase() = default;
+    public:
+        virtual ~BaseModel() = default;
         virtual void FromJson(const JsonValue& input) = 0;
         virtual JsonValue ToJson() const = 0;
     };
@@ -32,30 +34,30 @@ namespace PlayFab
     /// <summary>
     /// Base class for all PlayFab Requests
     /// </summary>
-    struct RequestBase : public ModelBase
+    class BaseRequest : public BaseModel
     {
+    public:
         SharedPtr<PlayFabAuthenticationContext> authenticationContext;
     };
 
     /// <summary>
     /// Base class for all PlayFab Results
     /// </summary>
-    struct ResultBase : public ModelBase
+    class BaseResult : public BaseModel
     {
+    public:
         JsonValue Request;
 
-        ResultBase() = default;
-        ResultBase(const ResultBase& /*src*/)
-        {
-            //JsonUtils::FromJson(src.Request, Request);
-        }
+        BaseResult() = default;
+        BaseResult(const BaseResult& src);
     };
 
     /// <summary>
     /// A result that can (trivially) be serialized into a continuous memory buffer
     /// <summary>
-    struct SerializableResult : ResultBase
+    class SerializableResult : BaseResult
     {
+    public:
         virtual size_t RequiredBufferSize() const = 0;
         virtual void Serialize(void* buffer, size_t bufferSize) const = 0;
     };
@@ -63,8 +65,9 @@ namespace PlayFab
     /// <summary>
     /// Base class for all PlayFab Login method Results
     /// </summary>
-    struct PlayFabLoginResultCommon : public ResultBase
+    class PlayFabLoginResultCommon : public BaseResult
     {
+    public:
         /// <summary>
         /// An authentication context returned by Login methods, it can used in multi-user scenarios
         /// </summary>
@@ -73,7 +76,7 @@ namespace PlayFab
 
     /// <summary>
     /// JsonObject with cached string representation
-    class JsonObject : public ModelBase
+    class JsonObject : public BaseModel
     {
     public:
         JsonObject() = default;
@@ -95,9 +98,12 @@ namespace PlayFab
     /// Helper class for managing C-style arrays of pointers to PlayFab models.
     /// By design, the only way to populate array is using FromJson (no insert/remove methods)
     /// </summary>
-    template<typename PointerT, typename ObjectT> class PointerArray : public ModelBase
+    template<typename PointerT, typename ObjectT> class PointerArray : public BaseModel
     {
     public:
+        using DataPtr = PointerT**;
+        using ConstDataPtr = const PointerT**;
+
         PointerArray() = default;
         PointerArray(const PointerArray& src);
         PointerArray(PointerArray&& src) = default;
@@ -106,8 +112,8 @@ namespace PlayFab
         virtual ~PointerArray() = default;
 
         bool Empty() const;
-        const PointerT** Data() const;
-        PointerT** Data();
+        ConstDataPtr Data() const;
+        DataPtr Data();
         size_t Size() const;
         void Clear();
 
@@ -124,9 +130,12 @@ namespace PlayFab
     /// Currently only have support for populating these arrays using PointerArray::FromJson (no other way to insert)
     /// </summary>
     template <typename EntryT, typename ValueT>
-    class AssociativeArray : public ModelBase
+    class AssociativeArray : public BaseModel
     {
     public:
+        using DataPtr = EntryT*;
+        using ConstDataPtr = const EntryT*;
+
         AssociativeArray() = default;
         AssociativeArray(const AssociativeArray& src);
         AssociativeArray(AssociativeArray&& src) = default;
@@ -135,8 +144,8 @@ namespace PlayFab
         virtual ~AssociativeArray() = default;
 
         bool Empty() const;
-        EntryT* Data();
-        const EntryT* Data() const;
+        DataPtr Data();
+        ConstDataPtr Data() const;
         size_t Size() const;
         void Clear();
 
@@ -150,14 +159,17 @@ namespace PlayFab
 
     // Specialization for EntryT where EntryT::value doesn't require storage outside the Entry struct
     template<typename EntryT>
-    class AssociativeArray<EntryT, void> : public ModelBase
+    class AssociativeArray<EntryT, void> : public BaseModel
     {
     public:
+        using DataPtr = EntryT*;
+        using ConstDataPtr = const EntryT*;
+
         AssociativeArray() = default;
         AssociativeArray(const AssociativeArray& src);
-        AssociativeArray(AssociativeArray&& src);
+        AssociativeArray(AssociativeArray&& src) = default;
         AssociativeArray& operator=(AssociativeArray src);
-        AssociativeArray& operator=(AssociativeArray&& src);
+        AssociativeArray& operator=(AssociativeArray&& src) = default;
         virtual ~AssociativeArray() = default;
 
         bool Empty() const;
@@ -189,13 +201,6 @@ namespace PlayFab
         }
     }
 
-    //template<typename PointerT, typename ObjectT>
-    //PointerArray<PointerT, ObjectT>::PointerArray(PointerArray&& src) :
-    //    m_pointers(std::move(src.m_pointers)),
-    //    m_objects(std::move(src.m_objects))
-    //{
-    //}
-
     template<typename PointerT, typename ObjectT>
     PointerArray<PointerT, ObjectT>& PointerArray<PointerT, ObjectT>::operator=(PointerArray src)
     {
@@ -204,14 +209,6 @@ namespace PlayFab
         return *this;
     }
 
-    //template<typename PointerT, typename ObjectT>
-    //PointerArray<PointerT, ObjectT>& PointerArray<PointerT, ObjectT>::operator=(PointerArray&& src)
-    //{
-    //    m_pointers = std::move(src.m_pointers);
-    //    m_objects = std::move(src.m_objects);
-    //    return *this;
-    //}
-
     template<typename PointerT, typename ObjectT>
     bool PointerArray<PointerT, ObjectT>::Empty() const
     {
@@ -219,13 +216,13 @@ namespace PlayFab
     }
 
     template<typename PointerT, typename ObjectT>
-    const PointerT** PointerArray<PointerT, ObjectT>::Data() const
+    typename PointerArray<PointerT, ObjectT>::ConstDataPtr PointerArray<PointerT, ObjectT>::Data() const
     {
         return m_pointers.data();
     }
 
     template<typename PointerT, typename ObjectT>
-    PointerT** PointerArray<PointerT, ObjectT>::Data()
+    typename PointerArray<PointerT, ObjectT>::DataPtr PointerArray<PointerT, ObjectT>::Data()
     {
         return m_pointers.data();
     }
@@ -287,29 +284,13 @@ namespace PlayFab
         }
     }
 
-    //template <typename EntryT, typename ValueT>
-    //AssociativeArray<EntryT, ValueT>::AssociativeArray(AssociativeArray&& src) :
-    //    m_entries{ std::move(src.m_entries) },
-    //    m_map{ std::move(src.m_map) }
-    //{
-    //}
-
     template <typename EntryT, typename ValueT>
     AssociativeArray<EntryT, ValueT>& AssociativeArray<EntryT, ValueT>::operator=(AssociativeArray src)
     {
-        // TODO test this
         m_entries = std::move(src.m_entries);
         m_map = std::move(src.m_map);
         return *this;
     }
-
-    //template <typename EntryT, typename ValueT>
-    //AssociativeArray<EntryT, ValueT>& AssociativeArray<EntryT, ValueT>::operator=(AssociativeArray&& src)
-    //{
-    //    m_entries = std::move(src.m_entries);
-    //    m_map = std::move(src.m_map);
-    //    return *this;
-    //}
 
     template <typename EntryT, typename ValueT>
     bool AssociativeArray<EntryT, ValueT>::Empty() const
@@ -318,13 +299,13 @@ namespace PlayFab
     }
 
     template <typename EntryT, typename ValueT>
-    EntryT* AssociativeArray<EntryT, ValueT>::Data()
+    typename AssociativeArray<EntryT, ValueT>::DataPtr AssociativeArray<EntryT, ValueT>::Data()
     {
         return m_entries.data();
     }
 
     template <typename EntryT, typename ValueT>
-    const EntryT* AssociativeArray<EntryT, ValueT>::Data() const
+    typename AssociativeArray<EntryT, ValueT>::ConstDataPtr AssociativeArray<EntryT, ValueT>::Data() const
     {
         return m_entries.data();
     }
@@ -382,23 +363,7 @@ namespace PlayFab
     }
 
     template <typename EntryT>
-    AssociativeArray<EntryT, void>::AssociativeArray(AssociativeArray&& src) :
-        m_entries{ std::move(src.m_entries) },
-        m_keys{ std::move(src.m_keys) }
-    {
-    }
-
-    template <typename EntryT>
     AssociativeArray<EntryT, void>& AssociativeArray<EntryT, void>::operator=(AssociativeArray src)
-    {
-        // TODO test this
-        m_entries = std::move(src.m_entries);
-        m_keys = std::move(src.m_keys);
-        return *this;
-    }
-
-    template <typename EntryT>
-    AssociativeArray<EntryT, void>& AssociativeArray<EntryT, void>::operator=(AssociativeArray&& src)
     {
         m_entries = std::move(src.m_entries);
         m_keys = std::move(src.m_keys);
@@ -412,13 +377,13 @@ namespace PlayFab
     }
 
     template <typename EntryT>
-    EntryT* AssociativeArray<EntryT, void>::Data()
+    typename AssociativeArray<EntryT, void>::DataPtr AssociativeArray<EntryT, void>::Data()
     {
         return m_entries.data();
     }
 
     template <typename EntryT>
-    const EntryT* AssociativeArray<EntryT, void>::Data() const
+    typename AssociativeArray<EntryT, void>::ConstDataPtr AssociativeArray<EntryT, void>::Data() const
     {
         return m_entries.data();
     }
@@ -460,6 +425,65 @@ namespace PlayFab
         for (auto& entry : m_entries)
         {
             JsonUtils::ObjectAddMember(output, JsonUtils::ToJson(entry.key), JsonUtils::ToJson(entry.value));
+        }
+        return output;
+    }
+
+    inline PointerArray<const char, String>::PointerArray(const PointerArray& src) :
+        m_objects(src.m_objects)
+    {
+        m_pointers.reserve(m_objects.size());
+        for (const auto& o : m_objects)
+        {
+            m_pointers.push_back(o.data());
+        }
+    }
+
+    template<>
+    inline void PointerArray<const char, String>::FromJson(const JsonValue& input)
+    {
+        Clear();
+        if (input.IsArray())
+        {
+            auto jsonArray{ input.GetArray() };
+
+            // Reserve vector storage to ensure no reallocation happens while inserting
+            m_objects.reserve(jsonArray.Size());
+            m_pointers.reserve(jsonArray.Size());
+
+            for (auto& value : jsonArray)
+            {
+                m_objects.emplace_back();
+                JsonUtils::FromJson(value, m_objects.back());
+                m_pointers.emplace_back(m_objects.back().data());
+            }
+        }
+    }
+
+    template <>
+    inline void AssociativeArray<PlayFabDateTimeDictionaryEntry, void>::FromJson(const JsonValue& input)
+    {
+        Clear();
+        if (input.IsObject())
+        {
+            m_entries.reserve(input.MemberCount());
+
+            for (auto& pair : input.GetObject())
+            {
+                auto keysIter = m_keys.emplace(pair.name.GetString()).first;
+                m_entries.emplace_back(PlayFabDateTimeDictionaryEntry{ keysIter->data(), time_t{} });
+                JsonUtils::FromJson(pair.value, m_entries.back().value, true);
+            }
+        }
+    }
+
+    template <>
+    inline JsonValue AssociativeArray<PlayFabDateTimeDictionaryEntry, void>::ToJson() const
+    {
+        JsonValue output{ rapidjson::kObjectType };
+        for (auto& entry : m_entries)
+        {
+            JsonUtils::ObjectAddMember(output, JsonUtils::ToJson(entry.key), JsonUtils::ToJson(entry.value, true));
         }
         return output;
     }
