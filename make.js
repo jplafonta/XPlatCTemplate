@@ -24,7 +24,8 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
         vsVer: "v141", // As C++ versions change, we may need to update this
         vsYear: "2017", // As VS versions change, we may need to update this
         getVerticalNameDefault: getVerticalNameDefault,
-        winSdkVersion: "10.0.17763.0" // Which version of the Windows SDK (A VS installation option) to use
+        winSdkVersion: "10.0.17763.0", // Which version of the Windows SDK (A VS installation option) to use
+        createGuid: createGuid
     };
 
     templatizeTree(locals, path.resolve(sourceDir, "source"), apiOutputDir);
@@ -34,17 +35,18 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
 
 function makeApiFiles(api, sourceDir, apiOutputDir) {
     var remStaticDefine = ""; // " && !defined(DISABLE_PLAYFAB_STATIC_API)";
+    var prefix = "PlayFab" + api.name;
 
     var locals = {
         api: api,
+        prefix: prefix,
         enumtypes: getEnumTypes(api.datatypes),
         getApiDefine: getApiDefine,
         getAuthParams: getAuthParams,
         getBaseType: getBaseType,
         getPropertyDefinition: getPropertyDefinition,
         getPropertyFromJson: getPropertyFromJson,
-        getPropertyToJson: getPropertyToJson,
-        getPropertySafeName: getPropertySafeName,
+        addPropertyToJson: addPropertyToJson,
         getRequestActions: getRequestActions,
         getResultActions: getResultActions,
         canDefaultCopyConstructor: canDefaultCopyConstructor,
@@ -55,17 +57,21 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         ifHasProps: ifHasProps,
         remStaticDefine: remStaticDefine,
         sdkVersion: sdkGlobals.sdkVersion,
-        sortedClasses: getSortedClasses(api.datatypes)
+        sortedClasses: getSortedClasses(api.datatypes),
+        dictionaryEntryTypes: getDictionaryEntryTypes(api.datatypes)
     };
 
-    var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_InstanceApi.h.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "InstanceApi.h"), iapihTemplate(locals));
+    var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "Api.h"), iapihTemplate(locals));
 
-    var iapiCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_InstanceApi.cpp.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/source/playfab", "PlayFab" + api.name + "InstanceApi.cpp"), iapiCppTemplate(locals));
+    var iapiCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.cpp.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "Api.cpp"), iapiCppTemplate(locals));
 
-    var dataModelTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels.h.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "DataModels.h"), dataModelTemplate(locals));
+    var dataModelTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "DataModels.h"), dataModelTemplate(locals));
+
+    var dataModelTemplate_c = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels_c.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/include/playFab", "PlayFab" + api.name + "DataModels_c.h"), dataModelTemplate_c(locals));
 }
 
 // *************************** Internal utility methods ***************************
@@ -102,6 +108,26 @@ function getSortedClasses(datatypes) {
     return sortedClasses;
 }
 
+function getDictionaryEntryTypes(datatypes) {
+    // Gets all (non-primitive) types which appear as a Value in a map
+    var dictionaryEntryTypes = [];
+    var addedTypes = new Set();
+
+    for (var typeIdx in datatypes) {
+        var datatype = datatypes[typeIdx];
+        if (datatype.properties) {
+            for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
+                var property = datatype.properties[propIdx];
+                if (property.collection === "map" && (property.isclass || property.isenum) && !addedTypes.has(property.actualtype)) {
+                    dictionaryEntryTypes.push(datatypes[property.actualtype]);
+                    addedTypes.add(property.actualtype);
+                }
+            }
+        }
+    }
+    return dictionaryEntryTypes;
+}
+
 // *************************** ejs-exposed methods ***************************
 function getApiDefine(api) {
     if (api.name === "Client")
@@ -135,94 +161,225 @@ function getAuthParams(apiCall) {
     
     throw Error("getAuthParams: Unknown auth type: " + apiCall.auth + " for " + apiCall.name);
 }
+
 function getBaseType(datatype) {
     if (datatype.className.toLowerCase().endsWith("request"))
-        return "PlayFabRequestCommon";
+        return "BaseRequest";
     if (datatype.className.toLowerCase().endsWith("loginresult"))
         return "PlayFabLoginResultCommon";
     if (datatype.className.toLowerCase().endsWith("response") || datatype.className.toLowerCase().endsWith("result"))
-        return "PlayFabResultCommon";
-    return "PlayFabBaseModel";
+        return "BaseResult";
+    return "BaseModel";
 }
 
-function getPropertyCppType(property, datatype, needOptional) {
-    var isOptional = property.optional && needOptional;
+function getDictionaryEntryTypeFromValueType(valueType) {
+    var types = {
+        "String": "String", "const char*": "String", "bool": "Bool", "int16_t": "Int16", "uint16_t": "Uint16", "int32_t": "Int32", "uint32_t": "Uint32",
+        "int64_t": "int64_t", "uint64_t": "int64_t", "float": "float", "double": "double", "time_t": "DateTime"
+    };
 
-    if (property.actualtype === "String")
-        return "String"; // Do we want to distinguish optional values here?
-    else if (property.isclass)
-        return isOptional ? ("StdExtra::optional<" + property.actualtype + ">") : property.actualtype;
-    else if (property.jsontype === "Object" && property.actualtype === "object")
-        return "JsonValue";
-    else if (property.actualtype === "Boolean")
-        return isOptional ? "StdExtra::optional<bool>" : "bool";
-    else if (property.actualtype === "int16")
-        return isOptional ? "StdExtra::optional<Int16>" : "Int16";
-    else if (property.actualtype === "uint16")
-        return isOptional ? "StdExtra::optional<Uint16>" : "Uint16";
-    else if (property.actualtype === "int32")
-        return isOptional ? "StdExtra::optional<Int32>" : "Int32";
-    else if (property.actualtype === "uint32")
-        return isOptional ? "StdExtra::optional<Uint32>" : "Uint32";
-    else if (property.actualtype === "int64")
-        return isOptional ? "StdExtra::optional<Int64>" : "Int64";
-    else if (property.actualtype === "uint64")
-        return isOptional ? "StdExtra::optional<Uint64>" : "Uint64";
-    else if (property.actualtype === "float")
-        return isOptional ? "StdExtra::optional<float>" : "float";
-    else if (property.actualtype === "double")
-        return isOptional ? "StdExtra::optional<double>" : "double";
-    else if (property.actualtype === "DateTime")
-        return isOptional ? "StdExtra::optional<time_t>" : "time_t";
-    else if (property.isenum)
-        return isOptional ? ("StdExtra::optional<" + property.actualtype + ">") : property.actualtype;
-    throw Error("getPropertyCppType: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
-}
-
-function getPropertyDefinition(tabbing, property, datatype) {
-    var cppType = getPropertyCppType(property, datatype, !property.collection);
-    var safePropName = getPropertySafeName(property);
-
-    if (!property.collection) {
-        return tabbing + cppType + " " + safePropName + ";";
-    } else if (property.jsontype === "Object" && property.actualtype === "object") {
-        return tabbing + cppType + " " + safePropName + ";";
-    } else if (property.collection === "array") {
-        return tabbing + "List<" + cppType + "> " + safePropName + ";";
-    } else if (property.collection === "map") {
-        return tabbing + "Map<String, " + cppType + "> " + safePropName + ";";
+    if (valueType in types) {
+        return "PlayFab" + types[valueType] + "DictionaryEntry";
+    } else {
+        // valueType should already be prefixed appropriately
+        return valueType + "DictionaryEntry";
     }
-    throw Error("getPropertyDefinition: Unknown property type: " + property.actualtype + " for " + property.name + " in " + datatype.name);
 }
 
-function getPropertyFromJson(tabbing, property, datatype) {
-    var safePropName = getPropertySafeName(property);
+function requiresInternalProperty(property) {
+    // An internal property is needed if the public property requires dynamic storage.
+    // Dynamic storage is not required for non-optional/non-collection primitive & enum types
+    var primitives = new Set(["Boolean", "int16", "uint16", "int32", "uint32", "int64", "uint64", "float", "double", "DateTime"]);
+
+    if ((primitives.has(property.actualtype) || property.isenum) && !property.optional && !property.collection) {
+        return false;
+    }
+    return true;
+}
+
+function getInternalPropertyType(property, prefix) {
+    var type = "";
+
+    // Service types that can be mapped directly to C++ types
+    var types = {
+        "String": "String", "Boolean": "bool", "int16": "int16_t", "uint16": "uint16_t", "int32": "int32_t", "uint32": "uint32_t",
+        "int64": "int64_t", "uint64": "uint64_t", "float": "float", "double": "double", "DateTime": "time_t", "object": "JsonObject"
+    };
+
+    if (property.actualtype in types) {
+        type = types[property.actualtype];
+    } else if (property.isclass) {
+        type = property.actualtype;
+    } else if (property.isenum) {
+        // Enums always defined in global namespace so add prefix
+        type = prefix + property.actualtype
+    } else {
+        throw Error("Unrecognized property type " + property.actualtype);
+    }
+
+    // Modify type depending on collection & optional attributes. 
+    // TODO describe reasons for this breakdown somewhere (here or in source)
+    if (!(property.actualtype === "object")) {
+        if (property.collection === "map") {
+            if (property.isclass) {
+                return "AssociativeArray<" + getDictionaryEntryTypeFromValueType(prefix + type) + ", " + type + ">";
+            } else if (type === "String") {
+                return "AssociativeArray<PlayFabStringDictionaryEntry, String>";
+            } else {
+                return "AssociativeArray<" + getDictionaryEntryTypeFromValueType(type) + ", void>";
+            }
+        } else if (property.collection === "array") {
+            if (property.isclass) {
+                return "PointerArray<" + prefix + type + ", " + type + ">";
+            } else if (type === "String") {
+                return "PointerArray<const char, String>";
+            } else {
+                return "Vector<" + type + ">";
+            }
+        } else if (property.optional) {
+            // Types which aren't nullable will be wrapped by StdExtra::optional.
+            // String is an exception here - empty will represent not set(might want to revisit this design)
+            if (!(type === "String" || type === "JsonObject")) {
+                return "StdExtra::optional<" + type + ">";
+            }
+        }
+    }
+
+    return type;
+}
+
+function getPublicPropertyType(property, prefix) {
+    var type = "";
+
+    // Service types that can be mapped directly to C types
+    var types = {
+        "String": "const char*", "Boolean": "bool", "int16": "int16_t", "uint16": "uint16_t", "int32": "int32_t", "uint32": "uint32_t",
+        "int64": "int64_t", "uint64": "uint64_t", "float": "float", "double": "double", "DateTime": "time_t", "object": "PlayFabJsonObject"
+    };
+
+    if (property.actualtype in types) {
+        type = types[property.actualtype];
+    } else if (property.isclass || property.isenum) {
+        // TODO should we include 'struct' keyword to distinguish structs vs enums
+        type = prefix + property.actualtype;
+    } else {
+        throw Error("Unrecognized property type " + property.actualtype);
+    }
+
+    // By design class properties are always pointers. Pointers will ultimately point to derived C++ internal Objects which
+    // can automatically manage their cleanup & copying via destructors and copy constructors
+
+    // Modify type depending on collection & optional attributes
+    // TODO figure out const correctness here
+    if (!(property.actualtype === "object")) {
+        if (property.collection === "map") {
+            // array of dictionary entries
+            return "PF_MAP struct " + getDictionaryEntryTypeFromValueType(type) + "*";
+        } else if (property.collection === "array") {
+            if (property.isclass) {
+                // array of pointers
+                return "PF_ARRAY " + type + "**";
+            } else {
+                return "PF_ARRAY " + type + "*";
+            }
+        } else if (property.optional) {
+            // Types which aren't already nullable will be made pointer types
+            if (!(type === "const char*" || type === "PlayFabJsonObject")) {
+                return "PF_OPTIONAL " + type + "*";
+            }
+        }
+    }
+
+    if (property.isclass) {
+        return type + "*";
+    }
+
+    return type;
+}
+
+function getPropertyName(property, isInternal) {
+    var name = property.name;
+
+    // Don't allow property name to be a C++ reserved word
+    if (name.localeCompare("namespace", undefined, { sensitivity: 'accent' }) === 0) {
+        name = "playfab" + name;
+    }
+
+    // GameCore design guideline is to use camelcase for property names (service is using Pascal case)
+    name = name.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function (match, index) {
+        if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
+        return index === 0 ? match.toLowerCase() : match.toUpperCase();
+    });
+
+    return isInternal ? "m_" + name : name;
+}
+
+function getPropertyDefinition(tabbing, property, prefix, isInternal) {
+    var output = "";
+
+    if (!isInternal || requiresInternalProperty(property)) {
+        var type = isInternal ? getInternalPropertyType(property, prefix) : getPublicPropertyType(property, prefix);
+        var propName = getPropertyName(property, isInternal);
+        output = tabbing + type + " " + propName + ";";
+
+        // For public collection properties add an additional "count" property
+        if (property.collection && !(type === "PlayFabJsonObject") && !isInternal) {
+            output += ("\n" + tabbing + "PF_COLLECTION_COUNT uint32_t " + propName + "Count;");
+        }
+    }
+    return output;
+}
+
+function getPropertyFromJson(tabbing, property) {
+    var publicPropName = getPropertyName(property, false);
+    var internalPropName = getPropertyName(property, true);
+
+    var output = tabbing + "JsonUtils:: ObjectGetMember(input, \"" + property.name + "\", ";
+
+    if (!requiresInternalProperty(property)) {
+        output += publicPropName;
+    } else {
+        // if there is internal storage for a property, get the internal value and the public pointer to it
+        output += (internalPropName + ", " + publicPropName);
+    }
+
+    if (property.collection && !(property.actualtype === "object")) {
+        // for collections, also retreive the collection count
+        output += (", " + publicPropName + "Count");
+    }
+
+    // for DateTime values, set optional param "convertToIso8601String" to true
     if (property.actualtype === "DateTime") {
-        // Special case needed for time since we are translating from JsonString -> c++ time_t
-        return tabbing + "JsonUtils::ObjectGetMemberTime(input, \"" + property.name + "\", " + safePropName + ");";
+        output += ", true";
     }
 
-    return tabbing + "JsonUtils::ObjectGetMember(input, \"" + property.name + "\", " + safePropName + ");";
+    return output + ");";
 }
 
-function getPropertyToJson(tabbing, property, datatype) {
-    var safePropName = getPropertySafeName(property);
+function addPropertyToJson(tabbing, property) {
+    var publicPropName = getPropertyName(property, false);
+
+    var output = tabbing + "JsonUtils::ObjectAddMember(output, \"" + property.name + "\", input." + publicPropName;
+
+    // for collections, pass the collection count
+    if (property.collection && !(property.actualtype === "object")) {
+        output += ", input." + publicPropName + "Count";
+    }
+
+    // for DateTime values, set optional param "convertToIso8601String" to true
     if (property.actualtype === "DateTime") {
-        // Special case needed for time since we are translating from c++ time_t -> JsonString
-        return tabbing + "JsonUtils::ObjectAddMemberTime(output, \"" + property.name + "\", " + safePropName + ");";
+        output += ", true"; 
     }
-    return tabbing + "JsonUtils::ObjectAddMember(output, \"" + property.name + "\", " + safePropName + ");";
-}
 
-function getPropertySafeName(property) {
-    return (property.actualtype === property.name) ? "pf" + property.name : property.name;
+    return output + ");";
 }
 
 function canDefaultCopyConstructor(datatype) {
+    // We can default the copy construct iff there are no internal properties (i.e. no public properties reference memory outside the struct)
     if (datatype.properties) {
         for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
             var property = datatype.properties[propIdx];
-            if (property.jsontype === "Object" && property.actualtype === "object") {
+            if (requiresInternalProperty(property)) {
                 return false;
             }
         }
@@ -231,44 +388,47 @@ function canDefaultCopyConstructor(datatype) {
 }
 
 function getCopyConstructorInitializationList(tabbing, datatype) {
-    var initializationList = "";
-    var firstProp = true;
+    var output = "";
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
         var property = datatype.properties[propIdx];
-        if (!(property.jsontype === "Object" && property.actualtype === "object")) {
-            var safeName = getPropertySafeName(property);
-            if (firstProp) {
-                firstProp = false;
-                initializationList += (tabbing + ": " + safeName + "{ src." + safeName + " }");
-            } else {
-                initializationList += (",\n" + tabbing + safeName + "{ src." + safeName + " }");
-            }
+        if (requiresInternalProperty(property)) {
+            var internalPropName = getPropertyName(property, true);
+            output += (",\n" + tabbing + internalPropName + "{ src." + internalPropName + " }");
         }
     }
-    return initializationList;
+    return output;
 }
 
-function getCopyConstructorBody(tabbing, datatype) {
-    var constructorBody = "";
-    var firstProp = true;
+function getCopyConstructorBody(tabbing, datatype, prefix) {
+    var output = "";
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
         var property = datatype.properties[propIdx];
-        if (property.jsontype === "Object" && property.actualtype === "object") {
-            var safeName = getPropertySafeName(property);
-            if (firstProp) {
-                firstProp = false;
-                constructorBody += (tabbing + "JsonUtils::FromJson(src." + safeName + ", " + safeName + ");");
+        if (requiresInternalProperty(property)) {
+            var publicPropName = getPropertyName(property, false);
+            var internalPropName = getPropertyName(property, true);
+            var internalPropertyType = getInternalPropertyType(property, prefix);
+
+            if (internalPropertyType === "JsonObject") {
+                output += ("\n" + tabbing + publicPropName + ".stringValue = " + internalPropName + ".StringValue();");
+            } else if (internalPropertyType.includes("Array")) {
+                output += ("\n" + tabbing + publicPropName + " = " + internalPropName + ".Empty() ? nullptr : " + internalPropName + ".Data();");
+            } else if (internalPropertyType === "String" || internalPropertyType.includes("Vector")) {
+                output += ("\n" + tabbing + publicPropName + " = " + internalPropName + ".empty() ? nullptr : " + internalPropName + ".data();");
+            } else if (property.optional) {
+                output += ("\n" + tabbing + publicPropName + " = " + internalPropName + " ? " + internalPropName + ".operator->() : nullptr;");
+            } else if (property.isclass) {
+                output += ("\n" + tabbing + publicPropName + " = (" + getPublicPropertyType(property, prefix) + ")&" + internalPropName + ";");
             } else {
-                constructorBody += ("\n" + tabbing + "JsonUtils::FromJson(src." + safeName + ", " + safeName + ");");
+                throw Error("Unable to copy property of type " + property.actualtype);
             }
         }
     }
-    return constructorBody;
+    return output;
 }
 
 function getRequestActions(tabbing, apiCall) {
     if (apiCall.result === "LoginResult" || apiCall.result === "RegisterPlayFabUserResult")
-        return tabbing + "m_settings->titleId = request.TitleId;\n"
+        return tabbing + "m_settings->titleId = request.titleId;\n"
 
     if (apiCall.url === "/Authentication/GetEntityToken")
         return tabbing + "String authKey, authValue;\n" +
@@ -292,15 +452,15 @@ function getRequestActions(tabbing, apiCall) {
 
 function getResultActions(tabbing, apiCall) {
     if (apiCall.url === "/Authentication/GetEntityToken")
-        return tabbing + "context->HandlePlayFabLogin(\"\", \"\", outResult.Entity->Id, outResult.Entity->Type, outResult.EntityToken);\n";
+        return tabbing + "context->HandlePlayFabLogin(\"\", \"\", outResult.entity->id, outResult.entity->type, outResult.entityToken);\n";
     if (apiCall.result === "LoginResult")
         return tabbing + "outResult.authenticationContext = std::make_shared<PlayFabAuthenticationContext>();\n" +
-            tabbing + "outResult.authenticationContext->HandlePlayFabLogin(outResult.PlayFabId, outResult.SessionTicket, outResult.EntityToken->Entity->Id, outResult.EntityToken->Entity->Type, outResult.EntityToken->EntityToken);\n" +
-            tabbing + "context->HandlePlayFabLogin(outResult.PlayFabId, outResult.SessionTicket, outResult.EntityToken->Entity->Id, outResult.EntityToken->Entity->Type, outResult.EntityToken->EntityToken);\n" +
-            tabbing + "MultiStepClientLogin(context, outResult.SettingsForUser->NeedsAttribution);\n";
+            tabbing + "outResult.authenticationContext->HandlePlayFabLogin(outResult.playFabId, outResult.sessionTicket, outResult.entityToken->entity->id, outResult.entityToken->entity->type, outResult.entityToken->entityToken);\n" +
+            tabbing + "context->HandlePlayFabLogin(outResult.playFabId, outResult.sessionTicket, outResult.entityToken->entity->id, outResult.entityToken->entity->type, outResult.entityToken->entityToken);\n" +
+            tabbing + "MultiStepClientLogin(context, outResult.settingsForUser->needsAttribution);\n";
     if (apiCall.result === "RegisterPlayFabUserResult")
-        return tabbing + "context->HandlePlayFabLogin(outResult.PlayFabId, outResult.SessionTicket, outResult.EntityToken->Entity->Id, outResult.EntityToken->Entity->Type, outResult.EntityToken->EntityToken);\n"
-            + tabbing + "MultiStepClientLogin(context, outResult.SettingsForUser->NeedsAttribution);\n";
+        return tabbing + "context->HandlePlayFabLogin(outResult.playFabId, outResult.sessionTicket, outResult.entityToken->entity->id, outResult.entityToken->entity->type, outResult.entityToken->entityToken);\n"
+            + tabbing + "MultiStepClientLogin(context, outResult.settingsForUser->needsAttribution);\n";
     if (apiCall.result === "AttributeInstallResult")
         return tabbing + "context->advertisingIdType += \"_Successful\";\n";
 
@@ -319,3 +479,10 @@ function getVerticalNameDefault() {
     }
     return "";
 }
+
+function createGuid() {
+    return '{xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx}'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+} 

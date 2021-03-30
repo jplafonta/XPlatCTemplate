@@ -7,10 +7,10 @@
 #include <playfab/QoS/PingResult.h>
 #include <playfab/QoS/PlayFabQoSApi.h>
 
-#include <playfab/PlayFabMultiplayerInstanceApi.h>
-#include <playfab/PlayFabMultiplayerDataModels.h>
-#include <playfab/PlayFabEventsInstanceApi.h>
-#include <playfab/PlayFabEventsDataModels.h>
+#include <Multiplayer/MultiplayerApi.h>
+#include <Multiplayer/MultiplayerDataModels.h>
+#include <Events/EventsApi.h>
+#include <Events/EventsDataModels.h>
 #include <playfab/PlayFabSettings.h>
 
 using namespace PlayFab::MultiplayerModels;
@@ -140,7 +140,7 @@ namespace PlayFab
             {
                 JsonValue dcResult;
 
-                JsonUtils::ObjectAddMember(dcResult, "Region", result.regionResults[i].region);
+                JsonUtils::ObjectAddMember(dcResult, "Region", result.regionResults[i].region.data());
                 JsonUtils::ObjectAddMember(dcResult, "LatencyMs", result.regionResults[i].latencyMs);
                 JsonUtils::ObjectAddMember(dcResult, "ErrorCode",result.regionResults[i].errorCode);
 
@@ -152,10 +152,11 @@ namespace PlayFab
             PlayFab::EventsModels::WriteEventsRequest request;
             PlayFab::EventsModels::EventContents eventContents;
 
-            eventContents.Name = "qos_result";
-            eventContents.EventNamespace = "playfab.servers";
-            eventContents.Payload = value;
-            request.Events.push_back(eventContents);
+            // TODO
+            //eventContents.m_name = "qos_result";
+            //eventContents.m_eventNamespace = "playfab.servers";
+            //eventContents.m_payload = value;
+            //request.m_events.push_back(eventContents);
 
             // TODO allow setting queue here somehow
             eventsApi->WriteTelemetryEvents(request, TaskQueue(), WriteEventsSuccessCallBack, WriteEventsFailureCallBack);
@@ -191,9 +192,10 @@ namespace PlayFab
 
         void PlayFabQoSApi::ListQosServersForTitleSuccessCallBack(const ListQosServersForTitleResponse& result)
         {
-            for (const QosServer& server : result.QosServers)
+            for (auto i = 0u; i < result.qosServersCount; ++i)
             {
-                regionMap[server.Region] = server.ServerUrl;
+                auto& server = result.qosServers[i];
+                regionMap[server->region] = server->serverUrl;
             }
 
             listQosServersCompleted = true;

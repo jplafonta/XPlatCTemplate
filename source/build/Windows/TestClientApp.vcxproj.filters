@@ -38,7 +38,10 @@
     <ClInclude Include="$(TestSourceDir)\TestApp\TestApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\test\TestApp\JsonParsingTests.h">
+    <ClInclude Include="$(TestSourceDir)\TestApp\JsonParsingTests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(TestSourceDir)\TestApp\ModelTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -70,7 +73,10 @@
     <ClCompile Include="TestAppWin32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\TestApp\JsonParsingTests.cpp">
+    <ClCompile Include="$(TestSourceDir)\TestApp\JsonParsingTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(TestSourceDir)\TestApp\ModelTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

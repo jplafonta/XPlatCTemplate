@@ -3,7 +3,7 @@
 #ifndef DISABLE_PLAYFABENTITY_API
 
 #include <playfab/PlayFabError.h>
-#include <playfab/PlayFabEventsDataModels.h>
+#include <Events/EventsDataModels.h>
 
 // This file contains declaration of base interfaces for any custom playstream events
 // as well as PlayFab-specific implementations
@@ -48,7 +48,7 @@ namespace PlayFab
     public:
         PlayFabEvent();
         void SetName(const String& eventName); // Sets the event name
-        const String& GetName() const; // Gets the event name
+        String GetName() const; // Gets the event name
         void SetNamespace(const String& eventNamespace); // Sets the event namespace
         void SetEntity(const EventsModels::EntityKey& entity); // Set EntityToken
         void SetProperty(const String& name, const String& value); // Sets a value of a string property by name

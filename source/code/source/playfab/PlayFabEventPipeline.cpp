@@ -3,7 +3,7 @@
 #ifndef DISABLE_PLAYFABENTITY_API
 
 #include <playfab/PlayFabEventPipeline.h>
-#include <playfab/PlayFabEventsInstanceApi.h>
+#include <Events/EventsApi.h>
 #include <playfab/PlayFabSettings.h>
 
 #include <chrono>
@@ -330,11 +330,12 @@ namespace PlayFab
             batchReq.authenticationContext = this->settings->authenticationContext;
         }
 
-        for (const auto& eventEmitRequest : localbatch)
-        {
-            const auto& playFabEmitRequest = std::dynamic_pointer_cast<const PlayFabEmitEventRequest>(eventEmitRequest);
-            batchReq.Events.push_back(playFabEmitRequest->event->eventContents);
-        }
+        // TODO
+        //for (const auto& eventEmitRequest : localbatch)
+        //{
+        //    const auto& playFabEmitRequest = std::dynamic_pointer_cast<const PlayFabEmitEventRequest>(eventEmitRequest);
+        //    batchReq.Events.push_back(playFabEmitRequest->event->eventContents);
+        //}
 
         size_t batchId = this->nextBatchId.fetch_add(1);
         ++batchesInFlight;

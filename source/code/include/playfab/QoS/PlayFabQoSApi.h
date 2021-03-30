@@ -5,7 +5,7 @@
 #include <playfab/QoS/QoS.h>
 #include <playfab/QoS/QoSResult.h>
 #include <playfab/QoS/QoSSocket.h>
-#include <playfab/PlayFabEventsDataModels.h>
+#include <Events/EventsDataModels.h>
 #include <playfab/PlayFabError.h>
 
 #include <chrono>

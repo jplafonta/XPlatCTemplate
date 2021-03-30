@@ -1,0 +1,73 @@
+#pragma once
+
+<%- getApiDefine(api) %>
+
+#include <playfab/PlayFab<%- api.name %>DataModels_c.h>
+#include <BaseModel.h>
+#include <JsonUtils.h>
+
+namespace PlayFab
+{
+    namespace JsonUtils
+    {
+<% for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype = sortedClasses[typeIdx]; %>
+        template<>
+        inline JsonValue ToJson<>(const <%- prefix %><%- datatype.name %>& input)
+        {
+            UNREFERENCED_PARAMETER(input);
+            JsonValue output{ rapidjson::kObjectType };
+<%for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx]; %><%- addPropertyToJson("            ", property) %>
+<% } %>            return output;
+        }
+<% } %>
+    }
+
+    namespace <%- api.name %>Models
+    {
+        // <%- api.name %> Classes<%
+for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype = sortedClasses[typeIdx]; %>
+        struct <%- datatype.name %> : public <%- prefix %><%- datatype.name %>, public <%- getBaseType(datatype) %>
+        {
+            <%- datatype.name %>() : <%- prefix %><%- datatype.name %>{}
+            {
+            }
+<% if (canDefaultCopyConstructor(datatype)) { %>
+            <%- datatype.name %>(const <%- datatype.name %>&) = default;
+<% } else { %>
+            <%- datatype.name %>(const <%- datatype.name %>& src) :
+                <%- prefix %><%- datatype.name %>{ src }<%- getCopyConstructorInitializationList("                ", datatype) %>
+            {
+<%- getCopyConstructorBody("                ", datatype, prefix) %>
+            }
+<% } %>
+            ~<%- datatype.name %>() = default;
+
+            void FromJson(const JsonValue&<%- ifHasProps(datatype, " input") %>) override
+            {
+                <%- ifHasProps(datatype, "UNREFERENCED_PARAMETER(input);") %>
+<% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
+%><%- getPropertyFromJson("                ", property, datatype) %>
+<% } %>            }
+
+            JsonValue ToJson() const override
+            { 
+                return JsonUtils::ToJson<<%- prefix %><%- datatype.name %>>(*this);
+            }
+
+        private:
+<% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
+%><%- getPropertyDefinition("            ", property, prefix, true) %>
+<% } %>        };
+<% } %>
+    }
+
+    // EnumRange definitions used for Enum (de)serialization <%
+for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { var enumtype = enumtypes[enumIdx]; var maxval = enumtype.enumvalues[enumtype.enumvalues.length-1]; %>
+    template<> struct EnumRange<<%- prefix %><%- enumtype.name %>>
+    {
+        static constexpr <%- prefix %><%- enumtype.name %> maxValue = <%- prefix %><%- enumtype.name %>::<%- maxval.name %>;
+    };
+<% } %>
+}
+
+#endif

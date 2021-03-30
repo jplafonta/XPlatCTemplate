@@ -9,7 +9,7 @@
   
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SdkSourceDir);$(SdkSourceDir)/include;$(SdkSourceDir)/source/playfab</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SdkSourceDir);$(SdkSourceDir)/include;$(SdkSourceDir)/source/playfab;$(SdkSourceDir)/source</AdditionalIncludeDirectories>
     </ClCompile>
     <Lib>
       <AdditionalDependencies>ws2_32.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>

@@ -3,11 +3,9 @@
   <ItemGroup>
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
     <Filter Include="Header Files">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
     <Filter Include="Header Files\playfab">
       <UniqueIdentifier>{de0a6aea-289b-42d4-9b67-c439bfee33f1}</UniqueIdentifier>
@@ -21,16 +19,33 @@
     <Filter Include="Source Files\playfab\QoS">
       <UniqueIdentifier>{f39744c7-f312-4119-a2bd-ae011afab4ef}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
+<% for(var i in apis) { var api = apis[i];
+%>    <Filter Include="Source Files\playfab\<%- api.name %>">
+      <UniqueIdentifier><%- createGuid() %></UniqueIdentifier>
+    </Filter>
+<% } %>  </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\AsyncProvider.h">
+<% for(var i in apis) { var api = apis[i];
+%>    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>DataModels_c.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\HttpClient.h">
+    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>DataModels.h">
+      <Filter>Source Files\playfab\<%- api.name %></Filter>
+    </ClInclude>
+    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>Api.h">
+      <Filter>Source Files\playfab\<%- api.name %></Filter>
+    </ClInclude>
+    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>Api.cpp">
+      <Filter>Source Files\playfab\<%- api.name %></Filter>
+    </ClCompile>
+<% } %>    <ClInclude Include="$(SdkSourceDir)\include\playfab\AsyncProvider.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\InternalMemory.h">
-      <Filter>Header Files\playfab</Filter>
+    <ClInclude Include="$(SdkSourceDir)\source\playfab\HttpClient.h">
+      <Filter>Source Files\playfab</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SdkSourceDir)\source\playfab\InternalMemory.h">
+      <Filter>Source Files\playfab</Filter>
     </ClInclude>
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabPlatformMacros.h">
       <Filter>Header Files\playfab</Filter>
@@ -47,20 +62,10 @@
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabApiSettings.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabBaseModel.h">
-      <Filter>Header Files\playfab</Filter>
+    <ClInclude Include="$(SdkSourceDir)\source\playfab\BaseModel.h">
+      <Filter>Source Files\playfab</Filter>
     </ClInclude>
-<% for(var i in apis) { var api = apis[i];
-%>    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>Api.h">
-      <Filter>Header Files\playfab</Filter>
-    </ClInclude>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>InstanceApi.h">
-      <Filter>Header Files\playfab</Filter>
-    </ClInclude>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>DataModels.h">
-      <Filter>Header Files\playfab</Filter>
-    </ClInclude>
-<% } %>    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabSettings.h">
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabSettings.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>
     <ClInclude Include="$(SdkSourceDir)\stdafx.h">
@@ -90,15 +95,15 @@
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabJsonHeaders.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\ResultMacros.h">
-      <Filter>Header Files\playfab</Filter>
+    <ClInclude Include="$(SdkSourceDir)\source\playfab\ResultMacros.h">
+      <Filter>Source Files\playfab</Filter>
     </ClInclude>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\StdOptional.h">
-      <Filter>Header Files\playfab</Filter>
+    <ClInclude Include="$(SdkSourceDir)\source\playfab\StdOptional.h">
+      <Filter>Source Files\playfab</Filter>
     </ClInclude>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\TaskQueue.h">
-      <Filter>Header Files\playfab</Filter>
-    </ClInclude>	
+    <ClInclude Include="$(SdkSourceDir)\source\playfab\TaskQueue.h">
+      <Filter>Source Files\playfab</Filter>
+    </ClInclude>
     <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\RegionResult.h">
       <Filter>Header Files\playfab\QoS</Filter>
     </ClInclude>
@@ -122,18 +127,21 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-  	<ClCompile Include="$(SdkSourceDir)\source\playfab\AsyncProvider.cpp">
+    <ClCompile Include="$(SdkSourceDir)\source\playfab\AsyncProvider.cpp">
       <Filter>Source Files\playfab</Filter>
     </ClCompile>  
   	<ClCompile Include="$(SdkSourceDir)\source\playfab\HttpClient.cpp">
       <Filter>Source Files\playfab</Filter>
     </ClCompile>
-	<ClInclude Include="$(SdkSourceDir)\source\playfab\JsonUtils.h">
+	  <ClInclude Include="$(SdkSourceDir)\source\playfab\JsonUtils.h">
       <Filter>Source Files\playfab</Filter>
     </ClInclude>
-	<ClCompile Include="$(SdkSourceDir)\source\playfab\JsonUtils.cpp">
+	  <ClCompile Include="$(SdkSourceDir)\source\playfab\JsonUtils.cpp">
       <Filter>Source Files\playfab</Filter>
     </ClCompile>
+    <ClCompile Include="$(SdkSourceDir)\source\playfab\ModelBase.cpp">
+      <Filter>Source Files\playfab</Filter>
+    </ClCompile>	
     <ClInclude Include="$(SdkSourceDir)\source\playfab\EnumTraits.h">
       <Filter>Source Files\playfab</Filter>
     </ClInclude>
@@ -146,14 +154,7 @@
     <ClCompile Include="$(SdkSourceDir)\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-<% for(var i in apis) { var api = apis[i];
-%>    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFab<%- api.name %>Api.cpp">
-      <Filter>Source Files\playfab</Filter>
-    </ClCompile>
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFab<%- api.name %>InstanceApi.cpp">
-      <Filter>Source Files\playfab</Filter>
-    </ClCompile>
-<% } %>    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabError.cpp">
+    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabError.cpp">
       <Filter>Source Files\playfab</Filter>
     </ClCompile>
     <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabSettings.cpp">
@@ -179,7 +180,7 @@
     </ClCompile>
   	<ClCompile Include="$(SdkSourceDir)\source\playfab\TaskQueue.cpp">
       <Filter>Source Files\playfab</Filter>
-    </ClCompile>	
+    </ClCompile>
     <ClCompile Include="$(SdkSourceDir)\source\playfab\QoS\RegionResult.cpp">
       <Filter>Source Files\playfab\QoS</Filter>
     </ClCompile>

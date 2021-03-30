@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include <playfab/PlayFabClientInstanceApi.h>
+#include <Client/ClientApi.h>
 
 namespace PlayFabUnit
 {

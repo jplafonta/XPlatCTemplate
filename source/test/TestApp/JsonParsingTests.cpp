@@ -1,6 +1,6 @@
 #include "TestAppPch.h"
 #include "JsonParsingTests.h"
-#include <playfab/PlayFabClientDataModels.h>
+#include <Client/ClientDataModels.h>
 
 using namespace PlayFab;
 
@@ -18,42 +18,46 @@ constexpr char jsonString[] = R"(
     "ArrayValue":[0,1,2,3,4,5],
     "SubObjectValue": 
     {
-        "AdActivity":"AdActivityStart"
+        "CountryCode":"IN"
     }
 }
 )";
 
 namespace PlayFabUnit
 {
+
+
     void JsonParsingTests::BasicJsonParsing(TestContext& testContext)
     {
-        struct SubObjectModel : public PlayFabBaseModel
+        struct SubObjectModel : public BaseModel
         {
-            ClientModels::AdActivity AdActivity;
+            PlayFabClientCountryCode CountryCode;
 
             void FromJson(const JsonValue& input)
             {
-                JsonUtils::ObjectGetMember(input, "AdActivity", AdActivity);
+                JsonUtils::ObjectGetMember(input, "CountryCode", CountryCode);
             }
 
-            JsonValue ToJson() const 
+            JsonValue ToJson() const
             {
                 JsonValue output{ rapidjson::kObjectType };
-                JsonUtils::ObjectAddMember(output, "AdActivity", AdActivity);
+                JsonUtils::ObjectAddMember(output, "CountryCode", CountryCode);
                 return output;
             }
         };
 
-        struct ObjectModel : public PlayFabBaseModel
+        struct ObjectModel : public BaseModel
         {
             PlayFabEnum EnumValue;
-            List<int> ArrayValue;
+            PointerArray<int, int> ArrayValue;
             SubObjectModel SubObjectValue;
 
             void FromJson(const JsonValue& input)
             {
                 JsonUtils::ObjectGetMember(input, "EnumValue", EnumValue);
-                JsonUtils::ObjectGetMember(input, "ArrayValue", ArrayValue);
+                uint32_t arraySize;
+                int** arrayPtr;
+                JsonUtils::ObjectGetMember(input, "ArrayValue", ArrayValue, arrayPtr, arraySize);
                 JsonUtils::ObjectGetMember(input, "SubObjectValue", SubObjectValue);
             }
 
