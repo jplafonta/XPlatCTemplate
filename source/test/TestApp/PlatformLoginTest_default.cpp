@@ -8,8 +8,8 @@
 #if !defined(DISABLE_PLAYFABCLIENT_API)
 
 #include "TestContext.h"
-#include <playfab/PlayFabApiSettings.h>
-#include <playfab/PlayFabSettings.h>
+#include <PlayFabApiSettings.h>
+#include <PlayFabSettings.h>
 
 #include "PlatformLoginTest.h"
 

@@ -100,67 +100,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="$(SdkSourceDir)\source\playfab\AsyncProvider.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\playfab\HttpClient.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\playfab\InternalMemory.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabPlatformMacros.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabPlatformTypes.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabPlatformUtils.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabAuthenticationContext.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabApiSettings.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\playfab\BaseModel.h" />
-<% for(var i in apis) { var api = apis[i];%>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>DataModels_c.h" /><% } %>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabEvent.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabEventApi.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabEventBuffer.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabEventPipeline.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabEventRouter.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabError.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabSettings.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabSpinLock.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFabJsonHeaders.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\playfab\ResultMacros.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\playfab\StdOptional.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\playfab\TaskQueue.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\RegionResult.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\PingResult.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\PlayFabQoSApi.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\QoS.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\QoSResult.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\QoSSocket.h" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\QoS\XPlatSocket.h" />
-    <ClInclude Include="$(SdkSourceDir)\stdafx.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\playfab\EnumTraits.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\playfab\JsonUtils.h" />
-  </ItemGroup>
-  <ItemGroup>
-<% for(var i in apis) { var api = apis[i];%>
-    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>Api.h" />
+<% for (var file in projectFiles.includeFiles) { %>
+    <ClInclude Include="$(SdkSourceDir)\<%- file %>" /><% 
+} 
+for (var file in projectFiles.sourceFiles) { 
+    var header = file.endsWith(".h"); 
+    if (header) { %>
+    <ClInclude Include="$(SdkSourceDir)\<%- file %>" /><%
+    } else { %>
+    <ClCompile Include="$(SdkSourceDir)\<%- file %>" /><%
+    }
+} 
+for(var i in apis) { var api = apis[i];%>
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>DataModels_c.h" />
     <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>DataModels.h" />
-    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>Api.cpp" /><% } %>
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\AsyncProvider.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\HttpClient.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\JsonUtils.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\BaseModel.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabAuthenticationContext.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabApiSettings.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabEvent.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabEventApi.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabEventBuffer.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabEventPipeline.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabEventRouter.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabError.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabSettings.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\PlayFabSpinLock.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\TaskQueue.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\QoS\RegionResult.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\QoS\PlayFabQoSApi.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\QoS\QoSSocket.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\source\playfab\QoS\XPlatSocket.cpp" />
-    <ClCompile Include="$(SdkSourceDir)\stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>Api.h" />
+    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>Api.cpp" /><%
+} %>
+    <ClInclude Include="$(SdkSourceDir)\source\stdafx.h" />
+    <ClCompile Include="$(SdkSourceDir)\source\stdafx.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

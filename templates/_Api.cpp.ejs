@@ -1,9 +1,9 @@
-#include <stdafx.h>
+#include "stdafx.h"
 
 <%- getApiDefine(api) %>
 
-#include <<%- api.name %>/<%- api.name %>Api.h>
-#include <playfab/PlayFabSettings.h>
+#include "<%- api.name %>Api.h"
+#include "PlayFabSettings.h"
 
 #if defined(PLAYFAB_PLATFORM_WINDOWS)
 #pragma warning (disable: 4100) // formal parameters are part of a public interface

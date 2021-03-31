@@ -12,7 +12,7 @@
 #include "TestUtils.h"
 
 #if !defined(DISABLE_PLAYFABCLIENT_API)
-#include <playfab/PlayFabSettings.h>
+#include <PlayFabSettings.h>
 #include "PlatformLoginTest.h"
 #endif
 

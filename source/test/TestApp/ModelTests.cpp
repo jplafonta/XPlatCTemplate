@@ -1,7 +1,6 @@
 #include "TestAppPch.h"
 #include "ModelTests.h"
 #include <Client/ClientDataModels.h>
-#include <playfab/PlayFabPlatformUtils.h>
 
 using namespace PlayFab;
 using namespace PlayFab::ClientModels;

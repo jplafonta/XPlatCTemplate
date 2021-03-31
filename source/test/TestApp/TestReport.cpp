@@ -57,7 +57,7 @@ namespace PlayFabUnit
         internalReport.tests += 1;
     }
 
-    void TestReport::TestComplete(const std::string& testName, TestFinishState testFinishState, Int64 testDurationMs, std::string message)
+    void TestReport::TestComplete(const std::string& testName, TestFinishState testFinishState, int64_t testDurationMs, std::string message)
     {
         // Add a new TestCaseReport for the completed test.
         std::shared_ptr<TestCaseReport> testReport = std::make_shared<TestCaseReport>();

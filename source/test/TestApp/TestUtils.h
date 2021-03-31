@@ -3,8 +3,6 @@
 #pragma once
 
 #include "TestDataTypes.h"
-#include <playfab/PlayFabJsonHeaders.h>
-#include <playfab/InternalMemory.h>
 
 namespace PlayFabUnit
 {

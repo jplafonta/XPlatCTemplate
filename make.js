@@ -14,6 +14,7 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
 
     var locals = {
         apis: apis,
+        projectFiles: parseProjectFiles("project_files.json"),
         buildIdentifier: sdkGlobals.buildIdentifier,
         clientDefines: clientDefines,
         libDefines: libDefines,
@@ -75,6 +76,21 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
 }
 
 // *************************** Internal utility methods ***************************
+function parseProjectFiles(filename) {
+    var fullPath = path.resolve(__dirname, filename);
+    console.log("Begin reading File: " + fullPath);
+    var projectFiles = null;
+    try {
+        projectFiles = require(fullPath);
+    }
+    catch (err) {
+        console.log(" ***** Failed to Load: " + fullPath);
+        throw err;
+    }
+    console.log("Finished reading: " + fullPath);
+    return projectFiles;
+}
+
 function getEnumTypes(datatypes) {
     var enumtypes = [];
 
