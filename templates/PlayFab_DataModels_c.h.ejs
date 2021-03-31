@@ -25,15 +25,11 @@ enum class <%- prefix %><%- enumtype.name %> : uint32_t
 <% } %>
 
 // <%- api.name %> structs<%
-for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { 
-    var datatype = sortedClasses[typeIdx]; 
-    // Don't define structs for datatypes without any properties
-    if (datatype.properties && datatype.properties.length > 0) { %>
+for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype = sortedClasses[typeIdx]; { %>
 typedef struct <%- prefix %><%- datatype.name %>
-{ <%
-for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx]; %>
-<%- getPropertyDefinition("    ", property, prefix, false) %><% 
-} %>
+{<%
+for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
+%><%- getPropertyDefinition("    ", property, prefix, false) %><% } %>
 } <%- prefix %><%- datatype.name %>;
 <% }
 } %>

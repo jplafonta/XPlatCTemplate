@@ -37,6 +37,8 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
     var remStaticDefine = ""; // " && !defined(DISABLE_PLAYFAB_STATIC_API)";
     var prefix = "PlayFab" + api.name;
 
+    pruneEmptyTypes(api);
+
     var locals = {
         api: api,
         prefix: prefix,
@@ -90,6 +92,48 @@ function parseProjectFiles(filename) {
     return projectFiles;
 }
 
+function pruneEmptyTypes(api) {
+
+    var datatypes = api.datatypes;
+
+    // Prune properties whose type is an empty class
+    for (var typeIdx in datatypes) {
+        var datatype = datatypes[typeIdx];
+        if (datatype.properties) {
+            for (var propIdx = datatype.properties.length - 1; propIdx >= 0; propIdx--) {
+                var property = datatype.properties[propIdx];
+                if (property.isclass) {
+                    var propertyDataType = datatypes[property.actualtype]
+                    if (!propertyDataType.properties || propertyDataType.properties.length === 0) {
+                        datatype.properties.splice(propIdx, 1);
+                    }
+                }
+            }
+        }
+    }
+
+    // Prune datatypes which are empty classes
+    for (typeIdx in datatypes) {
+        datatype = datatypes[typeIdx];
+        if (datatype.properties && datatype.properties.length === 0) {
+            delete datatypes[typeIdx];
+        }
+    }
+
+    // Change request and response types if they are empty classes
+    var calls = api.calls;
+    for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
+        var apiCall = calls[callIdx];
+        if (!(apiCall.request in datatypes)) {
+            apiCall.request = "BaseRequest";
+        }
+        if (!(apiCall.result in datatypes)) {
+            apiCall.result = "BaseResult";
+        }
+    }
+
+}
+
 function getEnumTypes(datatypes) {
     var enumtypes = [];
 
@@ -110,16 +154,19 @@ function getSortedClasses(datatypes) {
         if (datatype.properties) {
             for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
                 var property = datatype.properties[propIdx];
-                if (property.isclass || property.isenum)
+                if (property.isclass || property.isenum) {
                     addType(datatypes[property.actualtype]);
+                }
             }
         }
         addedTypes.add(datatype.name);
         sortedClasses.push(datatype);
     };
 
-    for (var typeIdx in datatypes) // Add all types and their dependencies
+    // Add all types and their dependencies
+    for (var typeIdx in datatypes) {
         addType(datatypes[typeIdx]);
+    }
     return sortedClasses;
 }
 
@@ -335,7 +382,7 @@ function getPropertyDefinition(tabbing, property, prefix, isInternal) {
     if (!isInternal || requiresInternalProperty(property)) {
         var type = isInternal ? getInternalPropertyType(property, prefix) : getPublicPropertyType(property, prefix);
         var propName = getPropertyName(property, isInternal);
-        output = tabbing + type + " " + propName + ";";
+        output = "\n" + tabbing + type + " " + propName + ";";
 
         // For public collection properties add an additional "count" property
         if (property.collection && !(type === "PlayFabJsonObject") && !isInternal) {

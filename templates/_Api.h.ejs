@@ -52,8 +52,11 @@ namespace PlayFab
         bool IsClientLoggedIn();
 <% } %>
         // ------------ Generated API calls
-<% for (var callIdx = 0; callIdx < api.calls.length; callIdx++) { var apiCall = api.calls[callIdx];
-%>        void <%- apiCall.name %>(<%- api.name %>Models::<%- apiCall.request %>& request, const TaskQueue& queue, const ProcessApiCallback<<%- api.name %>Models::<%- apiCall.result %>> callback, const ErrorCallback errorCallback = nullptr);
+<% for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
+    var apiCall = api.calls[callIdx];
+    var requestNamespace = apiCall.request === "BaseRequest" ? "PlayFab" : api.name + "Models";
+    var resultNamespace = apiCall.result === "BaseResult" ? "PlayFab" : api.name + "Models";
+%>        void <%- apiCall.name %>(<%- requestNamespace %>::<%- apiCall.request %>& request, const TaskQueue& queue, const ProcessApiCallback<<%- resultNamespace %>::<%- apiCall.result %>> callback, const ErrorCallback errorCallback = nullptr);
 <% }
 if (hasClientOptions) { %>
         // Private, Client-Specific
