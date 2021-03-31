@@ -2,16 +2,38 @@
 
 #pragma once
 
-#include <array>
-#include <httpClient/pal.h>
-#include <playfab/InternalMemory.h>
-#include <playfab/PlayFabPlatformMacros.h>
-#include <playfab/PlayFabPlatformTypes.h>
-#include <playfab/PlayFabPlatformUtils.h>
-#include <playfab/PlayFabApiSettings.h>
-#include <playfab/PlayFabAuthenticationContext.h>
+#include <algorithm>
+#include <chrono>
+#include <condition_variable>
+#include <cstring>
 #include <functional>
-#include <playfab/TaskQueue.h>
+#include <fstream>
+#include <future>
+#include <iomanip>
+#include <iostream>
+#include <list>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <array>
+#include <assert.h>
+
+// Pulled from XPlatC pch file. Test App still relying on a lot of internal types/APIs, but this
+// should eventually be changed
+#include <httpClient/pal.h>
+#include <httpClient/async.h>
+#include "JsonHeaders.h"
+#include "StdOptional.h"
+#include "ResultMacros.h"
+#include "InternalMemory.h"
+#include "PlayFabPlatformMacros.h"
+#include "PlatformUtils.h"
+#include "PlayFabApiSettings.h"
+#include "PlayFabAuthenticationContext.h"
 
 #if defined (_XBOX_ONE)
 

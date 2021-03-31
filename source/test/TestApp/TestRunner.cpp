@@ -2,7 +2,7 @@
 
 #include "TestAppPch.h"
 #include <thread>
-#include <playfab/PlayFabSettings.h>
+#include <PlayFabSettings.h>
 #include "TestCase.h"
 #include "TestContext.h"
 #include "TestRunner.h"
@@ -10,7 +10,7 @@
 
 namespace PlayFabUnit
 {
-    static const Int64 TEST_TIMEOUT_MILLISECONDS = 15000;
+    static const int64_t TEST_TIMEOUT_MILLISECONDS = 15000;
 
     TestRunner::TestRunner() :
         suiteState(TestActiveState::PENDING),
@@ -60,7 +60,7 @@ namespace PlayFabUnit
             // Tick the test.
             while (TestActiveState::ACTIVE == test->activeState)
             {
-                Int64 timeNow = PlayFab::GetMilliTicks();
+                int64_t timeNow = PlayFab::GetMilliTicks();
                 bool timeExpired = (timeNow - test->startTime) > TEST_TIMEOUT_MILLISECONDS;
 
                 if ((TestActiveState::READY != test->activeState) && !timeExpired) // Not finished & not timed out
@@ -88,7 +88,7 @@ namespace PlayFabUnit
             // printf("\n%s\n", suiteTestSummary.c_str()); // If we're debugging EventTests, it's nice to see each test as it happens...
 
             // Update the report.
-            Int64 testDurationMs = test->endTime - test->startTime;
+            int64_t testDurationMs = test->endTime - test->startTime;
             suiteTestReport.TestComplete(test->testName, test->finishState, testDurationMs, test->testResultMsg);
         }
 
@@ -106,8 +106,8 @@ namespace PlayFabUnit
     {
         std::stringstream summaryStream;
 
-        Int64 timeNow = PlayFab::GetMilliTicks();
-        Int64 testStartTime, testEndTime;
+        int64_t timeNow = PlayFab::GetMilliTicks();
+        int64_t testStartTime, testEndTime;
         size_t testsFinishedCount = 0, testsPassedCount = 0, testsFailedCount = 0, testsSkippedCount = 0;
 
         for (auto& test : suiteTests)
@@ -140,7 +140,7 @@ namespace PlayFabUnit
             }
 
             // Line for each test report
-            Int64 testDurationMs = testEndTime - testStartTime;
+            int64_t testDurationMs = testEndTime - testStartTime;
             summaryStream << std::setw(10) << testDurationMs << " ms";
             summaryStream << " - " << ToString(test->finishState);
             summaryStream << " - " << test->testName;
