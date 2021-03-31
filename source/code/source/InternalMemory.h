@@ -1,14 +1,36 @@
 #pragma once
 
-#include <memory>
+#include <playfab/PlayFabGlobal.h>
+#include <list>
+#include <string>
+#include <map>
 #include <unordered_map>
 #include <set>
-#include <queue>
 #include <unordered_set>
-#include <map>
+#include <queue>
 
 namespace PlayFab
 {
+
+namespace Detail
+{
+
+struct MemoryHooks
+{
+    PlayFabMemAllocFunction* alloc;
+    PlayFabMemFreeFunction* free;
+};
+
+MemoryHooks& GetMemoryHooks();
+void SetMemoryHooks(PlayFabMemAllocFunction* memAllocFunc, PlayFabMemFreeFunction* memFreeFunc);
+
+}
+
+//------------------------------------------------------------------------------
+// Raw allocation and free methods
+//------------------------------------------------------------------------------
+void* Alloc(size_t size);
+void Free(void* pointer) noexcept;
 
 //------------------------------------------------------------------------------
 // Allocator
@@ -49,25 +71,9 @@ struct JsonAllocator
 public:
     static const bool kNeedFree = true;
 
-    void* Malloc(size_t size)
-    {
-        return malloc(size);
-    }
-    void* Realloc(void* originalPtr, size_t originalSize, size_t newSize)
-    {
-        void* newPtr = nullptr;
-        if (newSize > 0)
-        {
-            newPtr = Malloc(newSize);
-            memcpy(newPtr, originalPtr, (originalSize < newSize ? originalSize : newSize));
-        }
-        Free(originalPtr);
-        return newPtr;
-    }
-    static void Free(void* ptr)
-    {
-        free(ptr);
-    }
+    void* Malloc(size_t size);
+    void* Realloc(void* originalPtr, size_t originalSize, size_t newSize);
+    static void Free(void* ptr);
 };
 
 //------------------------------------------------------------------------------
@@ -102,14 +108,14 @@ T* Allocator<T>::allocate(size_t n)
         throw std::bad_alloc{};
     }
 
-    auto rawPtr = malloc(n * sizeof(T)); // Bug 15586224: how to ensure alignment?
+    auto rawPtr = Alloc(n * sizeof(T)); // Bug 15586224: how to ensure alignment?
     return static_cast<T*>(rawPtr);
 }
 
 template<class T>
 void Allocator<T>::deallocate(_In_opt_ void* p, size_t) noexcept
 {
-    free(p);
+    Free(p);
 }
 
 template<class T>

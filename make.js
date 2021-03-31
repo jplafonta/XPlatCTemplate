@@ -25,8 +25,7 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
         vsVer: "v141", // As C++ versions change, we may need to update this
         vsYear: "2017", // As VS versions change, we may need to update this
         getVerticalNameDefault: getVerticalNameDefault,
-        winSdkVersion: "10.0.17763.0", // Which version of the Windows SDK (A VS installation option) to use
-        createGuid: createGuid
+        winSdkVersion: "10.0.17763.0" // Which version of the Windows SDK (A VS installation option) to use
     };
 
     templatizeTree(locals, path.resolve(sourceDir, "source"), apiOutputDir);
@@ -495,10 +494,3 @@ function getVerticalNameDefault() {
     }
     return "";
 }
-
-function createGuid() {
-    return '{xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx}'.replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-} 

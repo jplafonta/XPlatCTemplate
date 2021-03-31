@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup>
-<% for(var i = 0; i < projectFiles.filters.length; i++) {
+  <ItemGroup><%
+for(var i = 0; i < projectFiles.filters.length; i++) {
     var filter = projectFiles.filters[i]; %>
     <Filter Include="<%- filter %>" /><% 
 }
@@ -9,8 +9,8 @@ for(var i in apis) { var api = apis[i]; %>
     <Filter Include="Source Files\<%- api.name %>" /><%
 } %>
   </ItemGroup>
-  <ItemGroup>
-<% for (var file in projectFiles.includeFiles) { 
+  <ItemGroup><%
+for (var file in projectFiles.includeFiles) { 
     var filter = projectFiles.includeFiles[file]; %>
     <ClInclude Include="$(SdkSourceDir)\<%- file %>">
       <Filter><%- filter %></Filter>
