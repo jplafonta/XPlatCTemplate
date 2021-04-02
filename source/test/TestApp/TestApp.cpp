@@ -49,10 +49,10 @@ namespace PlayFabUnit
 
     int TestApp::Main()
     {
-        HRESULT hr = HCInitialize(nullptr);
-        assert(SUCCEEDED(hr));
-        HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
-        HCTraceSetTraceToDebugger(true);
+        //HRESULT hr = HCInitialize(nullptr);
+        //assert(SUCCEEDED(hr));
+        //HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
+        //HCTraceSetTraceToDebugger(true);
 
         // Load the TestTitleData
         TestTitleData testTitleData;
@@ -75,7 +75,7 @@ namespace PlayFabUnit
 
 #if !defined(DISABLE_PLAYFABCLIENT_API)
         // Set this up for use when the tests finish
-        this->clientApi = std::make_shared<PlayFab::PlayFabClientInstanceAPI>(PlayFab::PlayFabSettings::staticPlayer);
+        //this->clientApi = std::make_shared<PlayFab::PlayFabClientInstanceAPI>(PlayFab::PlayFabSettings::staticPlayer);
 
         PlatformLoginTest loginTest;
         loginTest.SetTitleInfo(testTitleData);
@@ -97,26 +97,26 @@ namespace PlayFabUnit
 #if !defined(DISABLE_PLAYFABCLIENT_API)
         // Publish the test report via cloud script (and wait for it to finish).
 
-        PlayFab::ClientModels::LoginWithCustomIDRequest request;
-        request.customId = PlayFab::PlayFabSettings::buildIdentifier.data();
-        bool createAccount = true;
-        request.createAccount = &createAccount;
-        request.titleId = testTitleData.titleId.data();
-        this->clientApi->LoginWithCustomID(request,
-            PlayFab::TaskQueue(),
-            std::bind(&TestApp::OnPostReportLogin, this, std::placeholders::_1, testRunner.suiteTestReport),
-            std::bind(&TestApp::OnPostReportError, this, std::placeholders::_1)
-        );
+        //PlayFab::ClientModels::LoginWithCustomIDRequest request;
+        //request.customId = PlayFab::PlayFabSettings::buildIdentifier.data();
+        //bool createAccount = true;
+        //request.createAccount = &createAccount;
+        //request.titleId = testTitleData.titleId.data();
+        //this->clientApi->LoginWithCustomID(request,
+        //    PlayFab::TaskQueue(),
+        //    std::bind(&TestApp::OnPostReportLogin, this, std::placeholders::_1, testRunner.suiteTestReport),
+        //    std::bind(&TestApp::OnPostReportError, this, std::placeholders::_1)
+        //);
 
-        // Wait for CloudResponse
-        {
-            std::unique_lock<std::mutex> lk(cloudResponseMutex);
-            cloudResponseConditionVar.wait_until(lk, std::chrono::system_clock::now() + std::chrono::milliseconds(CLOUDSCRIPT_TIMEOUT_MS), [this] {return !this->cloudResponse.empty(); });
-            lk.unlock();
-        }
+        //// Wait for CloudResponse
+        //{
+        //    std::unique_lock<std::mutex> lk(cloudResponseMutex);
+        //    cloudResponseConditionVar.wait_until(lk, std::chrono::system_clock::now() + std::chrono::milliseconds(CLOUDSCRIPT_TIMEOUT_MS), [this] {return !this->cloudResponse.empty(); });
+        //    lk.unlock();
+        //}
 
-        // Publish the cloud script response to STDOUT.
-        Log("Cloud Response: %s\n", cloudResponse.c_str());
+        //// Publish the cloud script response to STDOUT.
+        //Log("Cloud Response: %s\n", cloudResponse.c_str());
 #endif //!defined(DISABLE_PLAYFABCLIENT_API)
 
         // Return 0 (success) if all tests passed. Otherwise, return 1 (error).
@@ -154,59 +154,59 @@ namespace PlayFabUnit
     }
 
 #if !defined(DISABLE_PLAYFABCLIENT_API)
-    void TestApp::OnPostReportLogin(const PlayFab::ClientModels::LoginResult& result, TestReport& testReport)
-    {
-        // Prepare a JSON value as a param for the remote cloud script.
-        JsonValue cloudReportJson{ rapidjson::kObjectType };
-        cloudReportJson.AddMember("customId", JsonValue{ result.playFabId, s_jsonAllocator }, s_jsonAllocator);
+    //void TestApp::OnPostReportLogin(const PlayFab::ClientModels::LoginResult& result, TestReport& testReport)
+    //{
+    //    // Prepare a JSON value as a param for the remote cloud script.
+    //    JsonValue cloudReportJson{ rapidjson::kObjectType };
+    //    cloudReportJson.AddMember("customId", JsonValue{ result.playFabId, s_jsonAllocator }, s_jsonAllocator);
 
-        // The expected format is a list of TestSuiteReports, but this framework only submits one
-        JsonValue arrayInit{ rapidjson::kArrayType };
+    //    // The expected format is a list of TestSuiteReports, but this framework only submits one
+    //    JsonValue arrayInit{ rapidjson::kArrayType };
 
-        // Encode the test report as JSON.
-        arrayInit.PushBack(testReport.internalReport.ToJson(), s_jsonAllocator);
+    //    // Encode the test report as JSON.
+    //    arrayInit.PushBack(testReport.internalReport.ToJson(), s_jsonAllocator);
 
-        cloudReportJson.AddMember("testReport", arrayInit, s_jsonAllocator);
+    //    cloudReportJson.AddMember("testReport", arrayInit, s_jsonAllocator);
 
-        JsonStringBuffer stringBuffer;
-        JsonWriter writer{ stringBuffer };
-        cloudReportJson.Accept(writer);
+    //    JsonStringBuffer stringBuffer;
+    //    JsonWriter writer{ stringBuffer };
+    //    cloudReportJson.Accept(writer);
 
-        // Save the test results via cloud script.
-        PlayFab::ClientModels::ExecuteCloudScriptRequest request{};
-        request.functionName = "SaveTestData";
-        request.functionParameter.stringValue = stringBuffer.GetString();
-        bool generatePlayStreamEvent = true;
-        request.generatePlayStreamEvent = &generatePlayStreamEvent;
-        this->clientApi->ExecuteCloudScript(request,
-            PlayFab::TaskQueue(),
-            std::bind(&TestApp::OnPostReportComplete, this, std::placeholders::_1),
-            std::bind(&TestApp::OnPostReportError, this, std::placeholders::_1)
-        );
-    }
+    //    // Save the test results via cloud script.
+    //    PlayFab::ClientModels::ExecuteCloudScriptRequest request{};
+    //    request.functionName = "SaveTestData";
+    //    request.functionParameter.stringValue = stringBuffer.GetString();
+    //    bool generatePlayStreamEvent = true;
+    //    request.generatePlayStreamEvent = &generatePlayStreamEvent;
+    //    this->clientApi->ExecuteCloudScript(request,
+    //        PlayFab::TaskQueue(),
+    //        std::bind(&TestApp::OnPostReportComplete, this, std::placeholders::_1),
+    //        std::bind(&TestApp::OnPostReportError, this, std::placeholders::_1)
+    //    );
+    //}
 
-    void TestApp::OnPostReportComplete(const PlayFab::ClientModels::ExecuteCloudScriptResult& result)
-    {
-        std::stringstream ss;
-        if (result.error)
-        {
-            ss << "Test report submitted via cloud script: " << PlayFab::PlayFabSettings::buildIdentifier.data() << ", " << PlayFab::PlayFabSettings::staticPlayer->playFabId.data();
-            cloudResponse = ss.str();
-        }
-        else
-        {
-            ss << "Error executing test report cloud script:\n" << result.error->error << ": " << result.error->message;
-            cloudResponse += ss.str();
-        }
-        cloudResponseConditionVar.notify_one();
-    }
+    //void TestApp::OnPostReportComplete(const PlayFab::ClientModels::ExecuteCloudScriptResult& result)
+    //{
+    //    std::stringstream ss;
+    //    if (result.error)
+    //    {
+    //        ss << "Test report submitted via cloud script: " << PlayFab::PlayFabSettings::buildIdentifier.data() << ", " << PlayFab::PlayFabSettings::staticPlayer->playFabId.data();
+    //        cloudResponse = ss.str();
+    //    }
+    //    else
+    //    {
+    //        ss << "Error executing test report cloud script:\n" << result.error->error << ": " << result.error->message;
+    //        cloudResponse += ss.str();
+    //    }
+    //    cloudResponseConditionVar.notify_one();
+    //}
 
-    void TestApp::OnPostReportError(const PlayFab::PlayFabError& error)
-    {
-        std::stringstream ss;
-        ss << "Failed to report results via cloud script: " << error.GenerateErrorReport().data();
-        cloudResponse = ss.str();
-        cloudResponseConditionVar.notify_one();
-    }
+    //void TestApp::OnPostReportError(const PlayFab::PlayFabError& error)
+    //{
+    //    std::stringstream ss;
+    //    ss << "Failed to report results via cloud script: " << error.GenerateErrorReport().data();
+    //    cloudResponse = ss.str();
+    //    cloudResponseConditionVar.notify_one();
+    //}
 #endif // !defined(DISABLE_PLAYFABCLIENT_API)
 }

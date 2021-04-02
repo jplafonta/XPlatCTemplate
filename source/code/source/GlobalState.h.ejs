@@ -1,0 +1,37 @@
+#pragma once
+
+#include <playfab/PlayFabGlobal.h><%
+for(var i in apis) {
+    var api = apis[i];
+    if (hasAuthCall(api)) { %>
+#include <<%- api.name %>/<%- api.name %>AuthApi.h><%
+    }
+} %>
+
+namespace PlayFab
+{
+    // Any global state will go here
+    class GlobalState
+    {
+    public:
+        GlobalState() = default;
+        virtual ~GlobalState() = default;
+<% for(var i in apis) {
+    var api = apis[i];
+    if (hasAuthCall(api)) { %>
+        <%- api.name %>AuthAPI const <%- api.name %>Auth;<%
+    }
+} %>
+    };
+}
+
+struct PlayFabGlobalState
+{
+    PlayFab::SharedPtr<PlayFab::GlobalState> state;
+
+    static HRESULT Create(_Outptr_ PlayFabStateHandle* stateHandle);
+    HRESULT CleanupAsync(XAsyncBlock* async);
+
+private:
+    PlayFabGlobalState();
+};

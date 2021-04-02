@@ -8,53 +8,69 @@
 #if !defined(DISABLE_PLAYFABCLIENT_API)
 
 #include "TestContext.h"
-#include <PlayFabApiSettings.h>
-#include <PlayFabSettings.h>
-
 #include "PlatformLoginTest.h"
-
-using namespace PlayFab;
-using namespace ClientModels;
+#include <playfab/PlayFabClientAuthApi.h>
 
 namespace PlayFabUnit
 {
-    void OnErrorSharedCallback(const PlayFabError& error, TestContext& testContext)
-    {
-        testContext.Fail("Unexpected error: " + std::string(error.GenerateErrorReport().data()));
-    }
-
-    void OnPlatformLogin(const LoginResult& result, TestContext& testContext)
-    {
-        testContext.Pass("Custom: " + std::string(result.playFabId));
-    }
-
     // CLIENT API
     // Attempt a successful login
     void PlatformLoginTest::TestPlatformSpecificLogin(TestContext& testContext)
     {
-        LoginWithCustomIDRequest request;
-        request.customId = PlayFabSettings::buildIdentifier.data();
+        PlayFabClientLoginWithCustomIDRequest request{};
+        //request.customId = PlayFabSettings::buildIdentifier.data();
+        request.customId = "CustomId";
         bool createAccount = true;
         request.createAccount = &createAccount;
         request.titleId = testTitleData.titleId.data();
 
-        clientApi->LoginWithCustomID(request,
-            PlayFab::TaskQueue(),
-            std::bind(OnPlatformLogin, std::placeholders::_1, std::ref(testContext)),
-            std::bind(OnErrorSharedCallback, std::placeholders::_1, std::ref(testContext))
-        );
+        auto async = std::make_unique<XAsyncBlock>();
+        async->context = &testContext;
+        async->callback = [](XAsyncBlock* async)
+        {
+            std::unique_ptr<XAsyncBlock> reclaim{ async };
+
+            auto testContext = static_cast<TestContext*>(async->context);
+            PlayFabAuthContextHandle authHandle{};
+            HRESULT hr = PlayFabAuthGetAuthResult(async, &authHandle);
+
+            if (SUCCEEDED(hr))
+            {
+                testContext->Pass();
+            }
+            else
+            {
+                std::stringstream ss;
+                ss << "LoginWithCustomId Failed with hr=" << std::hex << hr;
+                testContext->Fail(ss.str());
+            }
+
+            PlayFabAuthContextCloseHandle(authHandle);
+        };
+
+        HRESULT hr = PlayFabClientLoginWithCustomID(stateHandle, &request, async.get());
+        if (FAILED(hr))
+        {
+            std::stringstream ss;
+            ss << "LoginWithCustomId Failed with hr=" << std::hex << hr;
+            testContext.Fail(ss.str());
+        }
+        else
+        {
+            async.release();
+        }
     }
 
     void PlatformLoginTest::AddTests()
     {
         AddTest("TestPlatformSpecificLogin", &PlatformLoginTest::TestPlatformSpecificLogin);
-        // Make sure PlayFab state is clean.
-        PlayFabSettings::ForgetAllCredentials();
     }
 
     void PlatformLoginTest::ClassSetUp()
     {
-        clientApi = std::make_shared<PlayFabClientInstanceAPI>(PlayFabSettings::staticPlayer);
+        HRESULT hr = PlayFabInitialize(&stateHandle);
+        assert(SUCCEEDED(hr));
+        UNREFERENCED_PARAMETER(hr);
     }
 
     void PlatformLoginTest::SetUp(TestContext&)
@@ -71,8 +87,14 @@ namespace PlayFabUnit
 
     void PlatformLoginTest::ClassTearDown()
     {
-        // Clean up any PlayFab state for next TestCase.
-        PlayFabSettings::ForgetAllCredentials();
+        XAsyncBlock async{};
+        HRESULT hr = PlayFabCleanupAsync(stateHandle, &async);
+        assert(SUCCEEDED(hr));
+
+        hr = XAsyncGetStatus(&async, true);
+        assert(SUCCEEDED(hr));
+
+        UNREFERENCED_PARAMETER(hr);
     }
 }
 

@@ -1,0 +1,27 @@
+#include "stdafx.h"
+#include <playfab/PlayFab<%- api.name %>AuthApi.h>
+#include "<%- api.name %>AuthApi.h"
+#include "AuthAsyncProvider.h"
+#include "GlobalState.h"
+
+using namespace PlayFab;
+using namespace PlayFab::<%- api.name %>Models;
+<% for (var callIdx = 0; callIdx < authCalls.length; callIdx++) { var call = authCalls[callIdx]; %>
+HRESULT PlayFab<%- api.name %><%- call.name %>(
+    _In_ PlayFabStateHandle stateHandle,
+    _In_ const PlayFab<%- api.name %><%- call.request %>* request,
+    _In_ XAsyncBlock* async
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(stateHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(request);
+
+    auto provider = MakeUnique<AuthCallProvider<<%- api.name %>AuthAPI, PlayFab<%- api.name %><%- call.request %>>>(
+        async,
+        stateHandle->state-><%- api.name %>Auth,
+        &<%- api.name %>AuthAPI::<%- call.name %>,
+        *request
+    );
+    return Provider::Run(UniquePtr<Provider>(provider.release()));
+}
+<% } %>

@@ -1,0 +1,54 @@
+#include "stdafx.h"
+#include "<%- api.name %>AuthApi.h"
+#include "AuthContext.h"
+
+namespace PlayFab
+{
+
+using namespace <%- api.name %>Models;
+
+<%- api.name %>AuthAPI::<%- api.name %>AuthAPI() :
+    m_settings{ MakeShared<PlayFabApiSettings>() },
+    m_httpClient{ m_settings }
+{
+}
+<% for (var callIdx = 0; callIdx < authCalls.length; callIdx++) { var call = authCalls[callIdx]; %>
+void <%- api.name %>AuthAPI::<%- call.name %>(
+    const PlayFab<%- api.name %><%- call.request %>& request,
+    const TaskQueue& queue,
+    const ProcessApiCallback<SharedPtr<AuthContext>> callback,
+    const ErrorCallback errorCallback
+) const
+{
+    // TODO find a cleaner way to configure the titleId
+<%- getRequestActions("    ", call) %>    UnorderedMap<String, String> headers;<%
+if (hasAuthParams(call)) {%>
+    headers.emplace(<%- getAuthParams(call) %>);<% 
+} %>
+
+    // TODO bug: There is a lifetime issue with capturing this here since the client owns the object
+    auto callComplete = [ this, callback, errorCallback ](const HttpResult& httpResult)
+    {
+        if (SUCCEEDED(httpResult.networkErrorCode) && httpResult.serviceResponse.HttpCode == 200)
+        {
+            <%- call.result %> resultModel;
+            resultModel.FromJson(httpResult.serviceResponse.Data);
+            callback(MakeShared<AuthContext>(resultModel));
+        }
+        else if (errorCallback)
+        {
+            errorCallback(httpResult.serviceResponse);
+        }
+    };
+
+    m_httpClient.MakePostRequest(
+        "<%- call.url %>",
+        headers,
+        JsonUtils::ToJson(request),
+        queue,
+        callComplete
+    );
+}<%
+} %>
+
+}

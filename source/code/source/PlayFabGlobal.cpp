@@ -48,8 +48,8 @@ HRESULT PlayFabInitialize(
 }
 
 HRESULT PlayFabCleanupAsync(
-    _In_ XAsyncBlock* async,
-    _In_ PlayFabStateHandle stateHandle
+    _In_ PlayFabStateHandle stateHandle,
+    _In_ XAsyncBlock* async
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(stateHandle);

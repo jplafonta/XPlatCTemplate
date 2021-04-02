@@ -1,0 +1,28 @@
+#pragma once
+
+#include "<%- api.name %>DataModels.h"
+#include "HttpClient.h"
+
+namespace PlayFab
+{
+class AuthContext;
+
+class <%- api.name %>AuthAPI
+{
+public:
+    <%- api.name %>AuthAPI();
+    <%- api.name %>AuthAPI(const <%- api.name %>AuthAPI&) = delete;
+    <%- api.name %>AuthAPI& operator=(const <%- api.name %>AuthAPI& source) = delete;
+    ~<%- api.name %>AuthAPI() = default;
+
+    // Generated APIs <%
+for (var callIdx = 0; callIdx < authCalls.length; callIdx++) { var call = authCalls[callIdx]; %>
+    void <%- call.name %>(const PlayFab<%- api.name %><%- call.request %>& request, const TaskQueue& queue, const ProcessApiCallback<SharedPtr<AuthContext>> callback, const ErrorCallback errorCallback = nullptr) const;<%
+} %>
+
+private:
+    SharedPtr<PlayFabApiSettings> m_settings;
+    HttpClient const m_httpClient;
+};
+
+}

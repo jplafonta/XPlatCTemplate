@@ -44,7 +44,8 @@ HRESULT PlayFabGlobalState::CleanupAsync(XAsyncBlock* async)
                 UniquePtr<PlayFabGlobalState> reclaim{ stateHandle };
 
                 // Cleanup libHttpClient
-                hcCleanupAsync.queue = queue.DeriveWorkerQueue().GetHandle();
+                hcCleanupQueue = queue.DeriveWorkerQueue();
+                hcCleanupAsync.queue = hcCleanupQueue.GetHandle();
                 hcCleanupAsync.callback = HCCleanupComplete;
                 hcCleanupAsync.context = this;
 
@@ -79,6 +80,7 @@ HRESULT PlayFabGlobalState::CleanupAsync(XAsyncBlock* async)
         }
 
         XAsyncBlock hcCleanupAsync{};
+        TaskQueue hcCleanupQueue;
         PlayFabStateHandle stateHandle;
     };
 

@@ -6,12 +6,16 @@
     "Source Files\\QoS"
   ],
   "includeFiles": {
+    "\\include\\playfab\\PlayFabAuth.h": "Header Files\\playfab",
     "\\include\\playfab\\PlayFabBaseModel_c.h": "Header Files\\playfab",
     "\\include\\playfab\\PlayFabGlobal.h": "Header Files\\playfab"
   },
   "sourceFiles": {
     "source\\AsyncProvider.cpp": "Source Files",
     "source\\AsyncProvider.h": "Source Files",
+    "source\\AuthAsyncProvider.h": "Source Files",
+    "source\\AuthContext.cpp": "Source Files",
+    "source\\AuthContext.h": "Source Files",
     "source\\BaseModel.cpp": "Source Files",
     "source\\BaseModel.h": "Source Files",
     "source\\EnumTraits.h": "Source Files",
@@ -28,6 +32,7 @@
     "source\\PlayFabApiSettings.cpp": "Source Files",
     "source\\PlayFabApiSettings.h": "Source Files",
     "source\\PlayFabAuthenticationContext.cpp": "Source Files",
+    "source\\PlayFabAuth.cpp": "Source Files",
     "source\\PlayFabAuthenticationContext.h": "Source Files",
     "source\\PlayFabError.cpp": "Source Files",
     "source\\PlayFabError.h": "Source Files",
