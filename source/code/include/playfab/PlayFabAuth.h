@@ -15,7 +15,7 @@ extern "C"
 
 /// <summary>
 /// Handle to an authenticated entity (Player, Server, etc.). Contains the auth info needed to make PlayFab service
-/// calls. When no longer needed, auth handle must be closed with PlayFabAuthenticatedEntityCloseHandle.
+/// calls. When no longer needed, auth handle must be closed with PlayFabAuthContextCloseHandle.
 /// </summary>
 typedef struct PlayFabAuthContext* PlayFabAuthContextHandle;
 
@@ -26,7 +26,7 @@ typedef struct PlayFabAuthContext* PlayFabAuthContextHandle;
 /// <param name="authHandle">AuthContext handle which can be used to call other PlayFab APIs.</param>
 /// <returns>Result code for this API operation.</returns>
 /// <remarks>
-/// If the auth call fails, authHandle with be null. Otherwise, the handle must be closed with PlayFabAuthenticatedEntityCloseHandle
+/// If the auth call fails, authHandle with be null. Otherwise, the handle must be closed with PlayFabAuthContextCloseHandle
 /// when it is no longer needed.
 /// </remarks>
 HRESULT PlayFabAuthGetAuthResult(
@@ -41,7 +41,7 @@ HRESULT PlayFabAuthGetAuthResult(
 /// <param name="duplicatedAuthHandle">The duplicated handle.</param>
 /// <returns>Result code for this API operation.</returns>
 /// <remarks>
-/// Both the duplicated handle and the original handle need to be closed with PlayFabAuthenticatedEntityCloseHandle when they
+/// Both the duplicated handle and the original handle need to be closed with PlayFabAuthContextCloseHandle when they
 /// are no longer needed.
 /// </remarks>
 HRESULT PlayFabAuthContextDuplicateHandle(

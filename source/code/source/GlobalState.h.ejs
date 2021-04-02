@@ -10,19 +10,20 @@ for(var i in apis) {
 
 namespace PlayFab
 {
-    // Any global state will go here
-    class GlobalState
-    {
-    public:
-        GlobalState() = default;
-        virtual ~GlobalState() = default;
+
+class GlobalState
+{
+public:
+    GlobalState() = default;
+    virtual ~GlobalState() = default;
 <% for(var i in apis) {
-    var api = apis[i];
-    if (hasAuthCall(api)) { %>
-        <%- api.name %>AuthAPI const <%- api.name %>Auth;<%
-    }
+var api = apis[i];
+if (hasAuthCall(api)) { %>
+    <%- api.name %>AuthAPI const <%- api.name %>Auth;<%
+}
 } %>
-    };
+};
+
 }
 
 struct PlayFabGlobalState
