@@ -36,10 +36,8 @@ namespace PlayFab
     class BaseResult : public BaseModel
     {
     public:
-        JsonValue Request;
-
-        BaseResult() = default;
-        BaseResult(const BaseResult& src);
+        void FromJson(const JsonValue& input) override;
+        JsonValue ToJson() const override;
     };
 
     /// <summary>

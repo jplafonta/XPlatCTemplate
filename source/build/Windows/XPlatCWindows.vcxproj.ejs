@@ -99,8 +99,8 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-<% for (var file in projectFiles.includeFiles) { %>
+  <ItemGroup><%
+for (var file in projectFiles.includeFiles) { %>
     <ClInclude Include="$(SdkSourceDir)\<%- file %>" /><% 
 } 
 for (var file in projectFiles.sourceFiles) { 

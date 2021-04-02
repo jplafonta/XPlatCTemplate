@@ -1,6 +1,16 @@
+// Copyright (c) Microsoft Corporation
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if !defined(__cplusplus)
+#error C++11 required
+#endif
+
 #pragma once
 
 #include <playfab/PlayFabBaseModel_c.h>
+
+extern "C"
+{
 
 #pragma push_macro("IN")
 #undef IN
@@ -9,20 +19,20 @@
 for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { var enumtype = enumtypes[enumIdx]; %>
 enum class <%- prefix %><%- enumtype.name %> : uint32_t
 {
-    <% for(var i=0; i<enumtype.enumvalues.length-1; i++) { var enumval = enumtype.enumvalues[i] %><%- enumval.name %>,
+    <% for(var i=0; i<enumtype.enumvalues.length-1; i++) { var enumval = enumtype.enumvalues[i]; %><%- enumval.name %>,
     <% } %><%- enumtype.enumvalues[enumtype.enumvalues.length-1].name %>
 };
 <% } %>
 
 // <%- api.name %> structs<%
-for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype = sortedClasses[typeIdx]; %>
+for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype = sortedClasses[typeIdx]; { %>
 typedef struct <%- prefix %><%- datatype.name %>
-{
-<% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
-%><%- getPropertyDefinition("    ", property, prefix, false) %>
-<% } %>
+{<%
+for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
+%><%- getPropertyDefinition("    ", property, prefix, false) %><% } %>
 } <%- prefix %><%- datatype.name %>;
-<% } %>
+<% }
+} %>
 
 // <%- api.name %> dictionary entry structs<%
 for (var typeIdx = 0; typeIdx < dictionaryEntryTypes.length; typeIdx++) { var datatype = dictionaryEntryTypes[typeIdx]; %>
@@ -37,3 +47,5 @@ if (datatype.isenum) { %>
 <% } %>
 
 #pragma pop_macro("IN")
+
+}

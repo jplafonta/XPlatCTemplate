@@ -14,7 +14,6 @@ namespace PlayFab
         template<>
         inline JsonValue ToJson<>(const <%- prefix %><%- datatype.name %>& input)
         {
-            UNREFERENCED_PARAMETER(input);
             JsonValue output{ rapidjson::kObjectType };
 <%for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx]; %><%- addPropertyToJson("            ", property) %>
 <% } %>            return output;
@@ -36,15 +35,15 @@ for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype 
 <% } else { %>
             <%- datatype.name %>(const <%- datatype.name %>& src) :
                 <%- prefix %><%- datatype.name %>{ src }<%- getCopyConstructorInitializationList("                ", datatype) %>
-            {
-<%- getCopyConstructorBody("                ", datatype, prefix) %>
+            {<%- getCopyConstructorBody("                ", datatype, prefix) %>
             }
 <% } %>
             ~<%- datatype.name %>() = default;
 
+            // TODO Add move constructor & assignment operators
+
             void FromJson(const JsonValue&<%- ifHasProps(datatype, " input") %>) override
             {
-                <%- ifHasProps(datatype, "UNREFERENCED_PARAMETER(input);") %>
 <% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
 %><%- getPropertyFromJson("                ", property, datatype) %>
 <% } %>            }
@@ -54,10 +53,10 @@ for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype 
                 return JsonUtils::ToJson<<%- prefix %><%- datatype.name %>>(*this);
             }
 
-        private:
-<% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
-%><%- getPropertyDefinition("            ", property, prefix, true) %>
-<% } %>        };
+        private:<%
+for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
+%><%- getPropertyDefinition("            ", property, prefix, true) %><% } %>
+        };
 <% } %>
     }
 

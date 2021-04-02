@@ -3,9 +3,14 @@
 
 namespace PlayFab
 {
-    BaseResult::BaseResult(const BaseResult& src)
+    void BaseResult::FromJson(const JsonValue& input)
     {
-        JsonUtils::FromJson(src.Request, Request);
+        assert(input.IsNull() || (input.IsObject() && input.MemberCount() == 0));
+    }
+
+    JsonValue BaseResult::ToJson() const
+    {
+        return JsonValue{ rapidjson::kNullType };
     }
 
     JsonObject::JsonObject(const JsonObject& src) :

@@ -6,7 +6,8 @@
     "Source Files\\QoS"
   ],
   "includeFiles": {
-    "\\include\\playfab\\PlayFabBaseModel_c.h": "Header Files\\playfab" 
+    "\\include\\playfab\\PlayFabBaseModel_c.h": "Header Files\\playfab",
+    "\\include\\playfab\\PlayFabGlobal.h": "Header Files\\playfab"
   },
   "sourceFiles": {
     "source\\AsyncProvider.cpp": "Source Files",
@@ -14,8 +15,11 @@
     "source\\BaseModel.cpp": "Source Files",
     "source\\BaseModel.h": "Source Files",
     "source\\EnumTraits.h": "Source Files",
+    "source\\GlobalState.cpp": "Source Files",
+    "source\\GlobalState.h": "Source Files",
     "source\\HttpClient.cpp": "Source Files",
     "source\\HttpClient.h": "Source Files",
+    "source\\InternalMemory.cpp": "Source Files",
     "source\\InternalMemory.h": "Source Files",
     "source\\JsonHeaders.h": "Source Files",
     "source\\JsonUtils.cpp": "Source Files",
@@ -37,6 +41,7 @@
     "source\\PlayFabEventPipeline.h": "Source Files",
     "source\\PlayFabEventRouter.cpp": "Source Files",
     "source\\PlayFabEventRouter.h": "Source Files",
+    "source\\PlayFabGlobal.cpp": "Source Files",
     "source\\PlayFabPlatformMacros.h": "Source Files",
     "source\\PlayFabSettings.cpp": "Source Files",
     "source\\PlayFabSettings.h": "Source Files",
