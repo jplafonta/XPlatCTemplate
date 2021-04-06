@@ -5,7 +5,6 @@
 #include "QoS.h"
 #include "QoSResult.h"
 #include "QoSSocket.h"
-#include "PlayFabError.h"
 #include <Events/EventsDataModels.h>
 
 #include <chrono>
@@ -43,12 +42,7 @@ namespace PlayFab
             QoSResult GetResult(unsigned int numThreads, unsigned int timeoutMs);
 
             void PingThunderheadForServerList();
-            void ListQosServersForTitleSuccessCallBack(const PlayFab::MultiplayerModels::ListQosServersForTitleResponse& result);
-            void ListQosServersForTitleFailureCallBack(const PlayFab::PlayFabError& error);
-
             void SendResultsToPlayFab(const QoSResult& result);
-            static void WriteEventsSuccessCallBack(const PlayFab::EventsModels::WriteEventsResponse& result);
-            static void WriteEventsFailureCallBack(const PlayFab::PlayFabError& error);
 
             static PingResult GetQoSResultForRegion(SharedPtr<QoSSocket> socket);
 

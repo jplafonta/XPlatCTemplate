@@ -1,7 +1,5 @@
 #pragma once
 
-#include "PlayFabError.h"
-
 namespace PlayFab
 {
     class PlayFabApiSettings;
@@ -21,8 +19,6 @@ namespace PlayFab
         static bool threadedCallbacks;
         // Used to override the PlayFab endpoint url - Not typical
         static String productionEnvironmentURL;
-        // Used to receive a callback for every failed PlayFab API call - Parallel to the individual error callbacks
-        static ErrorCallback globalErrorHandler;
 
         // The pointers to these objects should be const as they should always be fixed, but the contents are still mutable
         static const SharedPtr<PlayFabApiSettings> staticSettings;

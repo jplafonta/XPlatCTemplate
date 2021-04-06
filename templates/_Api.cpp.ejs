@@ -73,10 +73,11 @@ namespace PlayFab
         m_context(authenticationContext),
         m_httpClient(m_settings)
     {
-        if (m_context == nullptr)
+        // TODO
+        /* if (m_context == nullptr)
         {
             throw PlayFabException(PlayFabExceptionCode::AuthContextRequired, "Context cannot be null, create a PlayFabAuthenticationContext for each player in advance, or get <PlayFabClientInstanceAPI>.authenticationContext");
-        }
+        } */
     }
 
     PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings, const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
@@ -84,10 +85,11 @@ namespace PlayFab
         m_context(authenticationContext),
         m_httpClient(m_settings)
     {
-        if (m_context == nullptr)
+        // TODO
+        /*if (m_context == nullptr)
         {
             throw PlayFabException(PlayFabExceptionCode::AuthContextRequired, "Context cannot be null, create a PlayFabAuthenticationContext for each player in advance, or get <PlayFabClientInstanceAPI>.authenticationContext");
-        }
+        }*/
     }
 <% } %>
     SharedPtr<PlayFabApiSettings> PlayFab<%- api.name %>InstanceAPI::GetSettings() const
@@ -109,38 +111,43 @@ namespace PlayFab
     }
 
     // PlayFab<%- api.name %> instance APIs
-<% for (var callIdx = 0; callIdx < api.calls.length; callIdx++) { var apiCall = api.calls[callIdx]; %>
-    void PlayFab<%- api.name %>InstanceAPI::<%- apiCall.name %>(
-        <%- apiCall.request %>& request,
-        const TaskQueue& queue,
-        const ProcessApiCallback<<%- apiCall.result %>> callback,
-        const ErrorCallback errorCallback
+<% for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
+    var apiCall = api.calls[callIdx]; 
+    var requestT = apiCall.request === "BaseRequest" ? "BaseRequest" : "PlayFab" + api.name + apiCall.request; %>
+    AsyncOp<<%- apiCall.result %>> PlayFab<%- api.name %>InstanceAPI::<%- apiCall.name %>(
+        const <%- requestT %>& request,
+        const TaskQueue& queue
     )
     {
 <%- getRequestActions("        ", apiCall) %>        UnorderedMap<String, String> headers;
 <% if (hasAuthParams(apiCall)) {
 %>        headers.emplace(<%- getAuthParams(apiCall) %>);
 <% } %>
-        // TODO bug: There is a lifetime issue with capturing this here since the client owns the object
-        auto callComplete = [ this, callback, errorCallback, context{ m_context } ](const HttpResult& httpResult)
-        {
-            <%- apiCall.result %> outResult;
-            if (ParseResult(outResult, httpResult, errorCallback))
-            {
-<%- getResultActions("                ", apiCall)   %>                if (callback)
-                {
-                    callback(outResult);
-                }
-            }
-        };
-
-        m_httpClient.MakePostRequest(
+        return m_httpClient.MakePostRequest(
             "<%- apiCall.url %>",
             headers,
-            request.ToJson(),
-            queue,
-            callComplete
-        );
+            JsonUtils::ToJson(request),
+            queue
+        ).Then([ this ](Result<ServiceResponse> result) -> Result<<%- apiCall.result %>>
+        {
+            // TODO bug: There is a lifetime issue with capturing this here since the client owns the object
+
+            RETURN_IF_FAILED(result.hr);
+
+            auto& serviceResponse = result.Payload();
+            if (serviceResponse.HttpCode == 200)
+            {
+                <%- apiCall.result %> resultModel;
+                resultModel.FromJson(serviceResponse.Data);
+                /*<%- getResultActions("                ", apiCall)   %>*/
+
+                return resultModel;
+            }
+            else
+            {
+                return ServiceErrorToHR(serviceResponse.ErrorCode);
+            }
+        });
     }
 <% } %><% if (hasClientOptions) { %>
     // Private PlayFabClientInstanceAPI specific
@@ -157,36 +164,16 @@ namespace PlayFab
             if (context->advertisingIdType == PlayFabSettings::AD_TYPE_IDFA)
             {
                 request.idfa = context->advertisingIdValue.data();
-                AttributeInstall(request, nullptr, nullptr);
+                AttributeInstall(request, nullptr);
             }
             else if (context->advertisingIdType == PlayFabSettings::AD_TYPE_ANDROID_ID)
             {
                 request.adid = context->advertisingIdValue.data();
-                AttributeInstall(request, nullptr, nullptr);
+                AttributeInstall(request, nullptr);
             }
         }
     }
 <% } %>
-    bool PlayFab<%- api.name %>InstanceAPI::ParseResult(BaseResult& result, const HttpResult& httpResult, const ErrorCallback& errorHandler)
-    {
-        if (httpResult.serviceResponse.HttpCode == 200)
-        {
-            result.FromJson(httpResult.serviceResponse.Data);
-            return true;
-        }
-        else // Process the error case
-        {
-            if (PlayFabSettings::globalErrorHandler != nullptr)
-            {
-                PlayFabSettings::globalErrorHandler(httpResult.serviceResponse);
-            }
-            if (errorHandler)
-            {
-                errorHandler(httpResult.serviceResponse);
-            }
-            return false;
-        }
-    }
 }
 
 #endif

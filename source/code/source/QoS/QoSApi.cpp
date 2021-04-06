@@ -159,18 +159,20 @@ namespace PlayFab
             //request.m_events.push_back(eventContents);
 
             // TODO allow setting queue here somehow
-            eventsApi->WriteTelemetryEvents(request, TaskQueue(), WriteEventsSuccessCallBack, WriteEventsFailureCallBack);
+            eventsApi->WriteTelemetryEvents(request, TaskQueue()).Finally([](Result<WriteEventsResponse> result)
+            {
+                if (Succeeded(result))
+                {
+                    LOG_QOS("QoSResult successfully sent to PlayFab");
+                }
+                else
+                {
+                    LOG_QOS("Failed to QoSResult sent to PlayFab");
+                }
+            });
         }
 
-        void PlayFabQoSApi::WriteEventsSuccessCallBack(const WriteEventsResponse&)
-        {
-            LOG_QOS("QoSResult successfully sent to PlayFab");
-        }
 
-        void PlayFabQoSApi::WriteEventsFailureCallBack(const PlayFabError&)
-        {
-            LOG_QOS("Failed to QoSResult sent to PlayFab");
-        }
 
         void PlayFabQoSApi::PingThunderheadForServerList()
         {
@@ -184,28 +186,25 @@ namespace PlayFab
             ListQosServersForTitleRequest request;
             multiplayerApi->ListQosServersForTitle(
                 request,
-                TaskQueue(), // TODO allow setting queue here somehow
-                std::bind(&PlayFabQoSApi::ListQosServersForTitleSuccessCallBack, this, std::placeholders::_1),
-                std::bind(&PlayFabQoSApi::ListQosServersForTitleFailureCallBack, this, std::placeholders::_1)
-            );
-        }
-
-        void PlayFabQoSApi::ListQosServersForTitleSuccessCallBack(const ListQosServersForTitleResponse& result)
-        {
-            for (auto i = 0u; i < result.qosServersCount; ++i)
+                TaskQueue() // TODO allow setting queue here somehow
+            ).Finally([this](Result<ListQosServersForTitleResponse> result)
             {
-                auto& server = result.qosServers[i];
-                regionMap[server->region] = server->serverUrl;
-            }
-
-            listQosServersCompleted = true;
-        }
-
-        void PlayFabQoSApi::ListQosServersForTitleFailureCallBack(const PlayFabError&)
-        {
-            // Log the error and return
-            LOG_QOS("Could not get the server list from thunderhead\n Error : " << error.ToJson() << endl);
-            listQosServersCompleted = true;
+                listQosServersCompleted = true;
+                if (Succeeded(result))
+                {
+                    auto& resultModel{ result.Payload() };
+                    for (auto i = 0u; i < resultModel.qosServersCount; ++i)
+                    {
+                        auto& server = resultModel.qosServers[i];
+                        regionMap[server->region] = server->serverUrl;
+                    }
+                }
+                else
+                {
+                    // Log the error and return
+                    LOG_QOS("Could not get the server list from thunderhead\n Error : " << error.ToJson() << endl);
+                }
+            });
         }
 
         Vector<String> PlayFabQoSApi::GetPingList(unsigned int serverCount)

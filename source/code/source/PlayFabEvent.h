@@ -2,8 +2,8 @@
 
 #ifndef DISABLE_PLAYFABENTITY_API
 
-#include "PlayFabError.h"
 #include <Events/EventsDataModels.h>
+#include "httpClient.h" // For ServiceResponse, though this should be changed
 
 // This file contains declaration of base interfaces for any custom playstream events
 // as well as PlayFab-specific implementations
@@ -111,7 +111,7 @@ namespace PlayFab
     {
     public:
         EmitEventResult emitEventResult; // result of immediate "emit event" operation
-        SharedPtr<const PlayFabError> playFabError; // error information and/or operation result
+        SharedPtr<const ServiceResponse> playFabError; // error information and/or operation result
         SharedPtr<const EventsModels::WriteEventsResponse> writeEventsResponse; // additional data with the outcome of the operation
         SharedPtr<const Vector<SharedPtr<const IPlayFabEmitEventRequest>>> batch; // the batch this event was part of
         size_t batchNumber; // the incremental batch number

@@ -5,42 +5,30 @@
 
 namespace PlayFab
 {
-    // RAII wrapper around HCCallHandle
+    // RAII wrapper around HCCallHandle.
     class HCHttpCall
     {
     public:
-        static void Perform(
-            String&& url,
+        static AsyncOp<ServiceResponse> Perform(
+            const char* url,
             const UnorderedMap<String, String>& headers,
-            JsonValue&& requestBody,
-            const TaskQueue& queue,
-            HttpClient::HttpCallback&& callback
+            const JsonValue& requestBody,
+            const TaskQueue& queue
         );
 
         virtual ~HCHttpCall() noexcept;
 
     private:
-        HCHttpCall(const TaskQueue& queue, HttpClient::HttpCallback&& callback);
+        HCHttpCall(const TaskQueue& queue);
         HCHttpCall(const HCHttpCall& other) = delete;
         HCHttpCall& operator=(HCHttpCall other) = delete;
-
-        HRESULT Initialize(
-            String&& url,
-            const UnorderedMap<String, String>& headers,
-            JsonValue&& requestBody
-        );
-
-        // Complete request should be invoked for every HCHttpCall. It is responsible for invoking
-        // the client's callback and releasing the HCHttpCall object
-        void CompleteRequest(HRESULT networkErrorCode);
 
         static void CALLBACK HCPerformComplete(XAsyncBlock* async);
 
         TaskQueue const m_queue;
-        HttpClient::HttpCallback const m_callback;
         HCCallHandle m_callHandle{ nullptr };
         XAsyncBlock m_asyncBlock{};
-        HttpResult m_result{};
+        SharedPtr<AsyncOpContext<ServiceResponse>> m_asyncContext;
     };
 
     HttpClient::HttpClient(SharedPtr<PlayFabApiSettings> settings) :
@@ -48,25 +36,24 @@ namespace PlayFab
     {
     }
 
-    void HttpClient::MakePostRequest(
+    AsyncOp<ServiceResponse> HttpClient::MakePostRequest(
         const char* path,
         const UnorderedMap<String, String>& headers,
-        JsonValue&& requestBody,
-        const TaskQueue & queue,
-        HttpCallback&& callback
+        const JsonValue& requestBody,
+        const TaskQueue& queue
     ) const
     {
         if (m_settings->titleId.empty())
         {
-            throw new PlayFabException(PlayFabExceptionCode::TitleNotSet, "PlayFabSettings::staticSettings->titleId has not been set properly. It must not be empty.");
+            return Result<ServiceResponse>{ E_FAIL, "PlayFabSettings::staticSettings->titleId has not been set properly. It must not be empty." };
         }
         auto fullUrl = m_settings->GetUrl(path);
-        HCHttpCall::Perform(fullUrl.data(), headers, std::move(requestBody), queue, std::move(callback));
+        return HCHttpCall::Perform(fullUrl.data(), headers, requestBody, queue);
     }
 
-    HCHttpCall::HCHttpCall(const TaskQueue& queue, HttpClient::HttpCallback&& callback) :
-        m_callback(std::move(callback)),
-        m_queue(queue)
+    HCHttpCall::HCHttpCall(const TaskQueue& queue) :
+        m_queue{ queue },
+        m_asyncContext{ MakeShared<AsyncOpContext<ServiceResponse>>() }
     {
     }
 
@@ -78,140 +65,159 @@ namespace PlayFab
         }
     }
 
-    void HCHttpCall::Perform(
-        String&& url,
+    AsyncOp<ServiceResponse> HCHttpCall::Perform(
+        const char* url,
         const UnorderedMap<String, String>& headers,
-        JsonValue&& requestBody,
-        const TaskQueue& queue,
-        HttpClient::HttpCallback&& callback
+        const JsonValue& requestBody,
+        const TaskQueue& queue
     )
     {
-        // Non-owning pointer. Ownership will always be taken in CompleteRequest
-        auto call = new (Allocator<HCHttpCall>{}.allocate(1)) HCHttpCall(queue, std::move(callback));
+        UniquePtr<HCHttpCall> call{ new (Allocator<HCHttpCall>{}.allocate(1)) HCHttpCall(queue) };
 
-        HRESULT hr = call->Initialize(std::move(url), headers, std::move(requestBody));
-        if (FAILED(hr))
-        {
-            call->CompleteRequest(hr);
-            return;
-        }
-
-        call->m_asyncBlock.callback = HCPerformComplete;
-        call->m_asyncBlock.context = call;
-        call->m_asyncBlock.queue = call->m_queue.GetHandle();
-
-        hr = HCHttpCallPerformAsync(call->m_callHandle, &call->m_asyncBlock);
-        if (FAILED(hr))
-        {
-            call->CompleteRequest(hr);
-        }
-    }
-
-    HRESULT HCHttpCall::Initialize(
-        String&& url,
-        const UnorderedMap<String, String>& headers,
-        JsonValue&& requestBody
-    )
-    {
-        // Initialize result. Url & request body moved into m_result and should be used from there
-        m_result.requestUrl = std::move(url);
-        m_result.requestBody = std::move(requestBody);
+        // Consider adding a helper to schedule the completion to correct queue port. Currently if failures happen 
+        // synchronously, the continuation will be invoked synchronously as well.
 
         // Set up HCHttpCallHandle
-        RETURN_IF_FAILED(HCHttpCallCreate(&m_callHandle));
-        RETURN_IF_FAILED(HCHttpCallRequestSetUrl(m_callHandle, "POST", m_result.requestUrl.data()));
+        RETURN_IF_FAILED(HCHttpCallCreate(&call->m_callHandle));
+        RETURN_IF_FAILED(HCHttpCallRequestSetUrl(call->m_callHandle, "POST", url));
 
         // Add default PlayFab headers
-        RETURN_IF_FAILED(HCHttpCallRequestSetHeader(m_callHandle, "Accept", "application/json", true));
-        RETURN_IF_FAILED(HCHttpCallRequestSetHeader(m_callHandle, "Content-Type", "application/json; charset=utf-8", true));
-        RETURN_IF_FAILED(HCHttpCallRequestSetHeader(m_callHandle, "X-PlayFabSDK", PlayFabSettings::versionString.data(), true));
-        RETURN_IF_FAILED(HCHttpCallRequestSetHeader(m_callHandle, "X-ReportErrorAsSuccess", "true", true));
+        RETURN_IF_FAILED(HCHttpCallRequestSetHeader(call->m_callHandle, "Accept", "application/json", true));
+        RETURN_IF_FAILED(HCHttpCallRequestSetHeader(call->m_callHandle, "Content-Type", "application/json; charset=utf-8", true));
+        RETURN_IF_FAILED(HCHttpCallRequestSetHeader(call->m_callHandle, "X-PlayFabSDK", PlayFabSettings::versionString.data(), true));
+        RETURN_IF_FAILED(HCHttpCallRequestSetHeader(call->m_callHandle, "X-ReportErrorAsSuccess", "true", true));
 
         for (const auto& pair : headers)
         {
             if (!pair.first.empty() && !pair.second.empty())
             {
-                RETURN_IF_FAILED(HCHttpCallRequestSetHeader(m_callHandle, pair.first.data(), pair.second.data(), true));
+                RETURN_IF_FAILED(HCHttpCallRequestSetHeader(call->m_callHandle, pair.first.data(), pair.second.data(), true));
             }
         }
 
         JsonStringBuffer jsonString;
         JsonWriter writer{ jsonString };
-        m_result.requestBody.Accept(writer);
+        requestBody.Accept(writer);
 
-        RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyString(m_callHandle, jsonString.GetString()));
-        return S_OK;
-    }
+        RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyString(call->m_callHandle, jsonString.GetString()));
 
-    void HCHttpCall::CompleteRequest(HRESULT networkErrorCode)
-    {
-        m_result.networkErrorCode = networkErrorCode;
+        call->m_asyncBlock.callback = HCPerformComplete;
+        call->m_asyncBlock.context = call.get();
+        call->m_asyncBlock.queue = call->m_queue.GetHandle();
 
-        // Invoke the callback on the correct TaskQueue port. In cases where CompleteRequest is called
-        // from the libHttpClient callback we should already be on the correct thread, but queue the callback
-        // regardless in case we are in an error case.
-        m_queue.RunCompletion([this]()
-        {
-            // Take ownership of the HCHttpCall and release it after invoking callback
-            UniquePtr<HCHttpCall> call{ this };
-            if (m_callback)
-            {
-                m_callback(m_result);
-            }
-        });
+        RETURN_IF_FAILED(HCHttpCallPerformAsync(call->m_callHandle, &call->m_asyncBlock));
+
+        auto asyncOp = AsyncOp<ServiceResponse>{ call->m_asyncContext };
+
+        // At this point HCPerfromComplete will be called. Release call and reclaim
+        // ownership in callback.
+        call.release();
+
+        return asyncOp;
     }
 
     void HCHttpCall::HCPerformComplete(XAsyncBlock* async)
     {
-        auto call{ static_cast<HCHttpCall*>(async->context) };
+        // Retake ownership of asyncContext
+        UniquePtr<HCHttpCall> call{ static_cast<HCHttpCall*>(async->context) };
+        auto& asyncOpContext{ call->m_asyncContext };
 
-        // Get Http code and response string
-        uint32_t httpCode{ 0 };
-        HRESULT hr = HCHttpCallResponseGetStatusCode(call->m_callHandle, &httpCode);
-        if (FAILED(hr))
+        try
         {
-            call->CompleteRequest(hr);
-            return;
+            // Get Http code and response string
+            uint32_t httpCode{ 0 };
+            HRESULT hr = HCHttpCallResponseGetStatusCode(call->m_callHandle, &httpCode);
+            if (FAILED(hr))
+            {
+                asyncOpContext->Complete(hr);
+                return;
+            }
+
+            const char* responseString{ nullptr };
+            hr = HCHttpCallResponseGetResponseString(call->m_callHandle, &responseString);
+            if (FAILED(hr))
+            {
+                asyncOpContext->Complete(hr);
+                return;
+            }
+
+            JsonDocument responseJson{ &JsonUtils::allocator };
+            responseJson.Parse(responseString);
+            if (responseJson.HasParseError())
+            {
+                Stringstream errorMessage;
+                errorMessage << "Failed to parse PlayFab service response: " << rapidjson::GetParseError_En(responseJson.GetParseError());
+                asyncOpContext->Complete(Result<ServiceResponse>{ E_FAIL, errorMessage.str() });
+                return;
+            }
+
+            // Successful response
+            ServiceResponse response{};
+            response.FromJson(responseJson);
+
+            // Get requestId response header
+            const char* requestId;
+            hr = HCHttpCallResponseGetHeader(call->m_callHandle, "X-RequestId", &requestId);
+            if (FAILED(hr))
+            {
+                asyncOpContext->Complete(hr);
+                return;
+            }
+            else if (requestId)
+            {
+                response.RequestId = requestId;
+            }
+
+            asyncOpContext->Complete(std::move(response));
         }
-
-        const char* responseString{ nullptr };
-        hr = HCHttpCallResponseGetResponseString(call->m_callHandle, &responseString);
-        if (FAILED(hr))
+        catch (...)
         {
-            call->CompleteRequest(hr);
-            return;
+            asyncOpContext->Complete(std::current_exception());
         }
+    }
 
-        JsonDocument responseJson{ &JsonUtils::allocator };
-        responseJson.Parse(responseString);
-        if (!responseJson.HasParseError())
+    ServiceResponse::ServiceResponse(const ServiceResponse& src) :
+        HttpCode{ src.HttpCode },
+        HttpStatus{ src.HttpStatus },
+        ErrorCode{ src.ErrorCode },
+        ErrorName{ src.ErrorName },
+        ErrorMessage{ src.ErrorMessage },
+        RequestId{ src.RequestId }
+    {
+        JsonUtils::FromJson(src.ErrorDetails, ErrorDetails);
+        JsonUtils::FromJson(src.Data, Data);
+    }
+
+    ServiceResponse& ServiceResponse::operator=(const ServiceResponse& src)
+    {
+        HttpCode = src.HttpCode;
+        HttpStatus = src.HttpStatus;
+        ErrorCode = src.ErrorCode;
+        ErrorName = src.ErrorName;
+        ErrorMessage = src.ErrorMessage;
+        JsonUtils::FromJson(src.ErrorDetails, ErrorDetails);
+        JsonUtils::FromJson(src.Data, Data);
+        RequestId = src.RequestId;
+        return *this;
+    }
+
+    void ServiceResponse::FromJson(const JsonValue& input)
+    {
+        JsonUtils::ObjectGetMember(input, "code", HttpCode);
+        JsonUtils::ObjectGetMember(input, "status", HttpStatus);
+        StdExtra::optional<int64_t> errorCode{};
+        JsonUtils::ObjectGetMember(input, "errorCode", errorCode);
+        if (errorCode.has_value())
         {
-            // fully successful response
-            call->m_result.serviceResponse.FromJson(responseJson);
+            ErrorCode = static_cast<ServiceErrorCode>(*errorCode);
         }
         else
         {
-            // TODO Weird to deliver this error via "serviceResponse" field.
-            call->m_result.serviceResponse.HttpCode = httpCode;
-            call->m_result.serviceResponse.HttpStatus = responseString;
-            call->m_result.serviceResponse.ErrorCode = PlayFabErrorCode::PlayFabErrorPartialFailure;
-            call->m_result.serviceResponse.ErrorName = "Failed to parse PlayFab response";
-            call->m_result.serviceResponse.ErrorMessage = rapidjson::GetParseError_En(responseJson.GetParseError());
+            ErrorCode = ServiceErrorCode::Success;
         }
-
-        // Get requestId response header
-        const char* requestId;
-        hr = HCHttpCallResponseGetHeader(call->m_callHandle, "X-RequestId", &requestId);
-        if (FAILED(hr))
-        {
-            call->CompleteRequest(hr);
-            return;
-        }
-        else if (requestId)
-        {
-            call->m_result.serviceResponse.RequestId = requestId;
-        }
-
-        call->CompleteRequest(S_OK);
+        JsonUtils::ObjectGetMember(input, "error", ErrorName);
+        JsonUtils::ObjectGetMember(input, "errorMessage", ErrorMessage);
+        JsonUtils::ObjectGetMember(input, "errorDetails", ErrorDetails);
+        JsonUtils::ObjectGetMember(input, "data", Data);
     }
 }
