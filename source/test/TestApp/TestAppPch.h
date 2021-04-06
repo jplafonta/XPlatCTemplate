@@ -22,18 +22,8 @@
 #include <array>
 #include <assert.h>
 
-// Pulled from XPlatC pch file. Test App still relying on a lot of internal types/APIs, but this
-// should eventually be changed
-#include <httpClient/pal.h>
-#include <httpClient/async.h>
-#include "JsonHeaders.h"
-#include "StdOptional.h"
-#include "ResultMacros.h"
-#include "InternalMemory.h"
-#include "PlayFabPlatformMacros.h"
-#include "PlatformUtils.h"
-#include "PlayFabApiSettings.h"
-#include "PlayFabAuthenticationContext.h"
+// Test App still relying on a lot of internal types/APIs, but this should eventually be changed
+#include <stdafx.h>
 
 #if defined (_XBOX_ONE)
 

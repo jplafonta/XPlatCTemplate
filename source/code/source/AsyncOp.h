@@ -2,7 +2,6 @@
 
 #include <httpClient/pal.h>
 #include <memory>
-#include "Result.h"
 
 namespace PlayFab
 {
@@ -214,14 +213,6 @@ void AsyncOp<T>::Finally(Func&& continuationFunc) noexcept
 
     auto continuation = MakeShared<Continuation<Func, ResultT>>(std::move(continuationFunc));
     m_context->SetContinuation(continuation);
-
-    /*auto intermediateFunc = [func{ std::move(continuationFunc) }](ResultT&& result)
-    {
-        func(std::move(result));
-        return Result<void>{ S_OK };
-    };
-
-    m_context->SetContinuation(MakeShared<Continuation<decltype(intermediateFunc), ResultT>>(std::move(intermediateFunc)));*/
 }
 
 // AsyncOpContext<T> Implementation
