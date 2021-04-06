@@ -35,7 +35,7 @@ HRESULT PlayFabAuthGetAuthResult(
 ) noexcept;
 
 /// <summary>
-/// Duplicates a PlayFabAuthenticatedEntityHandle.
+/// Duplicates a PlayFabAuthContextHandle.
 /// </summary>
 /// <param name="authHandle">Authenticated entity handle to duplicate.</param>
 /// <param name="duplicatedAuthHandle">The duplicated handle.</param>
@@ -50,7 +50,7 @@ HRESULT PlayFabAuthContextDuplicateHandle(
 ) noexcept;
 
 /// <summary>
-/// Closes a PlayFabAuthenticatedEntityHandle.
+/// Closes a PlayFabAuthContextHandle.
 /// </summary>
 /// <param name="authHandle">Authenticated entity handle to close.</param>
 /// <returns>Result code for this API operation.</returns>

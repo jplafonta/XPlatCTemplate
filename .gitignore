@@ -33,3 +33,6 @@
 
 # Git merge files
 *.orig
+
+# VS files
+**/.vs/

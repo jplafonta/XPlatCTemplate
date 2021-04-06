@@ -49,7 +49,7 @@ protected:
     }
 
 private:
-    // Consider copying the API, using SharedPtr, or storing a std::bind function
+    // TODO Consider copying the API, using SharedPtr, or storing a std::bind function
     const AuthApiT& m_api;
     AuthCallT m_call;
     const RequestT& m_request;
