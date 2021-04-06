@@ -29,7 +29,22 @@ for (var file in projectFiles.sourceFiles) {
     </ClCompile><%
     }
 } 
-for(var i in apis) { var api = apis[i]; %>
+for(var i in apis) { 
+    var api = apis[i];
+    if (hasAuthCall(api)) { %>
+    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>AuthApi.h">
+      <Filter>Source Files\<%- api.name %></Filter>
+    </ClInclude>
+    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>AuthApi.cpp">
+      <Filter>Source Files\<%- api.name %></Filter>
+    </ClCompile>
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>AuthApi.h">
+      <Filter>Header Files\playfab</Filter>
+    </ClInclude>
+    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\PlayFab<%- api.name %>AuthApi.cpp">
+      <Filter>Source Files\<%- api.name %></Filter>
+    </ClCompile><%
+    } %>
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>DataModels_c.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>

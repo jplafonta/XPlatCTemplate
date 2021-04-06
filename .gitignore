@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# Git merge files
+*.orig
+
+# VS files
+**/.vs/

@@ -106,13 +106,13 @@ HRESULT PlayFabInitialize(
 /// <summary>
 /// Cleanup PlayFab global state.
 /// </summary>
-/// <param name="async">XAsyncBlock for the async operation.</param>
 /// <param name="stateHandle">Handle to the PlayFab state to cleanup.</param>
+/// <param name="async">XAsyncBlock for the async operation.</param>
 /// <returns>Result code for this API operation.</returns>
 /// <remarks>Asynchronous result returned via XAsyncGetStatus.</remarks>
 HRESULT PlayFabCleanupAsync(
-    _In_ XAsyncBlock* async,
-    _In_ PlayFabStateHandle stateHandle
+    _In_ PlayFabStateHandle stateHandle,
+    _In_ XAsyncBlock* async
 ) noexcept;
 
 }

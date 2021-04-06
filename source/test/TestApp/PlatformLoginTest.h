@@ -5,10 +5,7 @@
 #if !defined(DISABLE_PLAYFABCLIENT_API)
 
 #include "TestCase.h"
-
-#include <memory>
-
-#include <Client/ClientApi.h>
+#include <playfab/PlayFabGlobal.h>
 
 namespace PlayFabUnit
 {
@@ -21,7 +18,7 @@ namespace PlayFabUnit
         void AddTests() override;
 
     public:
-        std::shared_ptr<PlayFab::PlayFabClientInstanceAPI> clientApi;
+        PlayFabStateHandle stateHandle{ nullptr };
 
         void ClassSetUp() override;
         void SetUp(TestContext& testContext) override;

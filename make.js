@@ -14,6 +14,7 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
 
     var locals = {
         apis: apis,
+        hasAuthCall: hasAuthCall,
         projectFiles: parseProjectFiles("project_files.json"),
         buildIdentifier: sdkGlobals.buildIdentifier,
         clientDefines: clientDefines,
@@ -38,9 +39,11 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
     var prefix = "PlayFab" + api.name;
 
     pruneEmptyTypes(api);
+    var authCalls = getAuthCalls(api);
 
     var locals = {
         api: api,
+        authCalls: authCalls,
         prefix: prefix,
         enumtypes: getEnumTypes(api.datatypes),
         getApiDefine: getApiDefine,
@@ -74,6 +77,20 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
 
     var dataModelTemplate_c = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels_c.h.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/include/playFab", "PlayFab" + api.name + "DataModels_c.h"), dataModelTemplate_c(locals));
+
+    if (authCalls.length > 0) {
+        var authApiHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_AuthApi.h.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "AuthApi.h"), authApiHeaderTemplate(locals));
+
+        var authApiTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_AuthApi.cpp.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "AuthApi.cpp"), authApiTemplate(locals));
+
+        var publicAuthApiHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_AuthApi.h.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "AuthApi.h"), publicAuthApiHeaderTemplate(locals));
+
+        var publicAuthApiTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_AuthApi.cpp.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, "PlayFab" + api.name + "AuthApi.cpp"), publicAuthApiTemplate(locals));
+    }
 }
 
 // *************************** Internal utility methods ***************************
@@ -132,6 +149,20 @@ function pruneEmptyTypes(api) {
         }
     }
 
+}
+
+function getAuthCalls(api) {
+    // TODO probably better to remove these from api.calls rather than copy, but just copying for now
+
+    var authCalls = [];
+
+    for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
+        var call = api.calls[callIdx];
+        if (isAuthCall(call)) {
+            authCalls.push(call) 
+        }
+    }
+    return authCalls;
 }
 
 function getEnumTypes(datatypes) {
@@ -201,6 +232,28 @@ function getApiDefine(api) {
 
     // For now, everything else is considered ENTITY
     return "#if !defined(DISABLE_PLAYFABENTITY_API)";
+}
+
+// Check if an API has any calls that acquire auth tokens
+function hasAuthCall(api) {
+    for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
+        if (isAuthCall(api.calls[callIdx])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// return if an API call is authentication call
+function isAuthCall(call) {
+    // TODO this might not be the only check needed
+    // Could we check for call.auth === "none"?
+    if (call.result.toLowerCase().endsWith("loginresult")) {
+        return true;
+    } else if (call.result === "RegisterPlayFabUserResult") {
+        return true;
+    }
+    return false;
 }
 
 function hasAuthParams(apiCall) {

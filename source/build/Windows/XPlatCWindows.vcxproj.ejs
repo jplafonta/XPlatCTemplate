@@ -111,7 +111,14 @@ for (var file in projectFiles.sourceFiles) {
     <ClCompile Include="$(SdkSourceDir)\<%- file %>" /><%
     }
 } 
-for(var i in apis) { var api = apis[i];%>
+for(var i in apis) { 
+    var api = apis[i];
+    if (hasAuthCall(api)) { %>
+    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>AuthApi.h" />
+    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>AuthApi.cpp" />
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>AuthApi.h" />
+    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\PlayFab<%- api.name %>AuthApi.cpp" /><%
+    } %>
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>DataModels_c.h" />
     <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>DataModels.h" />
     <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>Api.h" />
