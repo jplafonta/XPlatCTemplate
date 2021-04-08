@@ -5,6 +5,7 @@
 
 #include <XAsyncProvider.h>
 #include "TaskQueue.h"
+#include "AsyncOp.h"
 
 namespace PlayFab
 {
@@ -39,11 +40,11 @@ protected:
     // Default implementation will call Schedule with no delay.
     virtual HRESULT Begin(TaskQueue&& queue);
 
-    // Perform any long running work. This method is invoked  is guaranteed always be invoked on the thread dictated by the Provider's
-    // XAsync task queue.
+    // Perform any long running work. This method is invoked is guaranteed always be invoked on the thread dictated by the Provider's
+    // XAsync task queue. AsyncOp return value should be the size of the XAsync result.
     //
-    // Default implementation will return S_OK (marking the async work as completed).
-    virtual HRESULT DoWork(TaskQueue&& queue);
+    // Default implementation will return 0, marking the async work as completed.
+    virtual AsyncOp<size_t> DoWork(TaskQueue&& queue);
 
     // The GetResult operation should copy the result payload into a client provided buffer. GetResult will be called
     // synchronously when the client calls the appropriate get result API.
@@ -63,7 +64,7 @@ protected:
     void Complete(size_t resultSize);
 
     // Marks the operation as complete with a failure code. By design, the client won't get a result payload
-    // when the operation fails.  The Provider's GetResult method will never be invoked in this case.
+    // when the operation fails. The Provider's GetResult method will never be invoked in this case.
     void Fail(HRESULT hr);
 
 private:

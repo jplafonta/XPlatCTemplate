@@ -170,7 +170,7 @@ namespace PlayFab
             auto playFabEmitEventResponse = MakeShared<PlayFabEmitEventResponse>();
             playFabEmitEventResponse->emitEventResult = emitResult;
 
-            SharedPtr<PlayFabError> emitEventError = MakeShared<PlayFabError>();
+            SharedPtr<ServiceResponse> emitEventError = MakeShared<ServiceResponse>();
 
             emitEventError->ErrorName = "PlayFabEventPipeline IntakeEvent Error";
             emitEventError->ErrorMessage = "PlayFabEventPipeline did not accept the event. Please see ErrorDetails for more information.";
@@ -202,13 +202,13 @@ namespace PlayFab
         }
     }
 
-    void PlayFabEventPipeline::SetExceptionCallback(ExceptionCallback ex)
-    {
-        { // LOCK userCallbackMutex
-            std::unique_lock<std::mutex> lock(userExceptionCallbackMutex);
-            userExceptionCallback = ex;
-        } // UNLOCK userCallbackMutex
-    }
+    //void PlayFabEventPipeline::SetExceptionCallback(ExceptionCallback ex)
+    //{
+    //    { // LOCK userCallbackMutex
+    //        std::unique_lock<std::mutex> lock(userExceptionCallbackMutex);
+    //        userExceptionCallback = ex;
+    //    } // UNLOCK userCallbackMutex
+    //}
 
     void PlayFabEventPipeline::WorkerThread()
     {
@@ -303,15 +303,16 @@ namespace PlayFab
         }
         catch (const std::exception& ex)
         {
+            UNREFERENCED_PARAMETER(ex);
             LOG_PIPELINE("An exception was caught in PlayFabEventPipeline::WorkerThread method");
             this->isWorkerThreadRunning = false;
 
             { // LOCK userCallbackMutex
                 std::unique_lock<std::mutex> lock(userExceptionCallbackMutex);
-                if (userExceptionCallback)
-                {
-                    userExceptionCallback(ex);
-                }
+                //if (userExceptionCallback)
+                //{
+                //    userExceptionCallback(ex);
+                //}
             } // UNLOCK userCallbackMutex
         }
         catch (...)
@@ -348,62 +349,58 @@ namespace PlayFab
             // call Events API to send the batch
             eventsApi->WriteEvents(
                 batchReq,
-                TaskQueue(), // TODO allow setting queue here somehow
-                std::bind(&PlayFabEventPipeline::WriteEventsApiCallback, this, std::placeholders::_1, batchPtr, batchId),
-                std::bind(&PlayFabEventPipeline::WriteEventsApiErrorCallback, this, std::placeholders::_1, batchPtr, batchId)
-            );
+                TaskQueue() // TODO allow setting queue here somehow
+            ).Finally(std::bind(&PlayFabEventPipeline::WriteEventsApiCallback, this, std::placeholders::_1, batchPtr, batchId));
         }
         else
         {
             // call Events API to send the batch, bypassing Playstream
             eventsApi->WriteTelemetryEvents(
                 batchReq,
-                TaskQueue(), // TODO allow setting queue here somehow
-                std::bind(&PlayFabEventPipeline::WriteEventsApiCallback, this, std::placeholders::_1, batchPtr, batchId),
-                std::bind(&PlayFabEventPipeline::WriteEventsApiErrorCallback, this, std::placeholders::_1, batchPtr, batchId)
-            );
+                TaskQueue() // TODO allow setting queue here somehow
+            ).Finally(std::bind(&PlayFabEventPipeline::WriteEventsApiCallback, this, std::placeholders::_1, batchPtr, batchId));
         }
     }
 
-    void PlayFabEventPipeline::WriteEventsApiCallback(const EventsModels::WriteEventsResponse& result, SharedPtr<Vector<SharedPtr<const IPlayFabEmitEventRequest>>> batchWritten, size_t batchId)
+    void PlayFabEventPipeline::WriteEventsApiCallback(Result<EventsModels::WriteEventsResponse> result, SharedPtr<Vector<SharedPtr<const IPlayFabEmitEventRequest>>> batchWritten, size_t batchId)
     {
         --batchesInFlight;
 
-        // call individual emit event callbacks
-        for (const auto& eventEmitRequest : *batchWritten)
+        if (Succeeded(result))
         {
-            SharedPtr<const PlayFabEmitEventRequest> playFabEmitRequest = std::dynamic_pointer_cast<const PlayFabEmitEventRequest>(eventEmitRequest);
-            auto playFabEmitEventResponse = SharedPtr<PlayFabEmitEventResponse>(new PlayFabEmitEventResponse());
-            playFabEmitEventResponse->emitEventResult = EmitEventResult::Success;
-            auto playFabError = MakeShared<PlayFabError>();
-            playFabError->HttpCode = 200;
-            playFabError->ErrorCode = PlayFabErrorCode::PlayFabErrorSuccess;
-            playFabEmitEventResponse->playFabError = playFabError;
-            playFabEmitEventResponse->writeEventsResponse = SharedPtr<EventsModels::WriteEventsResponse>(new EventsModels::WriteEventsResponse(result));
-            playFabEmitEventResponse->batch = batchWritten;
-            playFabEmitEventResponse->batchNumber = batchId;
+            // call individual emit event callbacks
+            for (const auto& eventEmitRequest : *batchWritten)
+            {
+                SharedPtr<const PlayFabEmitEventRequest> playFabEmitRequest = std::dynamic_pointer_cast<const PlayFabEmitEventRequest>(eventEmitRequest);
+                auto playFabEmitEventResponse = SharedPtr<PlayFabEmitEventResponse>(new PlayFabEmitEventResponse());
+                playFabEmitEventResponse->emitEventResult = EmitEventResult::Success;
+                auto playFabError = MakeShared<ServiceResponse>();
+                playFabError->HttpCode = 200;
+                playFabError->ErrorCode = ServiceErrorCode::Success;
+                playFabEmitEventResponse->playFabError = playFabError;
+                playFabEmitEventResponse->writeEventsResponse = SharedPtr<EventsModels::WriteEventsResponse>(new EventsModels::WriteEventsResponse(result.Payload()));
+                playFabEmitEventResponse->batch = batchWritten;
+                playFabEmitEventResponse->batchNumber = batchId;
 
-            // call an emit event callback
-            CallbackRequest(playFabEmitRequest, std::move(playFabEmitEventResponse));
+                // call an emit event callback
+                CallbackRequest(playFabEmitRequest, std::move(playFabEmitEventResponse));
+            }
         }
-    }
-
-    void PlayFabEventPipeline::WriteEventsApiErrorCallback(const PlayFabError& error, SharedPtr<Vector<SharedPtr<const IPlayFabEmitEventRequest>>> batchWritten, size_t batchId)
-    {
-        --batchesInFlight;
-
-        // call individual emit event callbacks
-        for (const auto& eventEmitRequest : *batchWritten)
+        else
         {
-            SharedPtr<const PlayFabEmitEventRequest> playFabEmitRequest = std::dynamic_pointer_cast<const PlayFabEmitEventRequest>(eventEmitRequest);
-            auto playFabEmitEventResponse = SharedPtr<PlayFabEmitEventResponse>(new PlayFabEmitEventResponse());
-            playFabEmitEventResponse->emitEventResult = EmitEventResult::Success;
-            playFabEmitEventResponse->playFabError = SharedPtr<PlayFabError>(new PlayFabError(error));
-            playFabEmitEventResponse->batch = batchWritten;
-            playFabEmitEventResponse->batchNumber = batchId;
+            // call individual emit event callbacks
+            for (const auto& eventEmitRequest : *batchWritten)
+            {
+                SharedPtr<const PlayFabEmitEventRequest> playFabEmitRequest = std::dynamic_pointer_cast<const PlayFabEmitEventRequest>(eventEmitRequest);
+                auto playFabEmitEventResponse = SharedPtr<PlayFabEmitEventResponse>(new PlayFabEmitEventResponse());
+                playFabEmitEventResponse->emitEventResult = EmitEventResult::Success;
+                playFabEmitEventResponse->playFabError = SharedPtr<ServiceResponse>(new ServiceResponse(/*TODO*/));
+                playFabEmitEventResponse->batch = batchWritten;
+                playFabEmitEventResponse->batchNumber = batchId;
 
-            // call an emit event callback
-            CallbackRequest(playFabEmitRequest, std::move(playFabEmitEventResponse));
+                // call an emit event callback
+                CallbackRequest(playFabEmitRequest, std::move(playFabEmitEventResponse));
+            }
         }
     }
 

@@ -26,6 +26,8 @@
 #include "StdOptional.h"
 #include "ResultMacros.h"
 #include "InternalMemory.h"
+#include "Result.h"
+#include "Error.h"
 #include "PlayFabPlatformMacros.h"
 #include "PlatformUtils.h"
 #include "PlayFabApiSettings.h"

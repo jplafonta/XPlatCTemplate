@@ -1,39 +1,58 @@
 #pragma once
 
 #include <httpClient/httpClient.h>
-#include "PlayFabError.h"
 #include "TaskQueue.h"
+#include "AsyncOp.h"
 
 namespace PlayFab
 {
-    struct HttpResult
-    {
-        // Result indicating whether the request was successfully sent
-        HRESULT networkErrorCode;
-        String requestUrl;
-        JsonValue requestBody;
-        PlayFabError serviceResponse;
-    };
 
-    // An Http client for make PlayFab service requests
-    class HttpClient
-    {
-    public:
-        using HttpCallback = std::function<void(const HttpResult&)>;
+struct ServiceResponse;
 
-        HttpClient(SharedPtr<PlayFabApiSettings> settings);
-        HttpClient(const HttpClient&) = default;
-        ~HttpClient() = default;
+// An Http client for make PlayFab service requests
+class HttpClient
+{
+public:
+    HttpClient(SharedPtr<PlayFabApiSettings> settings);
+    HttpClient(const HttpClient&) = default;
+    ~HttpClient() = default;
 
-        void MakePostRequest(
-            const char* path,
-            const UnorderedMap<String, String>& headers,
-            JsonValue&& requestBody,
-            const TaskQueue & queue,
-            HttpCallback&& callback
-        ) const;
+    AsyncOp<ServiceResponse> MakePostRequest(
+        const char* path,
+        const UnorderedMap<String, String>& headers,
+        const JsonValue& requestBody,
+        const TaskQueue& queue
+    ) const;
 
-    private:
-        SharedPtr<PlayFabApiSettings> m_settings;
-    };
+private:
+    SharedPtr<PlayFabApiSettings> m_settings;
+};
+
+// Wrapper around PlayFab service response.
+// See https://docs.microsoft.com/en-us/rest/api/playfab/client/authentication/loginwithcustomid?view=playfab-rest#apierrorwrapper for
+// more information.
+struct ServiceResponse
+{
+    ServiceResponse() = default;
+    ServiceResponse(const ServiceResponse&);
+    ServiceResponse(ServiceResponse&&) = default;
+    ServiceResponse& operator=(const ServiceResponse&);
+    ServiceResponse& operator=(ServiceResponse&&) = default;
+    ~ServiceResponse() = default;
+
+    void FromJson(const JsonValue& input);
+
+    // Fields from response body
+    int HttpCode;
+    String HttpStatus;
+    ServiceErrorCode ErrorCode;
+    String ErrorName;
+    String ErrorMessage;
+    JsonValue ErrorDetails;
+    JsonValue Data;
+
+    // From response header
+    String RequestId;
+};
+
 }

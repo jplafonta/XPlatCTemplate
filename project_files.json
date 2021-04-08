@@ -11,6 +11,7 @@
     "\\include\\playfab\\PlayFabGlobal.h": "Header Files\\playfab"
   },
   "sourceFiles": {
+    "source\\AsyncOp.h": "Source Files",
     "source\\AsyncProvider.cpp": "Source Files",
     "source\\AsyncProvider.h": "Source Files",
     "source\\AuthAsyncProvider.h": "Source Files",
@@ -19,6 +20,8 @@
     "source\\BaseModel.cpp": "Source Files",
     "source\\BaseModel.h": "Source Files",
     "source\\EnumTraits.h": "Source Files",
+    "source\\Error.cpp": "Source Files",
+    "source\\Error.h": "Source Files",
     "source\\GlobalState.cpp": "Source Files",
     "source\\GlobalState.h": "Source Files",
     "source\\HttpClient.cpp": "Source Files",
@@ -34,8 +37,6 @@
     "source\\PlayFabAuthenticationContext.cpp": "Source Files",
     "source\\PlayFabAuth.cpp": "Source Files",
     "source\\PlayFabAuthenticationContext.h": "Source Files",
-    "source\\PlayFabError.cpp": "Source Files",
-    "source\\PlayFabError.h": "Source Files",
     "source\\PlayFabEvent.h": "Source Files",
     "source\\PlayFabEvent.cpp": "Source Files",
     "source\\PlayFabEventApi.cpp": "Source Files",
@@ -52,6 +53,7 @@
     "source\\PlayFabSettings.h": "Source Files",
     "source\\PlayFabSpinLock.cpp": "Source Files",
     "source\\PlayFabSpinLock.h": "Source Files",
+    "source\\Result.h": "Source Files",
     "source\\ResultMacros.h": "Source Files",
     "source\\StdOptional.h": "Source Files",
     "source\\TaskQueue.cpp": "Source Files",

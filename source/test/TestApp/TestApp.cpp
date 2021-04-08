@@ -18,6 +18,7 @@
 
 #include "JsonParsingTests.h"
 #include "ModelTests.h"
+#include "AsyncOpTests.h"
 
 using namespace PlayFab;
 
@@ -87,6 +88,9 @@ namespace PlayFabUnit
 
         ModelTests modelTests;
         testRunner.Add(modelTests);
+
+        AsyncOpTests asyncOpTests;
+        testRunner.Add(asyncOpTests);
 
         // Run the tests (blocks until all tests have finished).
         testRunner.Run();

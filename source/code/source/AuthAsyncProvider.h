@@ -2,7 +2,6 @@
 
 #include "AsyncProvider.h"
 #include "AuthContext.h"
-#include "PlayFabError.h"
 
 namespace PlayFab
 {
@@ -12,7 +11,7 @@ template<typename AuthApiT, typename RequestT>
 class AuthCallProvider: public Provider
 {
 public:
-    using AuthCallT = void (AuthApiT::*)(const RequestT&, const TaskQueue&, ProcessApiCallback<SharedPtr<AuthContext>>, const ErrorCallback) const;
+    using AuthCallT = AsyncOp<SharedPtr<AuthContext>> (AuthApiT::*)(const RequestT&, const TaskQueue&) const;
 
     AuthCallProvider(XAsyncBlock* async, const AuthApiT& api, AuthCallT authCall, const RequestT& request)
         : Provider{ async },
@@ -23,20 +22,22 @@ public:
     }
 
 protected:
+    // Choosing to kick of async operation during Begin so that we don't have to copy the AuthApiT object
     HRESULT Begin(TaskQueue&& queue) override
     {
-        (m_api.*m_call)(m_request, queue, 
-            [this](const SharedPtr<AuthContext>& authContext)
+        (m_api.*m_call)(m_request, queue).Finally([this](Result<SharedPtr<AuthContext>> result)
+        {
+            if (Succeeded(result))
             {
-                this->m_authContext = authContext;
+                this->m_authContext = result.ExtractPayload();
                 this->Complete(sizeof(PlayFabAuthContextHandle));
-            },
-            [this](const PlayFabError& /*error*/)
-            {
-                // TODO translate error to HRESULT
-                this->Fail(E_FAIL);
             }
-            );
+            else
+            {
+                this->Fail(result.hr);
+            }
+        });
+
         return S_OK;
     }
 
@@ -49,7 +50,6 @@ protected:
     }
 
 private:
-    // TODO Consider copying the API, using SharedPtr, or storing a std::bind function
     const AuthApiT& m_api;
     AuthCallT m_call;
     const RequestT& m_request;

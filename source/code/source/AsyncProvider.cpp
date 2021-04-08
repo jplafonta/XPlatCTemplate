@@ -25,9 +25,9 @@ HRESULT Provider::Begin(TaskQueue&&)
     return Schedule(0);
 }
 
-HRESULT Provider::DoWork(TaskQueue&&)
+AsyncOp<size_t> Provider::DoWork(TaskQueue&&)
 {
-    return S_OK;
+    return Result<size_t>(size_t(0));
 }
 
 HRESULT Provider::GetResult(void*, size_t)
@@ -62,16 +62,19 @@ HRESULT CALLBACK Provider::XAsyncProvider(_In_ XAsyncOp op, _Inout_ const XAsync
         }
         catch (...)
         {
-            return E_UNEXPECTED;
+            return CurrentExceptionToHR();
         }
     case XAsyncOp::DoWork:
         try
         {
-            return provider->DoWork(data->async->queue);
+            provider->DoWork(data->async->queue).Finally([data](Result<size_t> asyncResult)
+            {
+                XAsyncComplete(data->async, asyncResult.hr, asyncResult.Payload());
+            });
         }
         catch (...)
         {
-            return E_UNEXPECTED;
+            return CurrentExceptionToHR();
         }
     case XAsyncOp::GetResult:
         try
@@ -80,7 +83,7 @@ HRESULT CALLBACK Provider::XAsyncProvider(_In_ XAsyncOp op, _Inout_ const XAsync
         }
         catch (...)
         {
-            return E_UNEXPECTED;
+            return CurrentExceptionToHR();
         }
     case XAsyncOp::Cancel:
     {

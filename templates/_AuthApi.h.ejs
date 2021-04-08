@@ -17,7 +17,7 @@ public:
 
     // Generated APIs <%
 for (var callIdx = 0; callIdx < authCalls.length; callIdx++) { var call = authCalls[callIdx]; %>
-    void <%- call.name %>(const PlayFab<%- api.name %><%- call.request %>& request, const TaskQueue& queue, const ProcessApiCallback<SharedPtr<AuthContext>> callback, const ErrorCallback errorCallback = nullptr) const;<%
+    AsyncOp<SharedPtr<AuthContext>> <%- call.name %>(const PlayFab<%- api.name %><%- call.request %>& request, const TaskQueue& queue) const;<%
 } %>
 
 private:

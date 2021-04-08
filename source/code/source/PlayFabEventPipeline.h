@@ -83,7 +83,7 @@ namespace PlayFab
         virtual void Update() override;
         virtual void IntakeEvent(SharedPtr<const IPlayFabEmitEventRequest> request) override;
 
-        void SetExceptionCallback(ExceptionCallback callback);
+        //void SetExceptionCallback(ExceptionCallback callback);
 
     protected:
         virtual void SendBatch(Vector<SharedPtr<const IPlayFabEmitEventRequest>>& batch);
@@ -91,8 +91,8 @@ namespace PlayFab
     private:
         void WorkerThread();
         bool DoWork();
-        void WriteEventsApiCallback(const EventsModels::WriteEventsResponse& result, SharedPtr<Vector<SharedPtr<const IPlayFabEmitEventRequest>>> batch, size_t batchId);
-        void WriteEventsApiErrorCallback(const PlayFabError& error, SharedPtr<Vector<SharedPtr<const IPlayFabEmitEventRequest>>> batch, size_t batchId);
+        void WriteEventsApiCallback(Result<EventsModels::WriteEventsResponse> result, SharedPtr<Vector<SharedPtr<const IPlayFabEmitEventRequest>>> batch, size_t batchId);
+        //void WriteEventsApiErrorCallback(const PlayFabError& error, SharedPtr<Vector<SharedPtr<const IPlayFabEmitEventRequest>>> batch, size_t batchId);
         void CallbackRequest(SharedPtr<const IPlayFabEmitEventRequest> request, SharedPtr<const IPlayFabEmitEventResponse> response);
 
     private:
@@ -107,7 +107,7 @@ namespace PlayFab
         std::thread workerThread;
         std::atomic<bool> isWorkerThreadRunning;
         std::mutex userExceptionCallbackMutex;
-        ExceptionCallback userExceptionCallback;
+        //ExceptionCallback userExceptionCallback;
     };
 }
 

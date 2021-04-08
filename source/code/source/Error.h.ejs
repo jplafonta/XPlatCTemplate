@@ -1,0 +1,20 @@
+#pragma once
+
+#include "BaseModel.h"
+
+namespace PlayFab
+{
+
+// Errors returned from PlayFab service calls
+enum class ServiceErrorCode
+{
+<% for (errIdx in apis[0].errors) { var apiErr = apis[0].errors[errIdx];
+%>    <%- apiErr.name %> = <%- apiErr.id %>,
+<% }
+%>};
+
+HRESULT ServiceErrorToHR(ServiceErrorCode errorCode);
+
+HRESULT CurrentExceptionToHR();
+
+}
