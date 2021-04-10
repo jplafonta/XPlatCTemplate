@@ -97,9 +97,13 @@ typedef struct PlayFabGlobalState* PlayFabStateHandle;
 /// <summary>
 /// Create PlayFab global state.
 /// </summary>
-/// <param name="stateHandle">Pointer to PlayFabStateHandle.</param>
+/// <param name="titleId">TitleId for the title. Found in the Game Manager for your title on the PlayFab Website.</param>
+/// <param name="secretKey">Key to be used for Authentication for some APIs.</param>
+/// <param name="stateHandle">Returned pointer to PlayFabStateHandle.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabInitialize(
+    _In_z_ const char* titleId, // Could this be a uint64_t?
+    _In_opt_z_ const char* secretKey,
     _Outptr_ PlayFabStateHandle* stateHandle
 ) noexcept;
 

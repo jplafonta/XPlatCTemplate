@@ -2,6 +2,7 @@
 
 #include <httpClient/pal.h>
 #include <memory>
+#include "Result.h"
 
 namespace PlayFab
 {

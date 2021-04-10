@@ -20,9 +20,20 @@
 #include <array>
 #include <assert.h>
 
+// libHttpClient headers
 #include <httpClient/pal.h>
 #include <httpClient/async.h>
-#include "JsonHeaders.h"
+
+// rapidjson headers
+#define RAPIDJSON_NAMESPACE PlayFab::rapidjson
+#define RAPIDJSON_NAMESPACE_BEGIN namespace PlayFab { namespace rapidjson {
+#define RAPIDJSON_NAMESPACE_END } }
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/error/en.h>
+
 #include "StdOptional.h"
 #include "ResultMacros.h"
 #include "InternalMemory.h"
@@ -30,8 +41,6 @@
 #include "Error.h"
 #include "PlayFabPlatformMacros.h"
 #include "PlatformUtils.h"
-#include "PlayFabApiSettings.h"
-#include "PlayFabAuthenticationContext.h"
 
 #define UNREFERENCED_PARAMETER(P) (P)
 

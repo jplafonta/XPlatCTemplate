@@ -1,0 +1,84 @@
+#include "stdafx.h"
+#include <playfab/PlayFab<%- api.name %>Api.h>
+#include "<%- api.name %>Api.h"
+#include "ApiAsyncProviders.h"
+#include "GlobalState.h"<%
+if (!categorizedApi.otherCallsRequireSecretKey) { %>
+#include "Entity.h"<% 
+} %>
+
+using namespace PlayFab;
+using namespace PlayFab::<%- api.name %>Models;
+<% var apiMemberName = api.name.charAt(0).toLowerCase() + api.name.slice(1) + "API";
+for (var i = 0; i < categorizedApi.otherCalls.length; i++) {
+    var call = categorizedApi.otherCalls[i]; 
+    var contextHandleParam = categorizedApi.otherCallsRequireSecretKey || call.auth === "None" ? "PlayFabStateHandle contextHandle" : "PlayFabEntityHandle contextHandle";
+    var apiContext = categorizedApi.otherCallsRequireSecretKey || call.auth === "None" ? "contextHandle->state" : "contextHandle->entity";
+    var requestParam = call.request === "void" ? "" : "_In_ const PlayFab" + api.name + call.request + "* request,\n    ";
+    var apiInstanceBinder = call.auth === "None" ? "" : "&" + apiContext + "->" + apiMemberName + ", ";
+    var httpClientBinder = call.auth === "None" ? "contextHandle->state->HttpClient(), " : "";
+    var requestBinder = call.request === "void" ? "" : "*request, "; %>
+HRESULT PlayFab<%- api.name %><%- call.name %>Async(
+    _In_ <%- contextHandleParam %>,
+    <%- requestParam %>_In_ XAsyncBlock* async
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(contextHandle);<%
+    if (!(call.request === "void")) { %>
+    RETURN_HR_INVALIDARG_IF_NULL(request); <%
+    } %>
+
+    auto provider = MakeProvider(async, std::bind(&<%- api.name %>API::<%- call.name %>, <%- apiInstanceBinder %><%- requestBinder%><%- httpClientBinder %>std::placeholders::_1));
+    return Provider::Run(UniquePtr<Provider>(provider.release()));
+}
+<%
+    if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { 
+        // No Get Result method needed
+    } else if (isFixedSize(api.datatypes[call.result])) { %>
+HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
+    _In_ XAsyncBlock* async,
+    _Out_ PlayFab<%- api.name %><%- call.result %>* result
+) noexcept
+{
+    return XAsyncGetResult(async, nullptr, sizeof(PlayFab<%- api.name %><%- call.result %>), result, nullptr);
+}<%
+    } else if (isSerializable(api.datatypes[call.result])) { %>
+HRESULT PlayFab<%- api.name %><%- call.name %>GetResultSize(
+    _In_ XAsyncBlock* async,
+    _Out_ size_t* bufferSize
+) noexcept
+{
+    return XAsyncGetResultSize(async, bufferSize);
+}
+
+HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
+    _In_ XAsyncBlock* async,
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_(bufferSize, *bufferUsed) void* buffer,
+    _Outptr_ PlayFab<%- api.name %><%- call.result %>** result,
+    _Out_opt_ size_t* bufferUsed
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(result);
+
+    RETURN_IF_FAILED(XAsyncGetResult(async, nullptr, bufferSize, buffer, bufferUsed));
+    *result = static_cast<PlayFab<%- api.name %><%- call.result %>*>(buffer);
+
+    return S_OK;
+}<%
+    } else { %>
+HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
+    _In_ XAsyncBlock* async,
+    _Out_ PlayFabResultHandle* resultHandle,
+    _Outptr_ PlayFab<%- api.name %><%- call.result %>** result
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(result);
+
+    RETURN_IF_FAILED(XAsyncGetResult(async, nullptr, sizeof(PlayFabResultHandle), resultHandle, nullptr));
+    *result = (PlayFab<%- api.name %><%- call.result %>*)(std::dynamic_pointer_cast<<%- call.result %>>((*resultHandle)->model).get());
+
+    return S_OK;
+}
+<%  } // end if
+} // end for %>

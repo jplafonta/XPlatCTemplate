@@ -2,7 +2,7 @@
 
 #include "TestAppPch.h"
 #include <thread>
-#include <PlayFabSettings.h>
+#include <SdkVersion.h>
 #include "TestCase.h"
 #include "TestContext.h"
 #include "TestRunner.h"
@@ -15,9 +15,8 @@ namespace PlayFabUnit
     TestRunner::TestRunner() :
         suiteState(TestActiveState::PENDING),
         suiteTestCase(nullptr),
-        suiteTestReport(PlayFab::PlayFabSettings::buildIdentifier.data())
+        suiteTestReport(PlayFab::buildIdentifier)
     {
-        PlayFab::PlayFabSettings::threadedCallbacks = true;
     }
 
     void TestRunner::Add(TestCase& testCase)

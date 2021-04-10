@@ -23,8 +23,9 @@ namespace PlayFab
         static const size_t MaxWaitForFuturesLoopCounts = 300;
         PlayFabQoSApi::PlayFabQoSApi()
         {
-            eventsApi = std::make_shared<PlayFabEventsInstanceAPI>(PlayFabSettings::staticPlayer);
-            multiplayerApi = std::make_shared<PlayFabMultiplayerInstanceAPI>(PlayFabSettings::staticPlayer);
+            // TODO
+            //eventsApi = std::make_shared<EventsAPI>(PlayFabSettings::staticPlayer);
+            //multiplayerApi = std::make_shared<MultiplayerAPI>(PlayFabSettings::staticPlayer);
         }
 
         std::future<QoSResult> PlayFabQoSApi::GetQoSResultAsync(unsigned int numThreads, unsigned int timeoutMs)

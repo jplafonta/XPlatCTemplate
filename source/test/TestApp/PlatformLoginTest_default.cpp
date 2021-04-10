@@ -31,8 +31,8 @@ namespace PlayFabUnit
             std::unique_ptr<XAsyncBlock> reclaim{ async };
 
             auto testContext = static_cast<TestContext*>(async->context);
-            PlayFabAuthContextHandle authHandle{};
-            HRESULT hr = PlayFabAuthGetAuthResult(async, &authHandle);
+            PlayFabEntityHandle entityHandle{};
+            HRESULT hr = PlayFabGetAuthResult(async, &entityHandle);
 
             if (SUCCEEDED(hr))
             {
@@ -45,10 +45,10 @@ namespace PlayFabUnit
                 testContext->Fail(ss.str());
             }
 
-            PlayFabAuthContextCloseHandle(authHandle);
+            PlayFabEntityCloseHandle(entityHandle);
         };
 
-        HRESULT hr = PlayFabClientLoginWithCustomID(stateHandle, &request, async.get());
+        HRESULT hr = PlayFabClientLoginWithCustomIDAsync(stateHandle, &request, async.get());
         if (FAILED(hr))
         {
             std::stringstream ss;
@@ -68,7 +68,7 @@ namespace PlayFabUnit
 
     void PlatformLoginTest::ClassSetUp()
     {
-        HRESULT hr = PlayFabInitialize(&stateHandle);
+        HRESULT hr = PlayFabInitialize(testTitleData.titleId.data(), nullptr, &stateHandle);
         assert(SUCCEEDED(hr));
         UNREFERENCED_PARAMETER(hr);
     }

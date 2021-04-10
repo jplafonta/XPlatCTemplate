@@ -1,6 +1,6 @@
 #pragma once
 
-#include <playfab/PlayFabBaseModel_c.h>
+#include <playfab/PlayFabBaseModel.h>
 #include "EnumTraits.h"
 
 namespace PlayFab

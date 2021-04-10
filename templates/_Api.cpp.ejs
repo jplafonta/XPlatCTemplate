@@ -1,183 +1,64 @@
 #include "stdafx.h"
-
-<%- getApiDefine(api) %>
-
 #include "<%- api.name %>Api.h"
-#include "PlayFabSettings.h"
-
-#if defined(PLAYFAB_PLATFORM_WINDOWS)
-#pragma warning (disable: 4100) // formal parameters are part of a public interface
-#endif // defined(PLAYFAB_PLATFORM_WINDOWS)
+#include "Entity.h"
 
 namespace PlayFab
 {
-    using namespace <%- api.name %>Models;
-<% if( api.name === "Admin" || api.name === "Server" ) { %>
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI() :
-        m_settings(MakeShared<PlayFabApiSettings>()),
-        m_httpClient(m_settings)
-    {
-    }
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings) :
-        m_settings(apiSettings),
-        m_context(MakeShared<PlayFabAuthenticationContext>()),
-        m_httpClient(m_settings)
-    {
-    }
+using namespace <%- api.name %>Models;
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
-        m_settings(MakeShared<PlayFabApiSettings>()),
-        m_context(authenticationContext),
-        m_httpClient(m_settings)
-    {
-    }
+<%- api.name %>API::<%- api.name %>API(SharedPtr<HttpClient const> httpClient<%
+if (categorizedApi.otherCallsRequireSecretKey) {
+%>, SharedPtr<String const> secretKey) :
+    m_httpClient{ std::move(httpClient) },
+    m_secretKey{ std::move(secretKey) }<%
+} else {
+%>, SharedPtr<AuthTokens const> tokens) :
+    m_httpClient{ std::move(httpClient) },
+    m_tokens{ std::move(tokens) }<%
+} %>
+{
+}
+<%for (var i = 0; i < categorizedApi.otherCalls.length; i++) {
+    var call = categorizedApi.otherCalls[i];
+    var constModifier = call.auth === "None" ? "" : " const";
+    var resultT = call.result === "void" ? "AsyncOp<void>" : "AsyncOp<" + api.name + "Models::" + call.result + ">";
+    var requestParam = call.request === "void" ? "" : "const PlayFab" + api.name + call.request + "& request,\n    ";
+    var httpClientParam = call.auth === "None" ? "SharedPtr<HttpClient const> httpClient,\n    " : ""; 
+    var httpClient = call.auth === "None" ? "httpClient" : "m_httpClient";
+    var requestBody = call.request === "void" ? "JsonValue{ rapidjson::kNullType }" : "JsonUtils::ToJson(request)"; %>
+<%- resultT %> <%- api.name %>API::<%- call.name %>(
+    <%- requestParam %><%- httpClientParam %>const TaskQueue& queue
+)<%- constModifier %>
+{
+    UnorderedMap<String, String> headers;
+    <%- addAuthHeader(call) %>
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings, const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
-        m_settings(apiSettings),
-        m_context(authenticationContext),
-        m_httpClient(m_settings)
+    return <%- httpClient %>->MakePostRequest(
+        "<%- call.url %>",
+        headers,
+        <%- requestBody %>,
+        queue
+    ).Then([](Result<ServiceResponse> result) -> Result<<%- call.result %>>
     {
-    }
-<% } else if( api.name === "Client" || api.name === "Authentication" ) { %>
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI() :
-        m_settings(MakeShared<PlayFabApiSettings>()),
-        m_context(MakeShared<PlayFabAuthenticationContext>()),
-        m_httpClient(m_settings)
-    {
-    }
+        RETURN_IF_FAILED(result.hr);
 
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings) :
-        m_settings(apiSettings),
-        m_context(MakeShared<PlayFabAuthenticationContext>()),
-        m_httpClient(m_settings)
-    {
-    }
-
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
-        m_settings(MakeShared<PlayFabApiSettings>()),
-        m_context(authenticationContext),
-        m_httpClient(m_settings)
-    {
-    }
-
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings, const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
-        m_settings(apiSettings),
-        m_context(authenticationContext),
-        m_httpClient(m_settings)
-    {
-    }
-<% } else { %>
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
-        m_settings(MakeShared<PlayFabApiSettings>()),
-        m_context(authenticationContext),
-        m_httpClient(m_settings)
-    {
-        // TODO
-        /* if (m_context == nullptr)
-        {
-            throw PlayFabException(PlayFabExceptionCode::AuthContextRequired, "Context cannot be null, create a PlayFabAuthenticationContext for each player in advance, or get <PlayFabClientInstanceAPI>.authenticationContext");
-        } */
-    }
-
-    PlayFab<%- api.name %>InstanceAPI::PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings, const SharedPtr<PlayFabAuthenticationContext>& authenticationContext) :
-        m_settings(apiSettings),
-        m_context(authenticationContext),
-        m_httpClient(m_settings)
-    {
-        // TODO
-        /*if (m_context == nullptr)
-        {
-            throw PlayFabException(PlayFabExceptionCode::AuthContextRequired, "Context cannot be null, create a PlayFabAuthenticationContext for each player in advance, or get <PlayFabClientInstanceAPI>.authenticationContext");
-        }*/
-    }
-<% } %>
-    SharedPtr<PlayFabApiSettings> PlayFab<%- api.name %>InstanceAPI::GetSettings() const
-    {
-        return this->m_settings;
-    }
-
-    SharedPtr<PlayFabAuthenticationContext> PlayFab<%- api.name %>InstanceAPI::GetAuthenticationContext() const
-    {
-        return this->m_context;
-    }
-
-    void PlayFab<%- api.name %>InstanceAPI::ForgetAllCredentials()
-    {
-        if (this->m_context != nullptr)
-        {
-            this->m_context->ForgetAllCredentials();
+        auto serviceResponse = result.ExtractPayload();
+        if (serviceResponse.HttpCode == 200)
+        {<% 
+    if (call.result === "void") { %>
+            return S_OK;<%
+    } else { %>
+            <%- call.result %> resultModel;
+            resultModel.FromJson(serviceResponse.Data);
+            return resultModel;<%
+    } %>
         }
-    }
-
-    // PlayFab<%- api.name %> instance APIs
-<% for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
-    var apiCall = api.calls[callIdx]; 
-    var requestT = apiCall.request === "BaseRequest" ? "BaseRequest" : "PlayFab" + api.name + apiCall.request; %>
-    AsyncOp<<%- apiCall.result %>> PlayFab<%- api.name %>InstanceAPI::<%- apiCall.name %>(
-        const <%- requestT %>& request,
-        const TaskQueue& queue
-    )
-    {
-<%- getRequestActions("        ", apiCall) %>        UnorderedMap<String, String> headers;
-<% if (hasAuthParams(apiCall)) {
-%>        headers.emplace(<%- getAuthParams(apiCall) %>);
-<% } %>
-        return m_httpClient.MakePostRequest(
-            "<%- apiCall.url %>",
-            headers,
-            JsonUtils::ToJson(request),
-            queue
-        ).Then([ this ](Result<ServiceResponse> result) -> Result<<%- apiCall.result %>>
+        else
         {
-            // TODO bug: There is a lifetime issue with capturing this here since the client owns the object
-
-            RETURN_IF_FAILED(result.hr);
-
-            auto& serviceResponse = result.Payload();
-            if (serviceResponse.HttpCode == 200)
-            {
-                <%- apiCall.result %> resultModel;
-                resultModel.FromJson(serviceResponse.Data);
-                /*<%- getResultActions("                ", apiCall)   %>*/
-
-                return resultModel;
-            }
-            else
-            {
-                return ServiceErrorToHR(serviceResponse.ErrorCode);
-            }
-        });
-    }
-<% } %><% if (hasClientOptions) { %>
-    // Private PlayFabClientInstanceAPI specific
-    bool PlayFabClientInstanceAPI::IsClientLoggedIn()
-    {
-        return !this->m_context->clientSessionTicket.empty();
-    }
-
-    void PlayFabClientInstanceAPI::MultiStepClientLogin(SharedPtr<PlayFabAuthenticationContext> context, bool needsAttribution)
-    {
-        if (needsAttribution && !context->disableAdvertising && context->advertisingIdType.length() > 0 && context->advertisingIdValue.length() > 0)
-        {
-            AttributeInstallRequest request;
-            if (context->advertisingIdType == PlayFabSettings::AD_TYPE_IDFA)
-            {
-                request.idfa = context->advertisingIdValue.data();
-                AttributeInstall(request, nullptr);
-            }
-            else if (context->advertisingIdType == PlayFabSettings::AD_TYPE_ANDROID_ID)
-            {
-                request.adid = context->advertisingIdValue.data();
-                AttributeInstall(request, nullptr);
-            }
+            return Result<<%- call.result %>>{ ServiceErrorToHR(serviceResponse.ErrorCode), std::move(serviceResponse.ErrorMessage) };
         }
-    }
+    });
+}
 <% } %>
 }
-
-#endif
-
-#if defined(PLAYFAB_PLATFORM_WINDOWS)
-#pragma warning (default: 4100) // formal parameters are part of a public interface
-#endif // defined(PLAYFAB_PLATFORM_WINDOWS)
