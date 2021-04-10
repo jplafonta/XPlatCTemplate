@@ -20,6 +20,8 @@ struct AuthTokens
     String EntityToken;
 };
 
+// An entity authenticated with PlayFab via one of the various login methods. For more detail on PlayFab entities see the service
+// documentation here: https://docs.microsoft.com/en-us/gaming/playfab/features/data/entities/quickstart.
 class Entity : public std::enable_shared_from_this<Entity>
 {
 public:
