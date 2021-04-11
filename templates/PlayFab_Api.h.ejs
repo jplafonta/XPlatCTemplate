@@ -44,8 +44,7 @@ HRESULT PlayFab<%- api.name %><%- call.name %>Async(
     _In_ <%- contextHandleParam %>,
     <%- requestParam %>_Inout_ XAsyncBlock* async
 ) noexcept;
-<%
-    if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { 
+<%  if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { 
         // No Get Result method needed
     } else if (isFixedSize(api.datatypes[call.result])) { %>
 /// <summary>
@@ -58,9 +57,9 @@ HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
     _Inout_ XAsyncBlock* async,
     _Out_ PlayFab<%- api.name %><%- call.result %>* result
 ) noexcept;
-    <% } else if (isSerializable(api.datatypes[call.result])) { %>
+<%  } else if (isSerializable(api.datatypes[call.result])) { %>
 /// <summary>
-/// Get the size in bytes needed to store the result of a <%- call.name %> call.>
+/// Get the size in bytes needed to store the result of a <%- call.name %> call.
 /// </summary>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <param name="bufferSize">The buffer size in bytes required for the result.</param>
@@ -89,7 +88,7 @@ HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
     _Outptr_ PlayFab<%- api.name %><%- call.result %>** result,
     _Out_opt_ size_t* bufferUsed
 ) noexcept;
-    <% } else { %>
+<%  } else { %>
 /// <summary>
 /// Gets the result of a successful <%- call.name %> call.
 /// </summary>

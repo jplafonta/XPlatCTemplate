@@ -41,8 +41,8 @@ private:
 
 public:
     // Non-generated implementation for /Authentication/GetEntityToken API call. When GetEntityToken is called by an existing Entity, the service
-    // call will be authenticated with either the EntityToken or the ClientSessionTicket. The existing Entity object will be updated with the returned EntityToken
-    // if the call succeeds.
+    // call will be authenticated with either the EntityToken or the ClientSessionTicket. The calling Entity's AuthTokens will be updated with the returned 
+    // EntityToken if the call succeeds.
     AsyncOp<void> GetEntityToken(const PlayFabAuthenticationGetEntityTokenRequest& request, const TaskQueue& queue);
 <% for(var apiName in categorizedApis) {
     var api = categorizedApis[apiName];

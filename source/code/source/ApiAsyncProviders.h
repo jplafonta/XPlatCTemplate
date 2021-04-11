@@ -130,7 +130,7 @@ template<typename CallT>
 class AuthCallProvider : public Provider
 {
 public:
-    static_assert(std::is_same_v<SharedPtr<Entity>, typename Detail::UnwrapAsyncT<typename std::result_of_t<CallT(const TaskQueue&)>>>, "CallT must return an AuthContext");
+    static_assert(std::is_same_v<SharedPtr<Entity>, typename Detail::UnwrapAsyncT<typename std::result_of_t<CallT(const TaskQueue&)>>>, "CallT must return a SharedPt<Entity>");
 
     AuthCallProvider(XAsyncBlock* async, CallT authCall)
         : Provider{ async },

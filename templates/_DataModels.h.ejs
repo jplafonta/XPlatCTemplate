@@ -65,15 +65,21 @@ for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype 
 
             void Serialize(void* buffer, size_t bufferSize) const override
             {
-                new (buffer) <%- prefix %><%- datatype.name %>{ *this };
+                auto serializedStruct = new (buffer) <%- prefix %><%- datatype.name %>{ *this };
                 char* stringBuffer = static_cast<char*>(buffer) + sizeof(<%- prefix %><%- datatype.name %>);
-        <% for (i = 0; i < datatype.properties.length; i++) { 
+        <% for (i = 0; i < datatype.properties.length; i++) {
+            var hasStringProp = false;
             var property = datatype.properties[i]; 
-            if (property.actualtype === "String") { %>
+            if (property.actualtype === "String") { 
+                var hasStringProp = true; %>
                 memcpy(stringBuffer, <%- getPropertyName(property, true) %>.data(), <%- getPropertyName(property, true) %>.size() + 1);
+                serializedStruct-><%- getPropertyName(property, false) %> = stringBuffer;
                 stringBuffer +=  <%- getPropertyName(property, true) %>.size() + 1; <%
             }
-        } // end for %>
+        } // end for 
+        if (!hasStringProp) { %>
+                UNREFERENCED_PARAMETER(serializedStruct);<%
+        } // end if %>
                 assert(stringBuffer - bufferSize == buffer);
             }
     <% } // end if %>

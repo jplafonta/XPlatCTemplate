@@ -31,8 +31,7 @@ HRESULT PlayFab<%- api.name %><%- call.name %>Async(
     auto provider = MakeProvider(async, std::bind(&<%- api.name %>API::<%- call.name %>, <%- apiInstanceBinder %><%- requestBinder%><%- httpClientBinder %>std::placeholders::_1));
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
-<%
-    if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { 
+<%  if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { 
         // No Get Result method needed
     } else if (isFixedSize(api.datatypes[call.result])) { %>
 HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
@@ -41,8 +40,8 @@ HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
 ) noexcept
 {
     return XAsyncGetResult(async, nullptr, sizeof(PlayFab<%- api.name %><%- call.result %>), result, nullptr);
-}<%
-    } else if (isSerializable(api.datatypes[call.result])) { %>
+}
+<%  } else if (isSerializable(api.datatypes[call.result])) { %>
 HRESULT PlayFab<%- api.name %><%- call.name %>GetResultSize(
     _In_ XAsyncBlock* async,
     _Out_ size_t* bufferSize
@@ -65,8 +64,8 @@ HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
     *result = static_cast<PlayFab<%- api.name %><%- call.result %>*>(buffer);
 
     return S_OK;
-}<%
-    } else { %>
+}
+<%  } else { %>
 HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
     _In_ XAsyncBlock* async,
     _Out_ PlayFabResultHandle* resultHandle,
