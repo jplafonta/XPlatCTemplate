@@ -121,6 +121,7 @@ for(var apiName in categorizedApis) {
     } %>
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>DataModels.h" />
     <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.h" />
+    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.cpp" />
     <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>Api.h" />
     <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>Api.cpp" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>Api.h" />
