@@ -1,0 +1,94 @@
+#include "stdafx.h"
+#include "<%- api.name %>DataModels.h"
+
+namespace PlayFab
+{
+namespace <%- api.name %>Models
+{<%
+for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) {
+    var datatype = sortedClasses[typeIdx]; %>
+
+<%- datatype.name %>::<%- datatype.name %>() : 
+    <%- prefix %><%- datatype.name %>{}
+{
+}
+<% if (!canDefaultCopyConstructor(datatype)) { %>
+<%- datatype.name %>::<%- datatype.name %>(const <%- datatype.name %>& src) :
+    <%- prefix %><%- datatype.name %>{ src }<%- getCopyConstructorInitializationList("    ", datatype) %>
+{<%- getCopyConstructorBody("    ", datatype, prefix) %>
+}
+
+<%- datatype.name %>::<%- datatype.name %>(<%- datatype.name %>&& src) :
+    <%- prefix %><%- datatype.name %>{ src }<%- getMoveConstructorInitializationList("    ", datatype) %>
+{<%- getCopyConstructorBody("    ", datatype, prefix) %>
+}<%
+} // end if %>
+
+void <%- datatype.name %>::FromJson(const JsonValue& input)
+{<%
+for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
+    var property = datatype.properties[propIdx]; %>
+    <%- getPropertyFromJson(property, datatype) %><%
+} %>
+}
+
+JsonValue <%- datatype.name %>::ToJson() const
+{
+    return JsonUtils::ToJson<<%- prefix %><%- datatype.name %>>(*this);
+}
+<%  if (isSerializable(datatype)) { %>
+size_t <%- datatype.name %>::SerializedSize() const
+{
+    size_t serializedSize{ sizeof(<%- prefix %><%- datatype.name %>) };<%
+        for (var i = 0; i < datatype.properties.length; i++) { 
+            var property = datatype.properties[i];
+            if (property.actualtype === "String") { %>
+    serializedSize += (<%- getPropertyName(property, true) %>.size() + 1);<%
+            }
+        } // end for %>
+    return serializedSize;
+}
+
+void <%- datatype.name %>::Serialize(void* buffer, size_t bufferSize) const
+{
+    auto serializedStruct = new (buffer) <%- prefix %><%- datatype.name %>{ *this };
+    char* stringBuffer = static_cast<char*>(buffer) + sizeof(<%- prefix %><%- datatype.name %>);<%
+        var hasStringProp = false;
+        for (i = 0; i < datatype.properties.length; i++) {
+            var property = datatype.properties[i]; 
+            if (property.actualtype === "String") { 
+                var hasStringProp = true; %>
+    memcpy(stringBuffer, <%- getPropertyName(property, true) %>.data(), <%- getPropertyName(property, true) %>.size() + 1);
+    serializedStruct-><%- getPropertyName(property, false) %> = stringBuffer;
+    stringBuffer += <%- getPropertyName(property, true) %>.size() + 1;<%
+            } // end if
+        } // end for 
+        if (!hasStringProp) { %>
+    UNREFERENCED_PARAMETER(serializedStruct);<%
+        } %>
+    assert(stringBuffer - bufferSize == buffer);
+}
+<%  } // end if
+} // end for %>
+
+} // namespace <%- api.name %>Models
+
+namespace JsonUtils
+{
+// Serialization methods for public models
+<% for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { 
+    var datatype = sortedClasses[typeIdx]; %>
+template<>
+inline JsonValue ToJson<>(const <%- prefix %><%- datatype.name %>& input)
+{
+    JsonValue output{ rapidjson::kObjectType };<%
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { 
+        var property = datatype.properties[propIdx]; %>
+    <%- addPropertyToJson(property) %><%
+    } // end for %>
+    return output;
+}
+<% } // end for %>
+} // namespace JsonUtils
+
+} // namespace PlayFab
