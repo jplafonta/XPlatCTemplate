@@ -5,11 +5,13 @@ if (typeof getCompiledTemplate === "undefined") getCompiledTemplate = function (
 if (typeof templatizeTree === "undefined") templatizeTree = function () { };
 
 var categorizedApis = {};
+var xmlRefDocs = {};
 
 exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     console.log("Generating Combined api from: " + sourceDir + " to: " + apiOutputDir);
 
     categorizeCalls(apis);
+    parseXmlRefDocs();
 
     var locals = {
         apis: apis,
@@ -51,7 +53,8 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         addAuthHeader: addAuthHeader,
         isSerializable: isSerializable,
         isFixedSize: isFixedSize,
-        getFormattedDatatypeDescription: getFormattedDatatypeDescription
+        getFormattedDatatypeDescription: getFormattedDatatypeDescription,
+        getFormattedCallDescription: getFormattedCallDescription
     };
 
     var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.h.ejs"));
@@ -104,6 +107,19 @@ function parseProjectFiles(filename) {
     }
     console.log("Finished reading: " + fullPath);
     return projectFiles;
+}
+
+function parseXmlRefDocs() {
+    var fullPath = path.resolve(__dirname, "XMLRefDocs.json");
+    console.log("Begin reading File: " + fullPath);
+    try {
+        xmlRefDocs = require(fullPath);
+    }
+    catch (err) {
+        console.log(" ***** Failed to Load: " + fullPath);
+        throw err;
+    }
+    console.log("Finished reading: " + fullPath);
 }
 
 function pruneEmptyTypes(api) {
@@ -663,4 +679,14 @@ function getFormattedDatatypeDescription(prefix, datatype) {
     }
 
     return output;
+}
+
+function getFormattedCallDescription(apiName, call) {
+    if (apiName in xmlRefDocs) {
+        var apiRefDocs = xmlRefDocs[apiName];
+        if (call.name in apiRefDocs.calls) {
+            return appendToXmlDocComment("///", apiRefDocs.calls[call.name].summary);
+        }
+    }
+    return "/// " + call.name + " documentation not found in XmlRefDocs."
 }

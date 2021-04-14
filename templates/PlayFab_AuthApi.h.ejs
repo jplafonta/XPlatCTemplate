@@ -14,7 +14,7 @@ extern "C"
 {
 <% for (var i = 0; i < categorizedApi.loginCalls.length; i++) { var call = categorizedApi.loginCalls[i]; %>
 /// <summary>
-/// <<%- call.name %> documentation goes here.>
+<%- getFormattedCallDescription(api.name, call) %>
 /// </summary>
 /// <param name="stateHandle">PlayFabStateHandle returned from PlayFabInitialize call.</param>
 /// <param name="request">Populated request object.</param>
