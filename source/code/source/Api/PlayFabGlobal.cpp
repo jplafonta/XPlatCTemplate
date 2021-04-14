@@ -41,10 +41,12 @@ STDAPI XblMemGetFunctions(
 }
 
 HRESULT PlayFabInitialize(
+    _In_z_ const char* titleId,
+    _In_opt_z_ const char* secretKey,
     _Outptr_ PlayFabStateHandle* stateHandle
 ) noexcept
 {
-    return PlayFabGlobalState::Create(stateHandle);
+    return PlayFabGlobalState::Create(titleId, secretKey, stateHandle);
 }
 
 HRESULT PlayFabCleanupAsync(

@@ -4,66 +4,53 @@ var path = require("path");
 if (typeof getCompiledTemplate === "undefined") getCompiledTemplate = function () { };
 if (typeof templatizeTree === "undefined") templatizeTree = function () { };
 
+var categorizedApis = {};
+
 exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     console.log("Generating Combined api from: " + sourceDir + " to: " + apiOutputDir);
 
-    var removeStatic = ""; // "DISABLE_PLAYFAB_STATIC_API;";
-    var libDefines = "ENABLE_PLAYFABADMIN_API;ENABLE_PLAYFABSERVER_API;" + removeStatic;
-    var clientDefines = "" + removeStatic;
-    var serverDefines = "ENABLE_PLAYFABADMIN_API;ENABLE_PLAYFABSERVER_API;DISABLE_PLAYFABCLIENT_API;" + removeStatic;
+    categorizeCalls(apis);
 
     var locals = {
         apis: apis,
-        hasAuthCall: hasAuthCall,
+        categorizedApis: categorizedApis,
         projectFiles: parseProjectFiles("project_files.json"),
         buildIdentifier: sdkGlobals.buildIdentifier,
-        clientDefines: clientDefines,
-        libDefines: libDefines,
-        serverDefines: serverDefines,
         sdkVersion: sdkGlobals.sdkVersion,
         sdkDate: sdkGlobals.sdkVersion.split(".")[2],
         sdkYear: sdkGlobals.sdkVersion.split(".")[2].substr(0, 2),
         vsVer: "v141", // As C++ versions change, we may need to update this
         vsYear: "2017", // As VS versions change, we may need to update this
-        getVerticalNameDefault: getVerticalNameDefault,
         winSdkVersion: "10.0.17763.0" // Which version of the Windows SDK (A VS installation option) to use
     };
 
     templatizeTree(locals, path.resolve(sourceDir, "source"), apiOutputDir);
-    for (var a = 0; a < apis.length; a++)
+    for (var a = 0; a < apis.length; a++) {
         makeApiFiles(apis[a], sourceDir, apiOutputDir);
+    }
 };
 
 function makeApiFiles(api, sourceDir, apiOutputDir) {
-    var remStaticDefine = ""; // " && !defined(DISABLE_PLAYFAB_STATIC_API)";
-    var prefix = "PlayFab" + api.name;
-
-    pruneEmptyTypes(api);
-    var authCalls = getAuthCalls(api);
 
     var locals = {
         api: api,
-        authCalls: authCalls,
-        prefix: prefix,
+        prefix: "PlayFab" + api.name,
+        categorizedApi: categorizedApis[api.name],
         enumtypes: getEnumTypes(api.datatypes),
-        getApiDefine: getApiDefine,
-        getAuthParams: getAuthParams,
+        sortedClasses: getSortedClasses(api.datatypes),
+        dictionaryEntryTypes: getDictionaryEntryTypes(api.datatypes),
         getBaseType: getBaseType,
         getPropertyDefinition: getPropertyDefinition,
         getPropertyFromJson: getPropertyFromJson,
         addPropertyToJson: addPropertyToJson,
-        getRequestActions: getRequestActions,
-        getResultActions: getResultActions,
+        getPropertyName: getPropertyName,
         canDefaultCopyConstructor: canDefaultCopyConstructor,
         getCopyConstructorInitializationList: getCopyConstructorInitializationList,
         getCopyConstructorBody: getCopyConstructorBody,
-        hasClientOptions: getAuthMechanisms([api]).includes("SessionTicket"),
-        hasAuthParams: hasAuthParams,
+        addAuthHeader: addAuthHeader,
         ifHasProps: ifHasProps,
-        remStaticDefine: remStaticDefine,
-        sdkVersion: sdkGlobals.sdkVersion,
-        sortedClasses: getSortedClasses(api.datatypes),
-        dictionaryEntryTypes: getDictionaryEntryTypes(api.datatypes)
+        isSerializable: isSerializable,
+        isFixedSize: isFixedSize
     };
 
     var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.h.ejs"));
@@ -75,10 +62,16 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
     var dataModelTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.h.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "DataModels.h"), dataModelTemplate(locals));
 
-    var dataModelTemplate_c = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels_c.h.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/include/playFab", "PlayFab" + api.name + "DataModels_c.h"), dataModelTemplate_c(locals));
+    var dataModelTemplate_c = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/include/playFab", "PlayFab" + api.name + "DataModels.h"), dataModelTemplate_c(locals));
 
-    if (authCalls.length > 0) {
+    var publicApiHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_Api.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "Api.h"), publicApiHeaderTemplate(locals));
+
+    var publicApiTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_Api.cpp.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, "PlayFab" + api.name + "Api.cpp"), publicApiTemplate(locals));
+
+    if (locals.categorizedApi.loginCalls.length > 0) {
         var authApiHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_AuthApi.h.ejs"));
         writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "AuthApi.h"), authApiHeaderTemplate(locals));
 
@@ -142,27 +135,59 @@ function pruneEmptyTypes(api) {
     for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
         var apiCall = calls[callIdx];
         if (!(apiCall.request in datatypes)) {
-            apiCall.request = "BaseRequest";
+            apiCall.request = "void";
         }
         if (!(apiCall.result in datatypes)) {
-            apiCall.result = "BaseResult";
+            apiCall.result = "void";
         }
     }
 
 }
 
-function getAuthCalls(api) {
-    // TODO probably better to remove these from api.calls rather than copy, but just copying for now
+function categorizeCalls(apis) {
+    // Categorize calls for each API into the following categories:
+    // loginCalls: calls which acquire an AuthContext
+    // otherCalls: calls which require an AuthContext (i.e. auth = "EntityToken" || "SessionTicket") OR a secretKey (i.e. auth = "SecretKey")
+    // also note whether a secret key is required for the "loginCalls" as well as for the "otherCalls"
+    for (var i = 0; i < apis.length; i++) {
+        var api = apis[i];
+        pruneEmptyTypes(api);
+        var categorizedApi = { loginCalls: [], otherCalls: [] };
 
-    var authCalls = [];
-
-    for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
-        var call = api.calls[callIdx];
-        if (isAuthCall(call)) {
-            authCalls.push(call) 
+        for (var j = 0; j < api.calls.length; j++) {
+            var call = api.calls[j];
+            if (call.url === "/Authentication/GetEntityToken") {
+                // Special case for GetEntityToken API. API spec marks it as Auth type "None", but it allows any of the auth tokens to be used.
+                // In the SDK, we will split this into two APIs, one that can be called by an authenticated Entity, and one that can be called via
+                // a PlayFabStateHandle w/ a SecretKey. The loginCall can be auto generated, the Entity call will be implemented manually 
+                // as a one off.
+                call.auth = "SecretKey"; // Set auth to "SecretKey" so that the GetEntityToken login call is autogenerated correctly
+                categorizedApi.loginCalls.push(call);
+                categorizedApi.loginCallsRequireSecretKey = true;
+            } else if (call.result.toLowerCase().endsWith("loginresult") || call.result === "RegisterPlayFabUserResult") {
+                categorizedApi.loginCalls.push(call);
+                if (call.auth === "SecretKey") {
+                    categorizedApi.loginCallsRequireSecretKey = true;
+                }
+            } else if (call.auth === "EntityToken" || call.auth === "SessionTicket" || call.auth === "None") {
+                categorizedApi.otherCalls.push(call);
+                if (categorizedApi.otherCallsRequireSecretKey) {
+                    throw Error("A single API can't require both Entity AuthTokens and a secretKey");
+                }
+                categorizedApi.otherCallsRequireSecretKey = false;
+            } else if (call.auth === "SecretKey") {
+                categorizedApi.otherCalls.push(call);
+                if (categorizedApi.otherCallsRequireSecretKey === false) {
+                    throw Error("A single API can't require both an Entity AuthTokens and a secretKey");
+                }
+                categorizedApi.otherCallsRequireSecretKey = true;
+            } else {
+                throw Error("Unable to categorize api call");
+            }
         }
+
+        categorizedApis[api.name] = categorizedApi;
     }
-    return authCalls;
 }
 
 function getEnumTypes(datatypes) {
@@ -222,68 +247,49 @@ function getDictionaryEntryTypes(datatypes) {
 }
 
 // *************************** ejs-exposed methods ***************************
-function getApiDefine(api) {
-    if (api.name === "Client")
-        return "#if !defined(DISABLE_PLAYFABCLIENT_API)";
-    if (api.name === "Matchmaker")
-        return "#if defined(ENABLE_PLAYFABSERVER_API)"; // Matchmaker is bound to server, which is just a legacy design decision at this point
-    if (api.name === "Admin" || api.name === "Server")
-        return "#if defined(ENABLE_PLAYFAB" + api.name.toUpperCase() + "_API)";
 
-    // For now, everything else is considered ENTITY
-    return "#if !defined(DISABLE_PLAYFABENTITY_API)";
+function addAuthHeader(apiCall) {
+    switch (apiCall.auth) {
+        case "EntityToken": return "headers.emplace(\"X-EntityToken\", m_tokens->EntityToken);";
+        case "SessionTicket": return "headers.emplace(\"X-Authorization\", m_tokens->SessionTicket);";
+        case "SecretKey": return "headers.emplace(\"X-SecretKey\", *m_secretKey);";
+        case "None": return "//No auth header required for this API";
+    }
+
+    throw Error("getAuthParams: Unknown auth type: " + apiCall.auth + " for " + apiCall.name);
 }
 
-// Check if an API has any calls that acquire auth tokens
-function hasAuthCall(api) {
-    for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
-        if (isAuthCall(api.calls[callIdx])) {
-            return true;
+// Returns whether the C++ model for a datatype is fixed size
+function isFixedSize(datatype) {
+    for (var i = 0; i < datatype.properties.length; i++) {
+        if (requiresInternalProperty(datatype.properties[i])) {
+            return false;
         }
-    }
-    return false;
-}
-
-// return if an API call is authentication call
-function isAuthCall(call) {
-    // TODO this might not be the only check needed
-    // Could we check for call.auth === "none"?
-    if (call.result.toLowerCase().endsWith("loginresult")) {
-        return true;
-    } else if (call.result === "RegisterPlayFabUserResult") {
-        return true;
-    }
-    return false;
-}
-
-function hasAuthParams(apiCall) {
-    try {
-        getAuthParams(apiCall, true);
-    } catch (err) {
-        return false;
     }
     return true;
 }
 
-function getAuthParams(apiCall) {
-    if (apiCall.url === "/Authentication/GetEntityToken")
-        return "authKey, authValue";
-    switch (apiCall.auth) {
-        case "EntityToken": return "\"X-EntityToken\", m_context->entityToken.data()";
-        case "SessionTicket": return "\"X-Authorization\", m_context->clientSessionTicket.data()";
-        case "SecretKey": return "\"X-SecretKey\", m_settings->developerSecretKey.data()";
+// Returns whether the C++ model for a datatype can be (trivially) serialized into a byte buffer
+function isSerializable(datatype) {
+    // For now, calling a datatype serializable if the only extra memory it needs is for Strings. This avoids have to deal with
+    // alignment issues, nested classes, and collections.
+    // TODO possible to relax these requirements.
+
+    for (var i = 0; i < datatype.properties.length; i++) {
+        var property = datatype.properties[i];
+        if (requiresInternalProperty(property)) {
+            if (!(property.actualtype === "String" && !property.collection)) {
+                return false;
+            }
+        }
     }
-    
-    throw Error("getAuthParams: Unknown auth type: " + apiCall.auth + " for " + apiCall.name);
+    return true;
 }
 
 function getBaseType(datatype) {
-    if (datatype.className.toLowerCase().endsWith("request"))
-        return "BaseRequest";
-    if (datatype.className.toLowerCase().endsWith("loginresult"))
-        return "PlayFabLoginResultCommon";
-    if (datatype.className.toLowerCase().endsWith("response") || datatype.className.toLowerCase().endsWith("result"))
-        return "BaseResult";
+    if (isSerializable(datatype) || isFixedSize(datatype)) {
+        return "SerializableModel";
+    }
     return "BaseModel";
 }
 
@@ -333,7 +339,6 @@ function getInternalPropertyType(property, prefix) {
     }
 
     // Modify type depending on collection & optional attributes. 
-    // TODO describe reasons for this breakdown somewhere (here or in source)
     if (!(property.actualtype === "object")) {
         if (property.collection === "map") {
             if (property.isclass) {
@@ -425,6 +430,11 @@ function getPropertyName(property, isInternal) {
         if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
         return index === 0 ? match.toLowerCase() : match.toUpperCase();
     });
+
+    // Special case for properties that begin with "PSN" since its an abreviation
+    if (name.startsWith("pSN")) {
+        name = "P" + name.slice(1);
+    }
 
     return isInternal ? "m_" + name : name;
 }
@@ -541,56 +551,8 @@ function getCopyConstructorBody(tabbing, datatype, prefix) {
     return output;
 }
 
-function getRequestActions(tabbing, apiCall) {
-    if (apiCall.result === "LoginResult" || apiCall.result === "RegisterPlayFabUserResult")
-        return tabbing + "m_settings->titleId = request.titleId;\n"
-
-    if (apiCall.url === "/Authentication/GetEntityToken")
-        return tabbing + "String authKey, authValue;\n" +
-            tabbing + "if (m_context->entityToken.length() > 0)\n" +
-            tabbing + "{\n" +
-            tabbing + "    authKey = \"X-EntityToken\"; authValue = m_context->entityToken.data();\n" +
-            tabbing + "}\n" +
-            tabbing + "else if (m_context->clientSessionTicket.length() > 0)\n" +
-            tabbing + "{\n" +
-            tabbing + "    authKey = \"X-Authorization\"; authValue = m_context->clientSessionTicket.data();\n" +
-            tabbing + "}\n" +
-            "#if defined(ENABLE_PLAYFABSERVER_API) || defined(ENABLE_PLAYFABADMIN_API)\n" +
-            tabbing + "else if (m_settings->developerSecretKey.length() > 0)\n" +
-            tabbing + "{\n" +
-            tabbing + "    authKey = \"X-SecretKey\"; authValue = m_settings->developerSecretKey.data();\n" +
-            tabbing + "}\n" +
-            "#endif\n";
-
-    return "";
-}
-
-function getResultActions(tabbing, apiCall) {
-    if (apiCall.url === "/Authentication/GetEntityToken")
-        return tabbing + "context->HandlePlayFabLogin(\"\", \"\", outResult.entity->id, outResult.entity->type, outResult.entityToken);\n";
-    if (apiCall.result === "LoginResult")
-        return tabbing + "outResult.authenticationContext = std::make_shared<PlayFabAuthenticationContext>();\n" +
-            tabbing + "outResult.authenticationContext->HandlePlayFabLogin(outResult.playFabId, outResult.sessionTicket, outResult.entityToken->entity->id, outResult.entityToken->entity->type, outResult.entityToken->entityToken);\n" +
-            tabbing + "context->HandlePlayFabLogin(outResult.playFabId, outResult.sessionTicket, outResult.entityToken->entity->id, outResult.entityToken->entity->type, outResult.entityToken->entityToken);\n" +
-            tabbing + "MultiStepClientLogin(context, outResult.settingsForUser->needsAttribution);\n";
-    if (apiCall.result === "RegisterPlayFabUserResult")
-        return tabbing + "context->HandlePlayFabLogin(outResult.playFabId, outResult.sessionTicket, outResult.entityToken->entity->id, outResult.entityToken->entity->type, outResult.entityToken->entityToken);\n"
-            + tabbing + "MultiStepClientLogin(context, outResult.settingsForUser->needsAttribution);\n";
-    if (apiCall.result === "AttributeInstallResult")
-        return tabbing + "context->advertisingIdType += \"_Successful\";\n";
-
-    return "";
-}
-
 function ifHasProps(datatype, displayText) {
     if (datatype.properties.length === 0)
         return "";
     return displayText;
-}
-
-function getVerticalNameDefault() {
-    if (sdkGlobals.verticalName) {
-        return sdkGlobals.verticalName;
-    }
-    return "";
 }

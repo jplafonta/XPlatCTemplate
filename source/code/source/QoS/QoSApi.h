@@ -13,8 +13,8 @@
 
 namespace PlayFab
 {
-    class PlayFabEventsInstanceAPI;
-    class PlayFabMultiplayerInstanceAPI;
+    class EventsAPI;
+    class MultiplayerAPI;
 
     namespace QoS
     {
@@ -30,8 +30,8 @@ namespace PlayFab
             QoSResult GetQoSResult(unsigned int numThreads, unsigned int timeoutMs = DEFAULT_TIMEOUT_MS);
 
         private:
-            SharedPtr<PlayFabEventsInstanceAPI> eventsApi;
-            SharedPtr<PlayFabMultiplayerInstanceAPI> multiplayerApi;
+            SharedPtr<EventsAPI> eventsApi;
+            SharedPtr<MultiplayerAPI> multiplayerApi;
 
             Vector<String> GetPingList(unsigned int serverCount);
             void InitializeAccumulatedPingResults(UnorderedMap<String, PingResult>& accumulatedPingResults);

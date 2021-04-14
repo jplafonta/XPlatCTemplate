@@ -11,14 +11,11 @@
 #include "TestReport.h"
 #include "TestUtils.h"
 
-#if !defined(DISABLE_PLAYFABCLIENT_API)
-#include <PlayFabSettings.h>
+#include <httpClient/httpClient.h>
 #include "PlatformLoginTest.h"
-#endif
-
 #include "JsonParsingTests.h"
 #include "ModelTests.h"
-#include "AsyncOpTests.h"
+#include "ApiTests.h"
 
 using namespace PlayFab;
 
@@ -50,10 +47,10 @@ namespace PlayFabUnit
 
     int TestApp::Main()
     {
-        //HRESULT hr = HCInitialize(nullptr);
-        //assert(SUCCEEDED(hr));
-        //HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
-        //HCTraceSetTraceToDebugger(true);
+        HRESULT hr = HCInitialize(nullptr);
+        assert(SUCCEEDED(hr));
+        HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
+        HCTraceSetTraceToDebugger(true);
 
         // Load the TestTitleData
         TestTitleData testTitleData;
@@ -69,6 +66,7 @@ namespace PlayFabUnit
             // TODO: POPULATE THIS SECTION WITH REAL INFORMATION (or set up a testTitleData file, and set your PF_TEST_TITLE_DATA_JSON to the path for that file)
             testTitleData.titleId = "E18D7"; // The titleId for your title, found in the "Settings" section of PlayFab Game Manager
             //testTitleData.userEmail = ""; // This is the email for a valid user (test tries to log into it with an invalid password, and verifies error result)
+            testTitleData.developerSecretKey = "XQOGYEFXMAQKOQ5T68YEA1TQH586Z8JNZ3XD4EFQX6OUGYME5P";
         }
 
         // Initialize the test runner/test data.
@@ -89,8 +87,9 @@ namespace PlayFabUnit
         ModelTests modelTests;
         testRunner.Add(modelTests);
 
-        AsyncOpTests asyncOpTests;
-        testRunner.Add(asyncOpTests);
+        ApiTests apiTests;
+        apiTests.SetTitleInfo(testTitleData);
+        testRunner.Add(apiTests);
 
         // Run the tests (blocks until all tests have finished).
         testRunner.Run();

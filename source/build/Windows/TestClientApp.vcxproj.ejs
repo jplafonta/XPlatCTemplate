@@ -62,7 +62,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;WIN32;<%- clientDefines %>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(TestSourceDir)\TestApp;$(SdkSourceDir)\include</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>TestAppPch.h</PrecompiledHeaderFile>
@@ -86,7 +86,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CONSOLE;WIN32;<%- clientDefines %>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CONSOLE;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(TestSourceDir)\TestApp;$(SdkSourceDir)\include</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>TestAppPch.h</PrecompiledHeaderFile>
@@ -117,7 +117,7 @@
     <ClInclude Include="$(TestSourceDir)\TestApp\TestUtils.h" />
     <ClInclude Include="$(TestSourceDir)\TestApp\JsonParsingTests.h" />
     <ClInclude Include="$(TestSourceDir)\TestApp\ModelTests.h" />
-    <ClInclude Include="$(TestSourceDir)\TestApp\AsyncOpTests.h" />
+    <ClInclude Include="$(TestSourceDir)\TestApp\ApiTests.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(TestSourceDir)\TestApp\TestApp.cpp" />
@@ -131,7 +131,7 @@
     <ClCompile Include="$(TestSourceDir)\TestApp\TestUtils.cpp" />
     <ClCompile Include="$(TestSourceDir)\TestApp\JsonParsingTests.cpp" />
     <ClCompile Include="$(TestSourceDir)\TestApp\ModelTests.cpp" />
-    <ClCompile Include="$(TestSourceDir)\TestApp\AsyncOpTests.cpp" />
+    <ClCompile Include="$(TestSourceDir)\TestApp\ApiTests.cpp" />
     <ClCompile Include="MainWin32.cpp" />
     <ClCompile Include="TestAppWin32.cpp" />
   </ItemGroup>

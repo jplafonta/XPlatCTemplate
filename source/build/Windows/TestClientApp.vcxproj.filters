@@ -44,6 +44,9 @@
     <ClInclude Include="$(TestSourceDir)\TestApp\ModelTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="$(TestSourceDir)\TestApp\ApiTests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(TestSourceDir)\TestApp\TestApp.cpp">
@@ -77,6 +80,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(TestSourceDir)\TestApp\ModelTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(TestSourceDir)\TestApp\ApiTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

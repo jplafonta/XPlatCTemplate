@@ -62,7 +62,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;<%- libDefines %>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -84,7 +84,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_LIB;<%- libDefines %>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -111,18 +111,20 @@ for (var file in projectFiles.sourceFiles) {
     <ClCompile Include="$(SdkSourceDir)\<%- file %>" /><%
     }
 } 
-for(var i in apis) { 
-    var api = apis[i];
-    if (hasAuthCall(api)) { %>
-    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>AuthApi.h" />
-    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>AuthApi.cpp" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>AuthApi.h" />
-    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\PlayFab<%- api.name %>AuthApi.cpp" /><%
+for(var apiName in categorizedApis) { 
+    var api = categorizedApis[apiName];
+    if (api.loginCalls.length > 0) { %>
+    <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>AuthApi.h" />
+    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>AuthApi.cpp" />
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>AuthApi.h" />
+    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\PlayFab<%- apiName %>AuthApi.cpp" /><%
     } %>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>DataModels_c.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>DataModels.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>Api.h" />
-    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>Api.cpp" /><%
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>DataModels.h" />
+    <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.h" />
+    <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>Api.h" />
+    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>Api.cpp" />
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>Api.h" />
+    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\PlayFab<%- apiName %>Api.cpp" /><%
 } %>
     <ClInclude Include="$(SdkSourceDir)\source\stdafx.h" />
     <ClCompile Include="$(SdkSourceDir)\source\stdafx.cpp">

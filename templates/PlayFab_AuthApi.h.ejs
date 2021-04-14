@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include <playfab/PlayFabAuth.h>
-#include <playfab/PlayFab<%- api.name %>DataModels_c.h>
+#include <playfab/PlayFabEntity.h>
+#include <playfab/PlayFab<%- api.name %>DataModels.h>
 
 extern "C"
 {
-<% for (var callIdx = 0; callIdx < authCalls.length; callIdx++) { var call = authCalls[callIdx]; %>
+<% for (var i = 0; i < categorizedApi.loginCalls.length; i++) { var call = categorizedApi.loginCalls[i]; %>
 /// <summary>
 /// <<%- call.name %> documentation goes here.>
 /// </summary>
@@ -21,12 +21,13 @@ extern "C"
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <returns>Result code for this API operation.</returns>
 /// <remarks>
-/// If successful, call <see cref="PlayFab<%- api.name %>GetAuthResult"/> to get the result.
+/// If successful, call <see cref="PlayFabGetAuthResult"/> to get the result. The resulting PlayFabEntityHandle
+/// will be used to authenticate future PlayFab calls.
 /// </remarks>
-HRESULT PlayFab<%- api.name %><%- call.name %>(
+HRESULT PlayFab<%- api.name %><%- call.name %>Async(
     _In_ PlayFabStateHandle stateHandle,
     _In_ const PlayFab<%- api.name %><%- call.request %>* request,
-    _In_ XAsyncBlock* async
+    _Inout_ XAsyncBlock* async
 ) noexcept;
 <% } %>
 }

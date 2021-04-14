@@ -13,7 +13,7 @@
 
 namespace PlayFab
 {
-    class PlayFabEventsInstanceAPI;
+    class EventsAPI;
 
     enum class PlayFabEventPipelineType
     {
@@ -96,7 +96,7 @@ namespace PlayFab
         void CallbackRequest(SharedPtr<const IPlayFabEmitEventRequest> request, SharedPtr<const IPlayFabEmitEventResponse> response);
 
     private:
-        SharedPtr<PlayFabEventsInstanceAPI> eventsApi;
+        SharedPtr<EventsAPI> eventsApi;
 
         std::atomic<size_t> nextBatchId{ 0 };
         std::atomic<size_t> batchesInFlight{ 0 };

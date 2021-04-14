@@ -1,8 +1,6 @@
 #pragma once
 
-<%- getApiDefine(api) %>
-
-#include <playfab/PlayFab<%- api.name %>DataModels_c.h>
+#include <playfab/PlayFab<%- api.name %>DataModels.h>
 #include "BaseModel.h"
 #include "JsonUtils.h"
 
@@ -52,7 +50,39 @@ for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype 
             { 
                 return JsonUtils::ToJson<<%- prefix %><%- datatype.name %>>(*this);
             }
+    <% if (isSerializable(datatype)) { %>
+            size_t SerializedSize() const override
+            {
+                size_t serializedSize{ sizeof(<%- prefix %><%- datatype.name %>) };<%
+        for (var i = 0; i < datatype.properties.length; i++) { 
+            var property = datatype.properties[i]; 
+            if (property.actualtype === "String") { %>
+                serializedSize += (<%- getPropertyName(property, true) %>.size() + 1);<%
+            }
+        } // end for %>
+                return serializedSize;
+            }
 
+            void Serialize(void* buffer, size_t bufferSize) const override
+            {
+                auto serializedStruct = new (buffer) <%- prefix %><%- datatype.name %>{ *this };
+                char* stringBuffer = static_cast<char*>(buffer) + sizeof(<%- prefix %><%- datatype.name %>);
+        <% for (i = 0; i < datatype.properties.length; i++) {
+            var hasStringProp = false;
+            var property = datatype.properties[i]; 
+            if (property.actualtype === "String") { 
+                var hasStringProp = true; %>
+                memcpy(stringBuffer, <%- getPropertyName(property, true) %>.data(), <%- getPropertyName(property, true) %>.size() + 1);
+                serializedStruct-><%- getPropertyName(property, false) %> = stringBuffer;
+                stringBuffer +=  <%- getPropertyName(property, true) %>.size() + 1; <%
+            }
+        } // end for 
+        if (!hasStringProp) { %>
+                UNREFERENCED_PARAMETER(serializedStruct);<%
+        } // end if %>
+                assert(stringBuffer - bufferSize == buffer);
+            }
+    <% } // end if %>
         private:<%
 for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
 %><%- getPropertyDefinition("            ", property, prefix, true) %><% } %>
@@ -67,6 +97,5 @@ for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { var enumtype = en
         static constexpr <%- prefix %><%- enumtype.name %> maxValue = <%- prefix %><%- enumtype.name %>::<%- maxval.name %>;
     };
 <% } %>
-}
 
-#endif
+}

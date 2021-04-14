@@ -29,33 +29,39 @@ for (var file in projectFiles.sourceFiles) {
     </ClCompile><%
     }
 } 
-for(var i in apis) { 
-    var api = apis[i];
-    if (hasAuthCall(api)) { %>
-    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>AuthApi.h">
-      <Filter>Source Files\<%- api.name %></Filter>
+for(var apiName in categorizedApis) { 
+    var api = categorizedApis[apiName];
+    if (api.loginCalls.length > 0) {  %>
+    <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>AuthApi.h">
+      <Filter>Source Files\<%- apiName %></Filter>
     </ClInclude>
-    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>AuthApi.cpp">
-      <Filter>Source Files\<%- api.name %></Filter>
+    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>AuthApi.cpp">
+      <Filter>Source Files\<%- apiName %></Filter>
     </ClCompile>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>AuthApi.h">
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>AuthApi.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>
-    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\PlayFab<%- api.name %>AuthApi.cpp">
-      <Filter>Source Files\<%- api.name %></Filter>
+    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\PlayFab<%- apiName %>AuthApi.cpp">
+      <Filter>Source Files\<%- apiName %></Filter>
     </ClCompile><%
     } %>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- api.name %>DataModels_c.h">
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>DataModels.h">
       <Filter>Header Files\playfab</Filter>
     </ClInclude>
-    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>DataModels.h">
-      <Filter>Source Files\<%- api.name %></Filter>
+    <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.h">
+      <Filter>Source Files\<%- apiName %></Filter>
     </ClInclude>
-    <ClInclude Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>Api.h">
-      <Filter>Source Files\<%- api.name %></Filter>
+    <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>Api.h">
+      <Filter>Source Files\<%- apiName %></Filter>
     </ClInclude>
-    <ClCompile Include="$(SdkSourceDir)\source\<%- api.name %>\<%- api.name %>Api.cpp">
-      <Filter>Source Files\<%- api.name %></Filter>
+    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>Api.cpp">
+      <Filter>Source Files\<%- apiName %></Filter>
+    </ClCompile>
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>Api.h">
+      <Filter>Header Files\playfab</Filter>
+    </ClInclude>
+    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\PlayFab<%- apiName %>Api.cpp">
+      <Filter>Source Files\<%- apiName %></Filter>
     </ClCompile><%
 } %>
     <ClInclude Include="$(SdkSourceDir)\source\stdafx.h" >

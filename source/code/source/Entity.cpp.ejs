@@ -1,0 +1,94 @@
+#include "stdafx.h"
+#include "Entity.h"
+
+namespace PlayFab
+{<% 
+var apiInitializationList = "";
+for(var apiName in categorizedApis) {
+    var api = categorizedApis[apiName];
+    if (api.otherCalls.length > 0 && !api.otherCallsRequireSecretKey) { 
+        var apiMemberName = apiName.charAt(0).toLowerCase() + apiName.slice(1) + "API";
+        apiInitializationList += "\n    " + apiMemberName + "{ m_httpClient, m_authTokens },";
+    }
+} %>
+
+Entity::Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::LoginResult& result) :
+    m_httpClient{ std::move(httpClient) },
+    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, result.entityToken->entityToken } },<%- apiInitializationList %>
+    m_playFabId{ result.playFabId },
+    m_entityId{ result.entityToken->entity->id },
+    m_entityType{ result.entityToken->entity->type }
+{
+}
+
+Entity::Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::RegisterPlayFabUserResult& result) :
+    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, result.entityToken->entityToken } },<%- apiInitializationList %>
+    m_playFabId{ result.playFabId },
+    m_entityId{ result.entityToken->entity->id },
+    m_entityType{ result.entityToken->entity->type }
+{
+}
+
+Entity::Entity(SharedPtr<HttpClient const> httpClient, const ServerModels::ServerLoginResult& result) :
+    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, result.entityToken->entityToken } },<%- apiInitializationList %>
+    m_playFabId{ result.playFabId },
+    m_entityId{ result.entityToken->entity->id },
+    m_entityType{ result.entityToken->entity->type }
+{
+}
+
+Entity::Entity(SharedPtr<HttpClient const> httpClient, const AuthenticationModels::GetEntityTokenResponse& result) :
+    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ "", result.entityToken } },<%- apiInitializationList %>
+    m_entityId{ result.entity->id },
+    m_entityType{ result.entity->type }
+{
+}
+
+AsyncOp<void> Entity::GetEntityToken(
+    const PlayFabAuthenticationGetEntityTokenRequest& request,
+    const TaskQueue& queue
+)
+{
+    UnorderedMap<String, String> headers;
+    if (!m_authTokens->EntityToken.empty())
+    {
+        headers.emplace("X-EntityToken", m_authTokens->EntityToken);
+    }
+    else if (!m_authTokens->SessionTicket.empty())
+    {
+        headers.emplace("X-Authorization", m_authTokens->SessionTicket);
+    }
+    else
+    {
+        // Entity should always have at least one non-empty AuthToken
+        assert(false);
+        return E_UNEXPECTED;
+    }
+
+    return m_httpClient->MakePostRequest(
+        "/Authentication/GetEntityToken",
+        headers,
+        JsonUtils::ToJson(request),
+        queue
+    ).Then([ sharedThis{ shared_from_this() } ](Result<ServiceResponse> result) -> Result<void>
+    {
+        RETURN_IF_FAILED(result.hr);
+
+        auto serviceResponse = result.ExtractPayload();
+        if (serviceResponse.HttpCode == 200)
+        {
+            AuthenticationModels::GetEntityTokenResponse resultModel;
+            resultModel.FromJson(serviceResponse.Data);
+            sharedThis->m_authTokens->EntityToken = resultModel.entityToken;
+            sharedThis->m_entityId = resultModel.entity->id;
+            sharedThis->m_entityType = resultModel.entity->type;
+            return S_OK;
+        }
+        else
+        {
+            return Result<void>{ ServiceErrorToHR(serviceResponse.ErrorCode), std::move(serviceResponse.ErrorMessage) };
+        }
+    });
+}
+
+}

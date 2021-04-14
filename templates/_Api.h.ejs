@@ -1,68 +1,44 @@
 #pragma once
 
-<%- getApiDefine(api) %>
-
 #include "<%- api.name %>DataModels.h"
 #include "HttpClient.h"
 #include "TaskQueue.h"
 
 namespace PlayFab
 {
-    class CallRequestContainerBase;
-    class CallRequestContainer;
-    class PlayFabApiSettings;
-    class PlayFabAuthenticationContext;
+struct AuthTokens;
 
-    /// <summary>
-    /// Main interface for PlayFab Sdk, specifically all <%- api.name %> APIs
-    /// </summary>
-    class PlayFab<%- api.name %>InstanceAPI
-    {
-    private:
-        SharedPtr<PlayFabApiSettings> m_settings;
-        SharedPtr<PlayFabAuthenticationContext> m_context;
-        HttpClient const m_httpClient;
+class <%- api.name %>API
+{
+public:
+    <%- api.name %>API(SharedPtr<HttpClient const> httpClient<%
+if (categorizedApi.otherCallsRequireSecretKey) { 
+%>, SharedPtr<String const> secretKey<%
+} else { 
+%>, SharedPtr<AuthTokens const> tokens<%
+} %>);
+    <%- api.name %>API(const <%- api.name %>API& source) = delete;
+    <%- api.name %>API& operator=(const <%- api.name %>API& source) = delete;
+    ~<%- api.name %>API() = default;
 
-    public:
-<% if( api.name === "Admin" || api.name === "Server" ) {
-%>        PlayFab<%- api.name %>InstanceAPI();
-        PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings);
-        PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabAuthenticationContext>& authenticationContext);
-        PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings, const SharedPtr<PlayFabAuthenticationContext>& authenticationContext);
-<% } else if( api.name === "Client" || api.name === "Authentication" ) {
-%>        PlayFab<%- api.name %>InstanceAPI();
-        PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings);
-        PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabAuthenticationContext>& authenticationContext);
-        PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings, const SharedPtr<PlayFabAuthenticationContext>& authenticationContext);
-<% } else {
-%>        PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabAuthenticationContext>& authenticationContext);
-        PlayFab<%- api.name %>InstanceAPI(const SharedPtr<PlayFabApiSettings>& apiSettings, const SharedPtr<PlayFabAuthenticationContext>& authenticationContext);
-<% } %>
-        ~PlayFab<%- api.name %>InstanceAPI() = default;
-        PlayFab<%- api.name %>InstanceAPI(const PlayFab<%- api.name %>InstanceAPI& source) = delete; // disable copy
-        PlayFab<%- api.name %>InstanceAPI(PlayFab<%- api.name %>InstanceAPI&&) = delete; // disable move
-        PlayFab<%- api.name %>InstanceAPI& operator=(const PlayFab<%- api.name %>InstanceAPI& source) = delete; // disable assignment
-        PlayFab<%- api.name %>InstanceAPI& operator=(PlayFab<%- api.name %>InstanceAPI&& other) = delete; // disable move assignment
+    // ------------ Generated API calls<%
+for (var i = 0; i < categorizedApi.otherCalls.length; i++) {
+    var call = categorizedApi.otherCalls[i];
+    var static = call.auth === "None" ? "static " : ""; // Calls which don't require auth can be static
+    var constModifier = call.auth === "None" ? "" : " const";
+    var resultT = call.result === "void" ? "AsyncOp<void>" : "AsyncOp<" + api.name + "Models::" + call.result + ">";
+    var requestParam = call.request === "void" ? "" : "const PlayFab" + api.name + call.request + "& request, "; 
+    var httpClientParam = call.auth === "None" ? "SharedPtr<HttpClient const> httpClient, " : ""; %>
+    <%- static %><%- resultT %> <%- call.name %>(<%- requestParam %><%- httpClientParam %>const TaskQueue& queue)<%- constModifier %>; <%
+} %>
 
-        SharedPtr<PlayFabApiSettings> GetSettings() const;
-        SharedPtr<PlayFabAuthenticationContext> GetAuthenticationContext() const;
-        void ForgetAllCredentials();
-<% if (hasClientOptions) { %>
-        // Public, Client-Specific
-        bool IsClientLoggedIn();
-<% } %>
-        // ------------ Generated API calls
-<% for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
-    var apiCall = api.calls[callIdx];
-    var resultT = apiCall.result === "BaseResult" ? "BaseResult" : api.name + "Models::" + apiCall.result;
-    var requestT = apiCall.request === "BaseRequest" ? "BaseRequest" : "PlayFab" + api.name + apiCall.request; // TODO remove this parameter entirely maybe if no request?
-%>        AsyncOp<<%- resultT %>> <%- apiCall.name %>(const <%- requestT %>& request, const TaskQueue& queue);
-<% }
-if (hasClientOptions) { %>
-        // Private, Client-Specific
-        void MultiStepClientLogin(SharedPtr<PlayFabAuthenticationContext> context, bool needsAttribution);
-<% } %>
-    };
+private:
+    SharedPtr<HttpClient const> m_httpClient;<%
+if (categorizedApi.otherCallsRequireSecretKey) { %>
+    SharedPtr<String const> m_secretKey;<%
+} else { %>
+    SharedPtr<AuthTokens const> m_tokens;<%
+} %>
+};
+
 }
-
-#endif

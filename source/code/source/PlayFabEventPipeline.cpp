@@ -45,7 +45,8 @@ namespace PlayFab
         buffer(settings->bufferSize),
         isWorkerThreadRunning(false)
     {
-        eventsApi = MakeShared<PlayFabEventsInstanceAPI>(PlayFabSettings::staticPlayer);
+        // TODO
+        //eventsApi = MakeShared<EventsAPI>(PlayFabSettings::staticPlayer);
 
         this->settings = settings;
         if (this->settings->useBackgroundThread)
@@ -328,7 +329,7 @@ namespace PlayFab
         EventsModels::WriteEventsRequest batchReq;
         if (this->settings->authenticationContext != nullptr)
         {
-            batchReq.authenticationContext = this->settings->authenticationContext;
+            //batchReq.authenticationContext = this->settings->authenticationContext;
         }
 
         // TODO
