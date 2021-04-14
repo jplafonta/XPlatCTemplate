@@ -12,12 +12,6 @@
 extern "C"
 {
 
-/// Property annotations for PlayFab Models
-#define PF_MAP
-#define PF_ARRAY
-#define PF_OPTIONAL
-#define PF_COLLECTION_COUNT
-
 /// <summary>
 /// String representation of a Json Object
 /// </summary>
