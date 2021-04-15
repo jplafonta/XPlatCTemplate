@@ -21,7 +21,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++) {
     var contextHandleParam = categorizedApi.otherCallsRequireSecretKey || call.auth === "None" ? "PlayFabStateHandle stateHandle" : "PlayFabEntityHandle entityHandle"; 
     var requestParam = call.request === "void" ? "" : "_In_ const PlayFab" + api.name + call.request + "* request,\n    "; %>
 /// <summary>
-/// <<%- call.name %> documentation goes here.>
+<%- getFormattedCallDescription(api.name, call) %>
 /// </summary><%
     if (categorizedApi.otherCallsRequireSecretKey || call.auth === "None") { %>
 /// <param name="stateHandle">PlayFabStateHandle returned from PlayFabInitialize call.</param><%

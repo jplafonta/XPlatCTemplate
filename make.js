@@ -5,11 +5,13 @@ if (typeof getCompiledTemplate === "undefined") getCompiledTemplate = function (
 if (typeof templatizeTree === "undefined") templatizeTree = function () { };
 
 var categorizedApis = {};
+var xmlRefDocs = {};
 
 exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     console.log("Generating Combined api from: " + sourceDir + " to: " + apiOutputDir);
 
     categorizeCalls(apis);
+    parseXmlRefDocs();
 
     var locals = {
         apis: apis,
@@ -37,7 +39,7 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         prefix: "PlayFab" + api.name,
         categorizedApi: categorizedApis[api.name],
         enumtypes: getEnumTypes(api.datatypes),
-        sortedClasses: getSortedClasses(api.datatypes),
+        sortedClasses: getSortedClasses(api),
         dictionaryEntryTypes: getDictionaryEntryTypes(api.datatypes),
         getBaseType: getBaseType,
         getPropertyDefinition: getPropertyDefinition,
@@ -50,7 +52,9 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         getCopyConstructorBody: getCopyConstructorBody,
         addAuthHeader: addAuthHeader,
         isSerializable: isSerializable,
-        isFixedSize: isFixedSize
+        isFixedSize: isFixedSize,
+        getFormattedDatatypeDescription: getFormattedDatatypeDescription,
+        getFormattedCallDescription: getFormattedCallDescription
     };
 
     var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.h.ejs"));
@@ -103,6 +107,19 @@ function parseProjectFiles(filename) {
     }
     console.log("Finished reading: " + fullPath);
     return projectFiles;
+}
+
+function parseXmlRefDocs() {
+    var fullPath = path.resolve(__dirname, "XMLRefDocs.json");
+    console.log("Begin reading File: " + fullPath);
+    try {
+        xmlRefDocs = require(fullPath);
+    }
+    catch (err) {
+        console.log(" ***** Failed to Load: " + fullPath);
+        throw err;
+    }
+    console.log("Finished reading: " + fullPath);
 }
 
 function pruneEmptyTypes(api) {
@@ -202,7 +219,7 @@ function getEnumTypes(datatypes) {
     return enumtypes;
 }
 
-function getSortedClasses(datatypes) {
+function getSortedClasses(api) {
     var sortedClasses = [];
     var addedTypes = new Set();
 
@@ -214,7 +231,7 @@ function getSortedClasses(datatypes) {
             for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
                 var property = datatype.properties[propIdx];
                 if (property.isclass || property.isenum) {
-                    addType(datatypes[property.actualtype]);
+                    addType(api.datatypes[property.actualtype]);
                 }
             }
         }
@@ -223,10 +240,32 @@ function getSortedClasses(datatypes) {
     };
 
     // Add all types and their dependencies
-    for (var typeIdx in datatypes) {
-        addType(datatypes[typeIdx]);
+    for (var typeIdx in api.datatypes) {
+        addType(api.datatypes[typeIdx]);
     }
+
+    // Annotate classes
+    annotateClasses(sortedClasses, api);
+
     return sortedClasses;
+}
+
+// Annotates request & result datatypes with the APIs they are used with for documentation purposes
+function annotateClasses(sortedClasses, api) {
+    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) {
+        var datatype = sortedClasses[classIdx];
+        for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
+            var call = api.calls[callIdx];
+            if (call.request === datatype.name || call.result === datatype.name) {
+                if (datatype.calls) {
+                    datatype.calls.push(call.name);
+                } else {
+                    datatype.calls = [];
+                    datatype.calls.push(call.name);
+                }
+            }
+        }
+    }
 }
 
 function getDictionaryEntryTypes(datatypes) {
@@ -397,18 +436,18 @@ function getPublicPropertyType(property, prefix) {
     if (!(property.actualtype === "object")) {
         if (property.collection === "map") {
             // array of dictionary entries
-            return "PF_MAP struct " + getDictionaryEntryTypeFromValueType(type) + "*";
+            return "struct " + getDictionaryEntryTypeFromValueType(type) + "*";
         } else if (property.collection === "array") {
             if (property.isclass) {
                 // array of pointers
-                return "PF_ARRAY " + type + "**";
+                return type + "**";
             } else {
-                return "PF_ARRAY " + type + "*";
+                return type + "*";
             }
         } else if (property.optional) {
             // Types which aren't already nullable will be made pointer types
             if (!(type === "const char*" || type === "PlayFabJsonObject")) {
-                return "PF_OPTIONAL " + type + "*";
+                return type + "*";
             }
         }
     }
@@ -445,16 +484,40 @@ function getPropertyName(property, isInternal) {
 function getPropertyDefinition(tabbing, property, prefix, isInternal) {
     var output = "";
 
+    // for public properties, add XML ref doc comments
+    if (!isInternal) {
+        var xmlComment = tabbing + "/// <summary>\n" + tabbing + "///"
+        var propertyDescription = property.optional ? "(Optional) " : "";
+        if (property.description) {
+            propertyDescription += property.description.charAt(0).toUpperCase() + property.description.slice(1);
+            if (!propertyDescription.endsWith(".")) {
+                propertyDescription += ".";
+            }
+        } else {
+            propertyDescription += (property.name + " property.");
+        }
+
+        xmlComment = appendToXmlDocComment(xmlComment, propertyDescription);
+        xmlComment += ("\n" + tabbing + "/// </summary>")
+        output += ("\n" + xmlComment);
+    }
+
     if (!isInternal || requiresInternalProperty(property)) {
         var type = isInternal ? getInternalPropertyType(property, prefix) : getPublicPropertyType(property, prefix);
         var propName = getPropertyName(property, isInternal);
-        output = "\n" + tabbing + type + " " + propName + ";";
+        output += ("\n" + tabbing + type + " " + propName + ";");
 
         // For public collection properties add an additional "count" property
         if (property.collection && !(type === "PlayFabJsonObject") && !isInternal) {
-            output += ("\n" + tabbing + "PF_COLLECTION_COUNT uint32_t " + propName + "Count;");
+            output += ("\n\n" + tabbing + "/// <summary>\n" + tabbing + "/// Count of " + propName + "\n" + tabbing + "/// </summary>");
+            output += ("\n" + tabbing + "uint32_t " + propName + "Count;");
         }
     }
+
+    if (!isInternal) {
+        output += "\n";
+    }
+
     return output;
 }
 
@@ -564,4 +627,66 @@ function getCopyConstructorBody(tabbing, datatype, prefix) {
         }
     }
     return output;
+}
+
+// appends str to existing XmlDoc comment, ensuring proper line breaks and formatting
+function appendToXmlDocComment(comment, str) {
+    var tabbing = comment.slice(0, comment.indexOf("///"));
+    var curLineLength = comment.length - comment.lastIndexOf("\n");
+    var words = str.split(" ");
+    for (var i = 0; i < words.length; i++) {
+        if (curLineLength > 100) {
+            comment += ("\n" + tabbing + "///");
+            curLineLength = tabbing.length + 3;
+        }
+        comment += (" " + words[i]);
+        curLineLength += (words[i].length + 1);
+    }
+    return comment;
+}
+
+function getFormattedDatatypeDescription(prefix, datatype) {
+    var output = "/// " + prefix + datatype.name + " data model.";
+
+    if (datatype.description) {
+        if (datatype.description.endsWith(".")) {
+            output = appendToXmlDocComment(output, datatype.description);
+        } else {
+            output = appendToXmlDocComment(output, datatype.description + ".");
+        }
+    }
+
+    var callUsage = ""; // addition info on which API calls the struct is used in
+    if (datatype.isRequest) {
+        callUsage += "Request object for";
+
+    } else if (datatype.isResult) {
+        callUsage += "Result payload for";
+    }
+    if (callUsage.length > 0) {
+        for (i = 0; i < datatype.calls.length; i++) {
+            // ensure proper grammer in call usage list
+            if (i > 1 && i === datatype.calls.length - 1) { // Used in at least 3 calls and this is the last one
+                callUsage += ", and";
+            } else if (i === 1 && datatype.calls.length === 2) { // Used in 2 calls and this is the second one
+                callUsage += " and";
+            } else if (i > 0) {
+                callUsage += ",";
+            }
+            callUsage += (" " + prefix + datatype.calls[i] + "Async");
+        }
+        output = appendToXmlDocComment(output, callUsage + ".");
+    }
+
+    return output;
+}
+
+function getFormattedCallDescription(apiName, call) {
+    if (apiName in xmlRefDocs) {
+        var apiRefDocs = xmlRefDocs[apiName];
+        if (call.name in apiRefDocs.calls) {
+            return appendToXmlDocComment("///", apiRefDocs.calls[call.name].summary);
+        }
+    }
+    return "/// " + call.name + " documentation not found in XmlRefDocs."
 }
