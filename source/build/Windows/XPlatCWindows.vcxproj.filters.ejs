@@ -51,6 +51,9 @@ for(var apiName in categorizedApis) {
     <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.h">
       <Filter>Source Files\<%- apiName %></Filter>
     </ClInclude>
+    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.cpp">
+      <Filter>Source Files\<%- apiName %></Filter>
+    </ClCompile>
     <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>Api.h">
       <Filter>Source Files\<%- apiName %></Filter>
     </ClInclude>

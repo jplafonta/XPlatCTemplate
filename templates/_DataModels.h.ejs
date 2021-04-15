@@ -6,96 +6,55 @@
 
 namespace PlayFab
 {
-    namespace JsonUtils
-    {
-<% for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype = sortedClasses[typeIdx]; %>
-        template<>
-        inline JsonValue ToJson<>(const <%- prefix %><%- datatype.name %>& input)
-        {
-            JsonValue output{ rapidjson::kObjectType };
-<%for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx]; %><%- addPropertyToJson("            ", property) %>
-<% } %>            return output;
-        }
-<% } %>
-    }
+namespace <%- api.name %>Models
+{
 
-    namespace <%- api.name %>Models
-    {
-        // <%- api.name %> Classes<%
-for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype = sortedClasses[typeIdx]; %>
-        struct <%- datatype.name %> : public <%- prefix %><%- datatype.name %>, public <%- getBaseType(datatype) %>
-        {
-            <%- datatype.name %>() : <%- prefix %><%- datatype.name %>{}
-            {
-            }
-<% if (canDefaultCopyConstructor(datatype)) { %>
-            <%- datatype.name %>(const <%- datatype.name %>&) = default;
-<% } else { %>
-            <%- datatype.name %>(const <%- datatype.name %>& src) :
-                <%- prefix %><%- datatype.name %>{ src }<%- getCopyConstructorInitializationList("                ", datatype) %>
-            {<%- getCopyConstructorBody("                ", datatype, prefix) %>
-            }
-<% } %>
-            ~<%- datatype.name %>() = default;
+// <%- api.name %> Classes<%
+for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) {
+    var datatype = sortedClasses[typeIdx]; %>
+struct <%- datatype.name %> : public <%- prefix %><%- datatype.name %>, public <%- getBaseType(datatype) %>
+{
+    <%- datatype.name %>();<%
+    if (canDefaultCopyConstructor(datatype)) { %>
+    <%- datatype.name %>(const <%- datatype.name %>&) = default;
+    <%- datatype.name %>(<%- datatype.name %>&&) = default;<%
+    } else { %>
+    <%- datatype.name %>(const <%- datatype.name %>& src);
+    <%- datatype.name %>(<%- datatype.name %>&& src);<%
+    } // end if %>
+    <%- datatype.name %>& operator=(const <%- datatype.name %>&) = delete;
+    ~<%- datatype.name %>() = default;
 
-            // TODO Add move constructor & assignment operators
+    void FromJson(const JsonValue& input) override;
+    JsonValue ToJson() const override;
+<%  if (isSerializable(datatype)) { %>
+    size_t SerializedSize() const override;
+    void Serialize(void* buffer, size_t bufferSize) const override;
+<%  } // end if %>
+private:<%
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
+        var property = datatype.properties[propIdx];
+%><%- getPropertyDefinition("    ", property, prefix, true) %><%
+    } // end for %>
+};
+<% } // end for %>
+} // namespace <%- api.name %>Models
 
-            void FromJson(const JsonValue&<%- ifHasProps(datatype, " input") %>) override
-            {
-<% for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
-%><%- getPropertyFromJson("                ", property, datatype) %>
-<% } %>            }
+namespace JsonUtils
+{
+// Serialization methods for public models
+<% for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { 
+    var datatype = sortedClasses[typeIdx]; %>
+template<> inline JsonValue ToJson<>(const <%- prefix %><%- datatype.name %>& input);<%
+} // end for %>
+} // namespace JsonUtils
 
-            JsonValue ToJson() const override
-            { 
-                return JsonUtils::ToJson<<%- prefix %><%- datatype.name %>>(*this);
-            }
-    <% if (isSerializable(datatype)) { %>
-            size_t SerializedSize() const override
-            {
-                size_t serializedSize{ sizeof(<%- prefix %><%- datatype.name %>) };<%
-        for (var i = 0; i < datatype.properties.length; i++) { 
-            var property = datatype.properties[i]; 
-            if (property.actualtype === "String") { %>
-                serializedSize += (<%- getPropertyName(property, true) %>.size() + 1);<%
-            }
-        } // end for %>
-                return serializedSize;
-            }
-
-            void Serialize(void* buffer, size_t bufferSize) const override
-            {
-                auto serializedStruct = new (buffer) <%- prefix %><%- datatype.name %>{ *this };
-                char* stringBuffer = static_cast<char*>(buffer) + sizeof(<%- prefix %><%- datatype.name %>);
-        <% for (i = 0; i < datatype.properties.length; i++) {
-            var hasStringProp = false;
-            var property = datatype.properties[i]; 
-            if (property.actualtype === "String") { 
-                var hasStringProp = true; %>
-                memcpy(stringBuffer, <%- getPropertyName(property, true) %>.data(), <%- getPropertyName(property, true) %>.size() + 1);
-                serializedStruct-><%- getPropertyName(property, false) %> = stringBuffer;
-                stringBuffer +=  <%- getPropertyName(property, true) %>.size() + 1; <%
-            }
-        } // end for 
-        if (!hasStringProp) { %>
-                UNREFERENCED_PARAMETER(serializedStruct);<%
-        } // end if %>
-                assert(stringBuffer - bufferSize == buffer);
-            }
-    <% } // end if %>
-        private:<%
-for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
-%><%- getPropertyDefinition("            ", property, prefix, true) %><% } %>
-        };
-<% } %>
-    }
-
-    // EnumRange definitions used for Enum (de)serialization <%
-for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { var enumtype = enumtypes[enumIdx]; var maxval = enumtype.enumvalues[enumtype.enumvalues.length-1]; %>
-    template<> struct EnumRange<<%- prefix %><%- enumtype.name %>>
-    {
-        static constexpr <%- prefix %><%- enumtype.name %> maxValue = <%- prefix %><%- enumtype.name %>::<%- maxval.name %>;
-    };
-<% } %>
-
-}
+// EnumRange definitions used for Enum (de)serialization<%
+for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { 
+    var enumtype = enumtypes[enumIdx]; var maxval = enumtype.enumvalues[enumtype.enumvalues.length-1]; %>
+template<> struct EnumRange<<%- prefix %><%- enumtype.name %>>
+{
+    static constexpr <%- prefix %><%- enumtype.name %> maxValue = <%- prefix %><%- enumtype.name %>::<%- maxval.name %>;
+};
+<% } // end for %>
+} // namespace PlayFab

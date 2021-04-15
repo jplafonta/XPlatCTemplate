@@ -46,9 +46,9 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         getPropertyName: getPropertyName,
         canDefaultCopyConstructor: canDefaultCopyConstructor,
         getCopyConstructorInitializationList: getCopyConstructorInitializationList,
+        getMoveConstructorInitializationList: getMoveConstructorInitializationList,
         getCopyConstructorBody: getCopyConstructorBody,
         addAuthHeader: addAuthHeader,
-        ifHasProps: ifHasProps,
         isSerializable: isSerializable,
         isFixedSize: isFixedSize
     };
@@ -59,8 +59,11 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
     var iapiCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.cpp.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "Api.cpp"), iapiCppTemplate(locals));
 
-    var dataModelTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.h.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "DataModels.h"), dataModelTemplate(locals));
+    var dataModelHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "DataModels.h"), dataModelHeaderTemplate(locals));
+
+    var dataModelTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.cpp.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "DataModels.cpp"), dataModelTemplate(locals));
 
     var dataModelTemplate_c = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels.h.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/include/playFab", "PlayFab" + api.name + "DataModels.h"), dataModelTemplate_c(locals));
@@ -455,11 +458,11 @@ function getPropertyDefinition(tabbing, property, prefix, isInternal) {
     return output;
 }
 
-function getPropertyFromJson(tabbing, property) {
+function getPropertyFromJson(property) {
     var publicPropName = getPropertyName(property, false);
     var internalPropName = getPropertyName(property, true);
 
-    var output = tabbing + "JsonUtils:: ObjectGetMember(input, \"" + property.name + "\", ";
+    var output = "JsonUtils:: ObjectGetMember(input, \"" + property.name + "\", ";
 
     if (!requiresInternalProperty(property)) {
         output += publicPropName;
@@ -481,10 +484,10 @@ function getPropertyFromJson(tabbing, property) {
     return output + ");";
 }
 
-function addPropertyToJson(tabbing, property) {
+function addPropertyToJson(property) {
     var publicPropName = getPropertyName(property, false);
 
-    var output = tabbing + "JsonUtils::ObjectAddMember(output, \"" + property.name + "\", input." + publicPropName;
+    var output = "JsonUtils::ObjectAddMember(output, \"" + property.name + "\", input." + publicPropName;
 
     // for collections, pass the collection count
     if (property.collection && !(property.actualtype === "object")) {
@@ -524,6 +527,18 @@ function getCopyConstructorInitializationList(tabbing, datatype) {
     return output;
 }
 
+function getMoveConstructorInitializationList(tabbing, datatype) {
+    var output = "";
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
+        var property = datatype.properties[propIdx];
+        if (requiresInternalProperty(property)) {
+            var internalPropName = getPropertyName(property, true);
+            output += (",\n" + tabbing + internalPropName + "{ std::move(src." + internalPropName + ") }");
+        }
+    }
+    return output;
+}
+
 function getCopyConstructorBody(tabbing, datatype, prefix) {
     var output = "";
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
@@ -549,10 +564,4 @@ function getCopyConstructorBody(tabbing, datatype, prefix) {
         }
     }
     return output;
-}
-
-function ifHasProps(datatype, displayText) {
-    if (datatype.properties.length === 0)
-        return "";
-    return displayText;
 }
