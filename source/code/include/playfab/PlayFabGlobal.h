@@ -14,7 +14,7 @@ extern "C"
 {
 
 /// <summary>
-/// A callback invoked every time a new memory m_buffer must be dynamically allocated by the library.
+/// A callback invoked every time a new memory buffer must be dynamically allocated by the library.
 /// This callback is optionally installed by calling PlayFabMemSetFunctions()
 /// 
 /// The callback must allocate and return a pointer to a contiguous block of memory of the 
@@ -35,14 +35,14 @@ typedef _Ret_maybenull_ _Post_writable_byte_size_(size) void* STDAPIVCALLTYPE Pl
 );
 
 /// <summary>
-/// A callback invoked every time a previously allocated memory m_buffer is no longer needed by 
+/// A callback invoked every time a previously allocated memory buffer is no longer needed by 
 /// the library and can be freed. This callback is optionally installed by calling PlayFabMemSetFunctions()
 ///
-/// The callback is invoked whenever the library has finished using a memory m_buffer previously 
+/// The callback is invoked whenever the library has finished using a memory buffer previously 
 /// returned by the app's corresponding PlayFabMemAllocFunction such that the application can free the
-/// memory m_buffer.
+/// memory buffer.
 /// </summary>
-/// <param name="pointer">The pointer to the memory m_buffer previously allocated. This value will
+/// <param name="pointer">The pointer to the memory buffer previously allocated. This value will
 /// never be a null pointer.</param>
 /// <param name="memoryType">An opaque identifier representing the internal category of 
 /// memory being allocated.</param>

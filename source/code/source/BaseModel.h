@@ -33,7 +33,7 @@ namespace PlayFab
 {
 
 /// <summary>
-/// A model that can be (trivially) serialized into a continuous memory m_buffer.
+/// A model that can be (trivially) serialized into a continuous memory buffer.
 /// <summary>
 class SerializableModel : BaseModel
 {

@@ -46,7 +46,7 @@ protected:
     // Default implementation will return E_FAIL, marking the operation as completed with no result payload.
     virtual HRESULT DoWork(TaskQueue&& queue);
 
-    // The GetResult operation should copy the result payload into a client provided m_buffer. GetResult will be called
+    // The GetResult operation should copy the result payload into a client provided buffer. GetResult will be called
     // synchronously when the client calls the appropriate get result API.
     //
     // Providers implementing XAsync APIs with a result payload MUST override this method.
@@ -66,7 +66,7 @@ protected:
 protected:
     // Methods to be called by derived classes to mark XAsyncOp as complete
 
-    // Mark the async operation as sucessfully completed. Provide the needed m_buffer size to hold the result object.
+    // Mark the async operation as sucessfully completed. Provide the needed buffer size to hold the result object.
     void Complete(size_t resultSize);
 
     // Marks the operation as complete with a failure code. By design, the client won't get a result payload
