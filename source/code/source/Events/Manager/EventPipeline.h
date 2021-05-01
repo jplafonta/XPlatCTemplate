@@ -37,7 +37,7 @@ struct EventPipelineSettings
 };
 
 // Producer-consumer Event pipeline. Events added by clients via IntakeEvent & consumed and written to PlayFab
-// by WriteEventsProvider in the background.S
+// by WriteEventsProvider in the background.
 class EventPipeline : public std::enable_shared_from_this<EventPipeline>
 {
 public:

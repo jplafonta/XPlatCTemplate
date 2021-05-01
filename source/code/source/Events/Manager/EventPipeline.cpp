@@ -63,8 +63,8 @@ SharedPtr<EventPipeline> EventPipeline::Make(
 {
     auto pipeline = SharedPtr<EventPipeline>(new (Allocator<EventPipeline>{}.allocate(1)) EventPipeline(type));
 
-    // Create and start WriteEventsProvider. EventPipeline has a non-owning pointer to it - it's lifetime is automatically
-    // by the Provider class. The background operation will run until its explicitly terminated or the pipeline its consuming
+    // Create and start WriteEventsProvider. EventPipeline has a non-owning pointer to it - it's lifetime is managed automatically
+    // by the Provider class. The background operation will run until it's explicitly terminated or the pipeline its consuming
     // events from is destroyed.
     pipeline->m_writeEventsProvider = MakeUnique<WriteEventsProvider>(pipeline, std::move(httpClient), std::move(tokens), queue).release();
     Provider::Run(UniquePtr<Provider>{ pipeline->m_writeEventsProvider });
@@ -225,7 +225,7 @@ HRESULT WriteEventsProvider::Cancel(TaskQueue&& queue)
     }
     else if (m_batchesInFlight == 0)
     {
-        // If their are no pending events or in batches in flight, complete the XAsync operation
+        // If their are no pending events or in batches in flight, cancellation is trivially complete.
         Provider::Complete(0);
     }
     return S_OK;

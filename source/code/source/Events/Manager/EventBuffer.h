@@ -71,7 +71,7 @@ private:
     void DeleteEventPacket(EventPacket* eventPacket);
 
     AtomicSpin m_atomicSpin; // Used for spinlock in critical sections
-    std::atomic<bool> m_terminated;
+    std::atomic<bool> m_terminated{ false };
 
     const size_t m_buffMask; // A bit mask that is used for very fast m_buffer pointer arithmetics.
                            // The m_buffer's length is always a power of two and the m_buffer mask is (length - 1).
