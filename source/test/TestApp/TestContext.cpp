@@ -43,6 +43,13 @@ namespace PlayFabUnit
         // TODO: Throw "assert" exception
     }
 
+    void TestContext::Fail(const char* failedApi, HRESULT hr)
+    {
+        std::stringstream message;
+        message << "SDK call \"" << failedApi << "\" failed with hr=" << std::hex << hr;
+        Fail(message.str());
+    }
+
     void TestContext::Skip(const std::string& message)
     {
         EndTest(TestFinishState::SKIPPED, message);

@@ -2,7 +2,8 @@
 
 #include <Client/ClientDataModels.h>
 #include <Server/ServerDataModels.h>
-#include <Authentication/AuthenticationDataModels.h><%
+#include <Authentication/AuthenticationDataModels.h>
+#include <Events/Manager/EventManagerApi.h><%
 for(var apiName in categorizedApis) {
     var api = categorizedApis[apiName];
     if (api.otherCalls.length > 0 && !api.otherCallsRequireSecretKey) { %>
@@ -44,6 +45,9 @@ public:
     // call will be authenticated with either the EntityToken or the ClientSessionTicket. The calling Entity's AuthTokens will be updated with the returned 
     // EntityToken if the call succeeds.
     AsyncOp<void> GetEntityToken(const PlayFabAuthenticationGetEntityTokenRequest& request, const TaskQueue& queue);
+
+    // Non-generated API
+    EventManager::EventManagerAPI const eventManagerAPI;
 <% for(var apiName in categorizedApis) {
     var api = categorizedApis[apiName];
     if (api.otherCalls.length > 0 && !api.otherCallsRequireSecretKey) { 

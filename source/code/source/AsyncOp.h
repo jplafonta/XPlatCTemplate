@@ -108,7 +108,7 @@ struct IContinuation
 // continuation function to be invoked when the operation completes, and AsyncOp implementers provide the result
 // of the asynchronous operation when it completes. The AsyncOpContext stores the result/continuation until they are
 // needed, and then passing the result along to the continuation when both have been provided. Ownership of the AsyncOpContext
-// is shared between AsyncOp objects returned by consumers and AsyncOp implementers.
+// is shared between AsyncOp objects returned to consumers and AsyncOp implementers.
 template<typename T>
 class AsyncOpContext
 {

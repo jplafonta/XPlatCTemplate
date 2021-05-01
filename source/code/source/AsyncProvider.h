@@ -10,7 +10,7 @@
 namespace PlayFab
 {
 
-// Provider is a base class that makes implementing XAsync API providers easier. It is designed to reduce the 
+// Provider is a base class that makes implementing XAsync providers easier. It is designed to reduce the 
 // amount of boilerplate and edge cases each provider needs to implement.
 // 
 // Each XAsync API should define a derived provider class and override the relevant operations: Begin, DoWork,
@@ -41,12 +41,12 @@ protected:
     virtual HRESULT Begin(TaskQueue&& queue);
 
     // Perform any long running work. This method is invoked is guaranteed always be invoked on the thread dictated by the Provider's
-    // XAsync task queue. AsyncOp return value should be the size of the XAsync result.
+    // XAsync task queue.
     //
-    // Default implementation will return 0, marking the async work as completed.
-    virtual AsyncOp<size_t> DoWork(TaskQueue&& queue);
+    // Default implementation will return E_FAIL, marking the operation as completed with no result payload.
+    virtual HRESULT DoWork(TaskQueue&& queue);
 
-    // The GetResult operation should copy the result payload into a client provided buffer. GetResult will be called
+    // The GetResult operation should copy the result payload into a client provided m_buffer. GetResult will be called
     // synchronously when the client calls the appropriate get result API.
     //
     // Providers implementing XAsync APIs with a result payload MUST override this method.
@@ -54,13 +54,19 @@ protected:
     // no result payload).
     virtual HRESULT GetResult(void* buffer, size_t bufferSize);
 
+    // Called when the async operation is cancelled by the client. If the operation can be canceled, Complete should be called
+    // with E_ABORT when the operation has been cancelled.
+    //
+    // Default implementation returns S_OK (operation will continue running until it completes).
+    virtual HRESULT Cancel(TaskQueue&& queue);
+
     // Schedule DoWork operation to the TaskQueue. Can be called multiple times.
     virtual HRESULT Schedule(uint32_t delay) const;
 
 protected:
     // Methods to be called by derived classes to mark XAsyncOp as complete
 
-    // Mark the async operation as sucessfully completed. Provide the needed buffer size to hold the result object.
+    // Mark the async operation as sucessfully completed. Provide the needed m_buffer size to hold the result object.
     void Complete(size_t resultSize);
 
     // Marks the operation as complete with a failure code. By design, the client won't get a result payload

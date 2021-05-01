@@ -4,6 +4,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include "Types.h"
 
 namespace PlayFab
 {
@@ -11,8 +12,7 @@ namespace PlayFab
 #if defined(PLAYFAB_PLATFORM_SWITCH)
 static_assert("You must request the Nintendo specific XPlat SDK from PlayFab support.");
 #else
-typedef std::chrono::system_clock Clock;
-typedef std::chrono::time_point<Clock> TimePoint;
+using TimePoint = std::chrono::time_point<SystemClock>;
 #endif
 
 // The primary purpose of these format strings is to communicate to and from the PlayFab server with consistent accuracy across platforms supported by this SDK
@@ -31,12 +31,12 @@ inline void InitializeClock()
 // Time type conversions
 inline time_t TimePointToTimeT(const TimePoint& input)
 {
-    return Clock::to_time_t(input);
+    return SystemClock::to_time_t(input);
 }
 
 inline TimePoint TimeTToTimePoint(time_t input)
 {
-    return Clock::from_time_t(input);
+    return SystemClock::from_time_t(input);
 }
 
 inline tm TimeTToUtcTm(time_t input)
@@ -65,7 +65,7 @@ inline time_t UtcTmToTimeT(tm input)
 
 inline tm TimePointToUtcTm(const TimePoint& input)
 {
-    return TimeTToUtcTm(Clock::to_time_t(input));
+    return TimeTToUtcTm(SystemClock::to_time_t(input));
 }
 
 inline TimePoint UtcTmToTimePoint(const tm& input)
@@ -77,7 +77,7 @@ inline TimePoint UtcTmToTimePoint(const tm& input)
 inline TimePoint GetTimePointNow()
 {
     // The conversion is mostly to ensure consistent behavior among all platforms
-    return std::chrono::time_point_cast<std::chrono::seconds>(Clock::now());
+    return std::chrono::time_point_cast<std::chrono::seconds>(SystemClock::now());
 }
 
 inline time_t GetTimeTNow()

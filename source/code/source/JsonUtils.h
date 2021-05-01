@@ -106,6 +106,9 @@ void ObjectAddMember(JsonValue& jsonObject, JsonValue&& name, JsonValue&& value)
 template <typename T>
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const T& value);
 
+template <typename T>
+void ObjectAddMember(JsonValue& jsonObject, JsonValue&& name, const T& value);
+
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, time_t value, bool convertToIso8601String = false);
 
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const time_t* value, bool convertToIso8601String = false);
@@ -228,6 +231,12 @@ template <typename T>
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const T& value)
 {
     ObjectAddMember(jsonObject, name, ToJson(value));
+}
+
+template <typename T>
+void ObjectAddMember(JsonValue& jsonObject, JsonValue&& name, const T& value)
+{
+    ObjectAddMember(jsonObject, std::move(name), ToJson(value));
 }
 
 template <typename T, typename std::enable_if_t<!Detail::IsDictionaryEntry<T>::value>*>

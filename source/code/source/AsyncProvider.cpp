@@ -25,15 +25,21 @@ HRESULT Provider::Begin(TaskQueue&&)
     return Schedule(0);
 }
 
-AsyncOp<size_t> Provider::DoWork(TaskQueue&&)
+HRESULT Provider::DoWork(TaskQueue&&)
 {
-    return Result<size_t>(size_t(0));
+    return E_FAIL;
 }
 
 HRESULT Provider::GetResult(void*, size_t)
 {
     assert(false);
     return E_UNEXPECTED;
+}
+
+HRESULT Provider::Cancel(TaskQueue&&)
+{
+    // Cancellation not supported by default, let async operation complete
+    return S_OK;
 }
 
 HRESULT Provider::Schedule(uint32_t delay) const
@@ -67,10 +73,7 @@ HRESULT CALLBACK Provider::XAsyncProvider(_In_ XAsyncOp op, _Inout_ const XAsync
     case XAsyncOp::DoWork:
         try
         {
-            provider->DoWork(data->async->queue).Finally([data](Result<size_t> asyncResult)
-            {
-                XAsyncComplete(data->async, asyncResult.hr, asyncResult.Payload());
-            });
+            return provider->DoWork(data->async->queue);
         }
         catch (...)
         {
@@ -87,8 +90,14 @@ HRESULT CALLBACK Provider::XAsyncProvider(_In_ XAsyncOp op, _Inout_ const XAsync
         }
     case XAsyncOp::Cancel:
     {
-        // Cancelation for libHttpClient requests not supported, so just wait until they complete
-        return S_OK;
+        try
+        {
+            return provider->Cancel(data->async->queue);
+        }
+        catch (...)
+        {
+            return CurrentExceptionToHR();
+        }
     }
     case XAsyncOp::Cleanup:
     {

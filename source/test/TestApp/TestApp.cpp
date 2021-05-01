@@ -16,6 +16,7 @@
 #include "JsonParsingTests.h"
 #include "ModelTests.h"
 #include "ApiTests.h"
+#include "EventManagerTests.h"
 
 using namespace PlayFab;
 
@@ -90,6 +91,10 @@ namespace PlayFabUnit
         ApiTests apiTests;
         apiTests.SetTitleInfo(testTitleData);
         testRunner.Add(apiTests);
+
+        EventManagerTests eventManagerTests;
+        eventManagerTests.SetTitleInfo(testTitleData);
+        testRunner.Add(eventManagerTests);
 
         // Run the tests (blocks until all tests have finished).
         testRunner.Run();

@@ -36,9 +36,9 @@ protected:
 private:
     // How we deliver the XAsync result will depend on ResultT of m_call:
     // 1. If there is no result payload, there is no result to store & GetResult Op should never be called.
-    // 2. If the result payload is serializable, store the result, report the needed result buffer size, and serialize it into
-    //    the clients buffer during GetResult.
-    // 3. If the result payload isn't serializable, store the result, report the needed buffer size as sizeof(PlayFabResultHandle),
+    // 2. If the result payload is serializable, store the result, report the needed result m_buffer size, and serialize it into
+    //    the clients m_buffer during GetResult.
+    // 3. If the result payload isn't serializable, store the result, report the needed m_buffer size as sizeof(PlayFabResultHandle),
     //    and during GetResult, create a PlayFabResult object return a pointer to that.
     using ResultT = typename Detail::UnwrapAsyncT<typename std::result_of_t<CallT(const TaskQueue&)>>;
 
