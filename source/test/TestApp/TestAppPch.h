@@ -22,6 +22,8 @@
 #include <array>
 #include <assert.h>
 
+#include <playfab/PlayFab.h>
+
 // Test App still relying on a lot of internal types/APIs, but this should eventually be changed
 #include <stdafx.h>
 

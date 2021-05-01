@@ -164,6 +164,13 @@ void HCHttpCall::HCPerformComplete(XAsyncBlock* async)
             return;
         }
 
+        hr = HttpStatusToHR(httpCode);
+        if (FAILED(hr))
+        {
+            asyncOpContext->Complete(hr);
+            return;
+        }
+
         const char* responseString{ nullptr };
         hr = HCHttpCallResponseGetResponseString(call->m_callHandle, &responseString);
         if (FAILED(hr))

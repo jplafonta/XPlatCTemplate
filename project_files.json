@@ -6,6 +6,7 @@
     "Source Files\\Api"
   ],
   "includeFiles": {
+    "\\include\\playfab\\PlayFab.h": "Header Files\\playfab",
     "\\include\\playfab\\PlayFabBaseModel.h": "Header Files\\playfab",
     "\\include\\playfab\\PlayFabEntity.h": "Header Files\\playfab",
     "\\include\\playfab\\PlayFabGlobal.h": "Header Files\\playfab"

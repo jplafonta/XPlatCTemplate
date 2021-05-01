@@ -2,7 +2,7 @@
 #include "GlobalState.h"
 #include <httpClient/httpClient.h>
 
-STDAPI XblMemSetFunctions(
+STDAPI PlayFabMemSetFunctions(
     _In_opt_ PlayFabMemAllocFunction* memAllocFunc,
     _In_opt_ PlayFabMemFreeFunction* memFreeFunc
 ) noexcept
@@ -25,7 +25,7 @@ STDAPI XblMemSetFunctions(
     return S_OK;
 }
 
-STDAPI XblMemGetFunctions(
+STDAPI PlayFabMemGetFunctions(
     _Out_ PlayFabMemAllocFunction** memAllocFunc,
     _Out_ PlayFabMemFreeFunction** memFreeFunc
 ) noexcept

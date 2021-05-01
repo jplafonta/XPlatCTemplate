@@ -68,7 +68,7 @@ typedef void STDAPIVCALLTYPE PlayFabMemFreeFunction(
 /// <param name="memFreeFunc">A pointer to the custom freeing callback to use, or a null 
 /// pointer to restore the default.</param>
 /// <returns>HRESULT return code for this API operation.</returns>
-STDAPI XblMemSetFunctions(
+STDAPI PlayFabMemSetFunctions(
     _In_opt_ PlayFabMemAllocFunction* memAllocFunc,
     _In_opt_ PlayFabMemFreeFunction* memFreeFunc
 ) noexcept;
@@ -76,14 +76,14 @@ STDAPI XblMemSetFunctions(
 /// <summary>
 /// Gets the memory hook functions to allow callers to control route memory allocations to their 
 /// own memory manager.  This method allows the application get the default memory allocation routines.
-/// This can be used along with XblMemSetFunctions() to monitor all memory allocations.
+/// This can be used along with PlayFabMemSetFunctions() to monitor all memory allocations.
 /// </summary>
 /// <param name="memAllocFunc">Set to the current allocation callback.  Returns the default routine 
 /// if not previously set</param>
 /// <param name="memFreeFunc">Set to the to the current memory free callback.  Returns the default 
 /// routine if not previously set</param>
 /// <returns>HRESULT return code for this API operation.</returns>
-STDAPI XblMemGetFunctions(
+STDAPI PlayFabMemGetFunctions(
     _Out_ PlayFabMemAllocFunction** memAllocFunc,
     _Out_ PlayFabMemFreeFunction** memFreeFunc
 ) noexcept;
