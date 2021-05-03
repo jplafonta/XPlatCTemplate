@@ -1,0 +1,27 @@
+// Copyright (c) Microsoft Corporation
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+#if !defined(__cplusplus)
+#error C++11 required
+#endif
+
+#pragma once
+
+#include <playfab/PlayFabGlobal.h>
+#include <playfab/PlayFabEntity.h>
+
+// PlayFab Authenitcation APIs<%
+for(var apiName in categorizedApis) {
+    var api = categorizedApis[apiName];
+    if (api.loginCalls.length > 0) { %>
+#include <playfab/PlayFab<%- apiName %>AuthApi.h><%
+    }
+} %>
+
+// PlayFab Service wrapper APIs<%
+for(var apiName in categorizedApis) {
+    var api = categorizedApis[apiName];
+    if (api.otherCalls.length > 0) { %>
+#include <playfab/PlayFab<%- apiName %>Api.h><%
+    }
+} %>
