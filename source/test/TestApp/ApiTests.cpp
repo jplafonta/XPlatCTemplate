@@ -10,13 +10,6 @@
 namespace PlayFabUnit
 {
 
-std::string FailureMessage(const char* failedApi, HRESULT hr)
-{
-    std::stringstream message;
-    message << "SDK call \"" << failedApi << "\" failed with hr=" << std::hex << hr;
-    return message.str();
-}
-
 // Helper class to hold, retrieve, and validate the result of a completed XAsync operation. Intentionally
 // storing the and validating the result in a different context so that we can make sure the result
 // lifetime is maintained correctly
@@ -69,7 +62,7 @@ private:
         HRESULT hr = context->asyncResult->Get(async);
         if (FAILED(hr))
         {
-            context->testContext.Fail(FailureMessage("XAsyncResult::Get", hr));
+            context->testContext.Fail("XAsyncResult::Get", hr);
         }
         else
         {
@@ -81,7 +74,7 @@ private:
                 HRESULT hr = context->asyncResult->Validate();
                 if (FAILED(hr))
                 {
-                    context->testContext.Fail(FailureMessage("XAsyncResult::Validate", hr));
+                    context->testContext.Fail("XAsyncResult::Validate", hr);
                 }
                 else
                 {
@@ -114,7 +107,7 @@ void ApiTests::TestApiStaticSizeResult(TestContext& testContext)
     HRESULT hr = PlayFabClientGetTimeAsync(entityHandle, &async->asyncBlock);
     if (FAILED(hr))
     {
-        testContext.Fail(FailureMessage("PlayFabClientGetTimeAsync", hr));
+        testContext.Fail("PlayFabClientGetTimeAsync", hr);
         return;
     }
     async.release();
@@ -157,7 +150,7 @@ void ApiTests::TestApiSerializableResult(TestContext& testContext)
     HRESULT hr = PlayFabClientCreateSharedGroupAsync(entityHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
-        testContext.Fail(FailureMessage("PlayFabClientCreateSharedGroupAsync", hr));
+        testContext.Fail("PlayFabClientCreateSharedGroupAsync", hr);
         return;
     }
 
@@ -188,7 +181,7 @@ void ApiTests::TestApiResultHandle(TestContext& testContext)
     HRESULT hr = PlayFabClientGetPlayerProfileAsync(entityHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
-        testContext.Fail(FailureMessage("PlayFabClientGetPlayerProfileAsync", hr));
+        testContext.Fail("PlayFabClientGetPlayerProfileAsync", hr);
         return;
     }
     async.release();
@@ -217,7 +210,7 @@ void ApiTests::TestApiEntityToken(TestContext& testContext)
     HRESULT hr = PlayFabProfilesGetProfileAsync(entityHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
-        testContext.Fail(FailureMessage("PlayFabProfilesGetProfileAsync", hr));
+        testContext.Fail("PlayFabProfilesGetProfileAsync", hr);
         return;
     }
     async.release();
@@ -251,7 +244,7 @@ void ApiTests::TestApiSecretKey(TestContext& testContext)
     HRESULT hr = PlayFabAdminAddNewsAsync(stateHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
-        testContext.Fail(FailureMessage("PlayFabAdminAddNewsAsync", hr));
+        testContext.Fail("PlayFabAdminAddNewsAsync", hr);
         return;
     }
     async.release();
@@ -281,7 +274,7 @@ void ApiTests::TestApiNoAuth(TestContext& testContext)
     HRESULT hr = PlayFabClientGetTitlePublicKeyAsync(stateHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
-        testContext.Fail(FailureMessage("PlayFabClientGetTitlePublicKeyAsync", hr));
+        testContext.Fail("PlayFabClientGetTitlePublicKeyAsync", hr);
         return;
     }
     async.release();
@@ -295,7 +288,7 @@ void ApiTests::TestGetEntityTokenWithAuthContext(TestContext& testContext)
     HRESULT hr = PlayFabEntityGetEntityTokenAsync(entityHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
-        testContext.Fail(FailureMessage("PlayFabEntityGetEntityTokenAsync", hr));
+        testContext.Fail("PlayFabEntityGetEntityTokenAsync", hr);
         return;
     }
     async.release();
@@ -324,7 +317,7 @@ void ApiTests::TestGetEntityTokenWithSecretKey(TestContext& testContext)
     HRESULT hr = PlayFabAuthenticationGetEntityTokenAsync(stateHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
-        testContext.Fail(FailureMessage("PlayFabAuthenticationGetEntityTokenAsync", hr));
+        testContext.Fail("PlayFabAuthenticationGetEntityTokenAsync", hr);
         return;
     }
     async.release();

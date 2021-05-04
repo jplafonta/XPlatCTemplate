@@ -3,12 +3,15 @@
     "Header Files",
     "Header Files\\playfab",
     "Source Files",
-    "Source Files\\Api"
+    "Source Files\\Api",
+    "Source Files\\Events\\Manager"
   ],
   "includeFiles": {
     "\\include\\playfab\\PlayFab.h": "Header Files\\playfab",
     "\\include\\playfab\\PlayFabBaseModel.h": "Header Files\\playfab",
     "\\include\\playfab\\PlayFabEntity.h": "Header Files\\playfab",
+    "\\include\\playfab\\PlayFabErrors.h": "Header Files\\playfab",
+    "\\include\\playfab\\PlayFabEventManagerApi.h": "Header Files\\playfab",
     "\\include\\playfab\\PlayFabGlobal.h": "Header Files\\playfab"
   },
   "sourceFiles": {
@@ -36,11 +39,23 @@
     "source\\Result.h": "Source Files",
     "source\\ResultMacros.h": "Source Files",
     "source\\SdkVersion.h": "Source Files",
+    "source\\SpinLock.cpp": "Source Files",
+    "source\\SpinLock.h": "Source Files",
     "source\\StdOptional.h": "Source Files",
     "source\\TaskQueue.cpp": "Source Files",
     "source\\TaskQueue.h": "Source Files",
+    "source\\Types.h": "Source Files",
     "source\\Api\\PlayFabBaseModel.cpp": "Source Files\\Api",
     "source\\Api\\PlayFabEntity.cpp": "Source Files\\Api",
-    "source\\Api\\PlayFabGlobal.cpp": "Source Files\\Api"
+    "source\\Api\\PlayFabGlobal.cpp": "Source Files\\Api",
+    "source\\Events\\Manager\\Event.cpp": "Source Files\\Events\\Manager",
+    "source\\Events\\Manager\\Event.h": "Source Files\\Events\\Manager",
+    "source\\Events\\Manager\\EventBuffer.cpp": "Source Files\\Events\\Manager",
+    "source\\Events\\Manager\\EventBuffer.h": "Source Files\\Events\\Manager",
+    "source\\Events\\Manager\\EventManagerApi.cpp": "Source Files\\Events\\Manager",
+    "source\\Events\\Manager\\EventManagerApi.h": "Source Files\\Events\\Manager",
+    "source\\Events\\Manager\\EventPipeline.cpp": "Source Files\\Events\\Manager",
+    "source\\Events\\Manager\\EventPipeline.h": "Source Files\\Events\\Manager",
+    "source\\Events\\Manager\\PlayFabEventManagerApi.cpp": "Source Files\\Events\\Manager"
   }
 }

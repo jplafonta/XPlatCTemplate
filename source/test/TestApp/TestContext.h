@@ -39,6 +39,9 @@ namespace PlayFabUnit
         void Pass(const std::string& message = "");
         // End this test with FAILED state and optional message
         void Fail(const std::string& message = "");
+        // End this test with FAILED state. Message will note failed API and HRESULT
+        void Fail(const char* failedApi, HRESULT hr);
+
         // End this test with SKIPPED state and optional message
         void Skip(const std::string& message = "");
 

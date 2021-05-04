@@ -106,6 +106,9 @@ void ObjectAddMember(JsonValue& jsonObject, JsonValue&& name, JsonValue&& value)
 template <typename T>
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const T& value);
 
+template <typename T>
+void ObjectAddMember(JsonValue& jsonObject, JsonValue&& name, const T& value);
+
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, time_t value, bool convertToIso8601String = false);
 
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const time_t* value, bool convertToIso8601String = false);
@@ -124,6 +127,10 @@ template <typename EntryT, typename std::enable_if_t<Detail::IsDictionaryEntry<E
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const EntryT* associativeArray, uint32_t arrayCount);
 
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const PlayFabDateTimeDictionaryEntry* associativeArray, uint32_t arrayCount, bool convertToIso8601String = false);
+
+// Adds a member if a member with specificed name doesn't exist or set value if it does
+template <typename T>
+void ObjectSetMember(JsonValue& jsonObject, const char* name, const T& value);
 
 //------------------------------------------------------------------------------
 // Helpers for getting fields from JsonObjects as Cpp types.
@@ -230,6 +237,12 @@ void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const
     ObjectAddMember(jsonObject, name, ToJson(value));
 }
 
+template <typename T>
+void ObjectAddMember(JsonValue& jsonObject, JsonValue&& name, const T& value)
+{
+    ObjectAddMember(jsonObject, std::move(name), ToJson(value));
+}
+
 template <typename T, typename std::enable_if_t<!Detail::IsDictionaryEntry<T>::value>*>
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const T* array, uint32_t arrayCount)
 {
@@ -257,6 +270,20 @@ void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const
         ObjectAddMember(member, ToJson(entry.key), ToJson(entry.value));
     }
     ObjectAddMember(jsonObject, name, std::move(member));
+}
+
+template <typename T>
+void ObjectSetMember(JsonValue& jsonObject, const char* name, const T& value)
+{
+    auto existingMember = jsonObject.FindMember(name);
+    if (existingMember == jsonObject.MemberEnd())
+    {
+        ObjectAddMember(jsonObject, JsonUtils::ToJson(name), value);
+    }
+    else
+    {
+        FromJson(JsonUtils::ToJson(value), existingMember->value);
+    }
 }
 
 template <typename T, typename std::enable_if_t<!std::is_same_v<T, time_t>>*>
