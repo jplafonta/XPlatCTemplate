@@ -8,6 +8,7 @@
 #pragma once
 
 #include <playfab/PlayFabEntity.h>
+#include <httpClient/async.h>
 
 extern "C"
 {
@@ -40,6 +41,29 @@ enum class PlayFabEventManagerEventType : uint32_t
     Heavyweight
 };
 
+/// <summary>
+/// PlayFab EventPipeline types
+/// </summary>
+enum class PlayFabEventManagerPipelineType : uint32_t
+{
+    /// <summary>
+    /// PlayStream event pipeline
+    /// </summary>
+    PlayStream = 0x1,
+
+    /// <summary>
+    /// PlayFab telemetry pipeline (bypasses PlayStream)
+    /// </summary>
+    Telemetry = 0x2,
+
+    /// <summary>
+    /// All pipelines. Passed to PlayFabEventManagerCustomizeEventPipelineSettings to configure settings for all pipelines at once.
+    /// </summary>
+    All = 0x3
+};
+
+DEFINE_ENUM_FLAG_OPERATORS(PlayFabEventManagerPipelineType);
+
 // TODO consider fire and forget style (auto retry etc.)
 /// <summary>
 /// Callback routine that is invoked when an event is uploaded to PlayFab.
@@ -62,7 +86,7 @@ typedef void CALLBACK PlayFabEventManagerTerminatedCallback(_In_opt_ void* conte
 /// </summary>
 /// <param name="eventType">The type of event.</param>
 /// <param name="eventName">The name of the event.</param>
-/// <param name="eventNamespace">Optional namespace. \"com.playfab.events.default\" will be used if no namespace is provided</param>
+/// <param name="eventNamespace">Optional namespace. The namespace of the Event must be 'custom' or start with 'custom'. 'custom' will be used if no namespace is provided</param>
 /// <param name="entityId">Optional entity ID for entity associated with the event. If not provided, the event will apply to the entity that writes it.</param>
 /// <param name="entityType">Optional entity type for entity associated with the event. If not provided, the event will apply to the entity that writes it.</param>
 /// <param name="eventHandle">Returned PlayFabEventManagerEventHandle.</param>
@@ -107,7 +131,7 @@ void PlayFabEventManagerEventCloseHandle(
 /// Set the namespace for the event.
 /// </summary>
 /// <param name="eventHandle">Event to modify.</param>
-/// <param name="eventNamespace">Event namespace. Allowed namespaces can vary by API. </param> // TODO taken from service docs, clarify this
+/// <param name="eventNamespace">Event namespace. The namespace of the Event must be 'custom' or start with 'custom'.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabEventManagerEventSetNamespace(
     _In_ PlayFabEventManagerEventHandle eventHandle,
@@ -126,8 +150,6 @@ HRESULT PlayFabEventManagerEventSetEntity(
     _In_ const char* entityId,
     _In_opt_ const char* entityType
 ) noexcept;
-
-// TODO validate resetting property with same key
 
 /// <summary>
 /// Set a property associated with the event. Properties are arbitrary key/value pairs that will be added to a JSON payload.
@@ -194,7 +216,41 @@ HRESULT PlayFabEventManagerEventSetDoubleProperty(
     _In_ double value
 ) noexcept;
 
-// TODO provide a way to configure TaskQueue for uploads
+/// <summary>
+/// Default values for event pipeline settings.
+/// </summary>
+/// <seealso cref='PlayFabEventManagerCustomizeEventPipelineSettings' />
+const size_t PlayFabEventManagerBufferSizeBytesDefault = 256;
+const uint32_t PlayFabEventManagerMaxItemsInBatchDefault = 5;
+const uint32_t PlayFabEventManagerMaxBatchWaitTimeInSecondsDefault = 3;
+const uint32_t PlayFabEventManagerMaxBatchesInFlightDefault = 16;
+const uint32_t PlayFabEventManagerPollDelayInMsDefault = 10;
+
+/// <summary>
+/// Optional API set set custom event pipeline settings. Pipeline settings apply to a single entity and must be they must be configured
+/// prior to calling PlayFabEventManagerWriteEventAsync. If values are not provided PlayFabEventManagerCustomizeEventPipelineSettings
+/// is never called) the above defaults will be used.
+/// </summary>
+/// <param name="entityHandle">PlayFabEntityHandle to customize settings for.</param>
+/// <param name="pipeline">The event pipeline the provided settings will be applied to. Pass PlayFabEventManagerPipelineType::All to configure settings for all event pipelines.</param>
+/// <param name="queue">XTaskQueue where background work will be scheduled. If not default value is "null" (process default queue will be used).</param>
+/// <param name="minimumBufferSizeBytes">The minimum size of the event buffer, in bytes. The actually allocated size will be a power of 2 that is equal or greater than this value.</param>
+/// <param name="maxItemsInBatch">The max number of items (events) a batch can hold before it is sent out.</param>
+/// <param name="maxBatchWaitTimeInSeconds">The max wait time before a batch must be sent out even if it's still incomplete, in seconds.</param>
+/// <param name="maxBatchesInFlight">The max number of batches currently "in flight" (sent to PlayFab service but pending response).</param>
+/// <param name="pollDelayInMs">The delay between each time the background operation will poll the event buffer and evaluate if events should be uploaded.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT PlayFabEventManagerCustomizeEventPipelineSettings(
+    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PlayFabEventManagerPipelineType pipeline,
+    _In_ XTaskQueueHandle queue,
+    _In_ size_t* minimumBufferSizeBytes,
+    _In_ size_t* maxItemsInBatch,
+    _In_ uint32_t* maxBatchWaitTimeInSeconds,
+    _In_ size_t* maxBatchesInFlight,
+    _In_ uint32_t* pollDelayInMs
+) noexcept;
+
 /// <summary>
 /// Write an event to PlayFab server. Events will be buffered, batched, and uploaded in the background.
 /// Prior to shutdown, PlayFabEventManagerTerminate should be called to ensure any pending events
@@ -213,7 +269,7 @@ HRESULT PlayFabEventManagerWriteEventAsync(
 ) noexcept;
 
 /// <summary>
-/// Ensures pending events and in-flight write requests complete prior to cleanup.
+/// Terminate event pipelines prior to shutdown. Ensures pending events are written and in-flight write requests complete.
 /// If the entityHandle is closed without calling PlayFabEventManagerTerminate, some buffered
 /// events may be lost. Note that the write result for each event will still be delivered normally via the
 /// callback provided to PlayFabEventManagerWriteEventAsync.

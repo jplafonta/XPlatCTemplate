@@ -62,7 +62,7 @@ Result<void> EventBuffer::TryPut(EventContext&& eventContext)
 
     if (m_terminated.load(std::memory_order_consume))
     {
-        return E_PLAYFAB_EVENTMANAGERTERMINATED;
+        return E_PLAYFAB_EVENTMANAGERINVALIDOPERATION;
     }
 
     constexpr uint32_t size = sizeof(EventPacket);
@@ -86,7 +86,7 @@ Result<void> EventBuffer::TryPut(EventContext&& eventContext)
 
     if (sizeNeeded > sizeLeft)
     {
-        return E_PLAYFAB_EVENTBUFFEROVERFLOW;
+        return E_PLAYFAB_EVENTMANAGERBUFFEROVERFLOW;
     }
 
     if (wrapping)
@@ -112,7 +112,7 @@ Result<EventContext> EventBuffer::TryTake()
     if (event == nullptr)
     {
         // there are no events available for consumption
-        return E_PLAYFAB_INTERNAL_EVENTBUFFEREMPTY;
+        return E_PLAYFAB_INTERNAL_EVENTMANAGERBUFFEREMPTY;
     }
 
     // event is available; return its values
@@ -136,7 +136,7 @@ HRESULT EventBuffer::Terminate()
     }
     else
     {
-        return E_PLAYFAB_EVENTMANAGERTERMINATED;
+        return E_PLAYFAB_EVENTMANAGERINVALIDOPERATION;
     }
 }
 

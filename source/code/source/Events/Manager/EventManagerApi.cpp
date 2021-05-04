@@ -8,16 +8,29 @@ namespace PlayFab
 namespace EventManager
 {
 
-EventManagerAPI::EventManagerAPI(SharedPtr<HttpClient const> httpClient, SharedPtr<AuthTokens const> tokens, const TaskQueue& queue)
+EventManagerAPI::EventManagerAPI(SharedPtr<HttpClient const> httpClient, SharedPtr<AuthTokens const> tokens)
 {
-    m_pipelines.emplace(EventPipelineType::PlayStream, EventPipeline::Make(EventPipelineType::PlayStream, httpClient, tokens, queue));
-    m_pipelines.emplace(EventPipelineType::Telemetry, EventPipeline::Make(EventPipelineType::Telemetry, httpClient, tokens, queue));
+    m_pipelines.emplace(PlayFabEventManagerPipelineType::PlayStream, MakeShared<EventPipeline>(PlayFabEventManagerPipelineType::PlayStream, httpClient, tokens));
+    m_pipelines.emplace(PlayFabEventManagerPipelineType::Telemetry, MakeShared<EventPipeline>(PlayFabEventManagerPipelineType::Telemetry, httpClient, tokens));
+}
+
+HRESULT EventManagerAPI::CustomizePipelineSettings(PlayFabEventManagerPipelineType pipeline, EventPipelineSettings settings)
+{
+    if ((pipeline & PlayFabEventManagerPipelineType::PlayStream) == PlayFabEventManagerPipelineType::PlayStream)
+    {
+        RETURN_IF_FAILED(m_pipelines[PlayFabEventManagerPipelineType::PlayStream]->CustomizeSettings(settings));
+    }
+    if ((pipeline & PlayFabEventManagerPipelineType::Telemetry) == PlayFabEventManagerPipelineType::Telemetry)
+    {
+        RETURN_IF_FAILED(m_pipelines[PlayFabEventManagerPipelineType::Telemetry]->CustomizeSettings(settings));
+    }
+    return S_OK;
 }
 
 AsyncOp<String> EventManagerAPI::WriteEvent(SharedPtr<Event const> event) const
 {
     // Route the event to the appropriate pipeline
-    EventPipelineType pipelineType{};
+    PlayFabEventManagerPipelineType pipelineType{};
 
     switch (event->eventType)
     {
@@ -25,12 +38,12 @@ AsyncOp<String> EventManagerAPI::WriteEvent(SharedPtr<Event const> event) const
     case PlayFabEventManagerEventType::Lightweight:
     {
         // route lightweight (and default) events to PlayFab, bypassing PlayStream
-        pipelineType = EventPipelineType::Telemetry;
+        pipelineType = PlayFabEventManagerPipelineType::Telemetry;
         break;
     }
     case PlayFabEventManagerEventType::Heavyweight:
     {
-        pipelineType = EventPipelineType::PlayStream;
+        pipelineType = PlayFabEventManagerPipelineType::PlayStream;
         break;
     }
     default:

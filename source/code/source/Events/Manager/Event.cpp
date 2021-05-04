@@ -11,7 +11,7 @@ Event::Event(PlayFabEventManagerEventType type, const char* eventName) :
     m_eventContents{},
     m_payload{ rapidjson::kObjectType }
 {
-    SetNamespace("com.playfab.events.default");
+    SetNamespace("custom");
     SetName(eventName);
 }
 
@@ -64,57 +64,57 @@ void Event::SetEntity(const char* entityId, const char* entityType)
 
 void Event::SetProperty(const char* name, const char* value)
 {
-    JsonUtils::ObjectAddMember(m_payload, JsonUtils::ToJson(name), value);
+    JsonUtils::ObjectSetMember(m_payload, name, value);
 }
 
 void Event::SetProperty(const char* name, bool value)
 {
-    JsonUtils::ObjectAddMember(m_payload, JsonUtils::ToJson(name), value);
+    JsonUtils::ObjectSetMember(m_payload, name, value);
 }
 
 void Event::SetProperty(const char* name, int8_t value)
 {
-    JsonUtils::ObjectAddMember(m_payload, JsonUtils::ToJson(name), value);
+    JsonUtils::ObjectSetMember(m_payload, name, value);
 }
 
 void Event::SetProperty(const char* name, int16_t value)
 {
-    JsonUtils::ObjectAddMember(m_payload, JsonUtils::ToJson(name), value);
+    JsonUtils::ObjectSetMember(m_payload, name, value);
 }
 
 void Event::SetProperty(const char* name, int32_t value)
 {
-    JsonUtils::ObjectAddMember(m_payload, JsonUtils::ToJson(name), value);
+    JsonUtils::ObjectSetMember(m_payload, name, value);
 }
 
 void Event::SetProperty(const char* name, int64_t value)
 {
-    JsonUtils::ObjectAddMember(m_payload, JsonUtils::ToJson(name), value);
+    JsonUtils::ObjectSetMember(m_payload, name, value);
 }
 
 void Event::SetProperty(const char* name, uint8_t value)
 {
-    JsonUtils::ObjectAddMember(m_payload, JsonUtils::ToJson(name), value);
+    JsonUtils::ObjectSetMember(m_payload, name, value);
 }
 
 void Event::SetProperty(const char* name, uint16_t value)
 {
-    JsonUtils::ObjectAddMember(m_payload, JsonUtils::ToJson(name), value);
+    JsonUtils::ObjectSetMember(m_payload, name, value);
 }
 
 void Event::SetProperty(const char* name, uint32_t value)
 {
-    JsonUtils::ObjectAddMember(m_payload, JsonUtils::ToJson(name), value);
+    JsonUtils::ObjectSetMember(m_payload, name, value);
 }
 
 void Event::SetProperty(const char* name, uint64_t value)
 {
-    JsonUtils::ObjectAddMember(m_payload, JsonUtils::ToJson(name), value);
+    JsonUtils::ObjectSetMember(m_payload, name, value);
 }
 
 void Event::SetProperty(const char* name, double value)
 {
-    JsonUtils::ObjectAddMember(m_payload, JsonUtils::ToJson(name), value);
+    JsonUtils::ObjectSetMember(m_payload, name, value);
 }
 
 } // namespace EventManager

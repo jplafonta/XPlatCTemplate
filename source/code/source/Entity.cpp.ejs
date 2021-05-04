@@ -15,7 +15,7 @@ for(var apiName in categorizedApis) {
 Entity::Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::LoginResult& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, result.entityToken->entityToken } },
-    eventManagerAPI{ m_httpClient, m_authTokens, TaskQueue{} }, // TODO plumb task queue<%- apiInitializationList %>
+    eventManagerAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_playFabId{ result.playFabId },
     m_entityId{ result.entityToken->entity->id },
     m_entityType{ result.entityToken->entity->type }
@@ -25,7 +25,7 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::Login
 Entity::Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::RegisterPlayFabUserResult& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, result.entityToken->entityToken } },
-    eventManagerAPI{ m_httpClient, m_authTokens, TaskQueue{} }, // TODO plumb task queue<%- apiInitializationList %>
+    eventManagerAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_playFabId{ result.playFabId },
     m_entityId{ result.entityToken->entity->id },
     m_entityType{ result.entityToken->entity->type }
@@ -35,7 +35,7 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::Regis
 Entity::Entity(SharedPtr<HttpClient const> httpClient, const ServerModels::ServerLoginResult& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, result.entityToken->entityToken } },
-    eventManagerAPI{ m_httpClient, m_authTokens, TaskQueue{} }, // TODO plumb task queue<%- apiInitializationList %>
+    eventManagerAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_playFabId{ result.playFabId },
     m_entityId{ result.entityToken->entity->id },
     m_entityType{ result.entityToken->entity->type }
@@ -45,7 +45,7 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, const ServerModels::Serve
 Entity::Entity(SharedPtr<HttpClient const> httpClient, const AuthenticationModels::GetEntityTokenResponse& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ "", result.entityToken } },
-    eventManagerAPI{ m_httpClient, m_authTokens, TaskQueue{} }, // TODO plumb task queue<%- apiInitializationList %>
+    eventManagerAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_entityId{ result.entity->id },
     m_entityType{ result.entity->type }
 {

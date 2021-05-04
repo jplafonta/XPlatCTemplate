@@ -128,6 +128,10 @@ void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const
 
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const PlayFabDateTimeDictionaryEntry* associativeArray, uint32_t arrayCount, bool convertToIso8601String = false);
 
+// Adds a member if a member with specificed name doesn't exist or set value if it does
+template <typename T>
+void ObjectSetMember(JsonValue& jsonObject, const char* name, const T& value);
+
 //------------------------------------------------------------------------------
 // Helpers for getting fields from JsonObjects as Cpp types.
 // Unless the output field is optional, rapidjson will assert if the JsonObject is missing the requested
@@ -266,6 +270,20 @@ void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const
         ObjectAddMember(member, ToJson(entry.key), ToJson(entry.value));
     }
     ObjectAddMember(jsonObject, name, std::move(member));
+}
+
+template <typename T>
+void ObjectSetMember(JsonValue& jsonObject, const char* name, const T& value)
+{
+    auto existingMember = jsonObject.FindMember(name);
+    if (existingMember == jsonObject.MemberEnd())
+    {
+        ObjectAddMember(jsonObject, JsonUtils::ToJson(name), value);
+    }
+    else
+    {
+        FromJson(JsonUtils::ToJson(value), existingMember->value);
+    }
 }
 
 template <typename T, typename std::enable_if_t<!std::is_same_v<T, time_t>>*>

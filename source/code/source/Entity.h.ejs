@@ -47,7 +47,7 @@ public:
     AsyncOp<void> GetEntityToken(const PlayFabAuthenticationGetEntityTokenRequest& request, const TaskQueue& queue);
 
     // Non-generated API
-    EventManager::EventManagerAPI const eventManagerAPI;
+    EventManager::EventManagerAPI eventManagerAPI;
 <% for(var apiName in categorizedApis) {
     var api = categorizedApis[apiName];
     if (api.otherCalls.length > 0 && !api.otherCallsRequireSecretKey) { 

@@ -135,6 +135,47 @@ HRESULT PlayFabEventManagerEventSetDoubleProperty(
     return PlayFabEventManagerEventSetProperty(eventHandle, key, value);
 }
 
+HRESULT PlayFabEventManagerCustomizeEventPipelineSettings(
+    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PlayFabEventManagerPipelineType pipeline,
+    _In_ XTaskQueueHandle queue,
+    _In_ size_t* minimumBufferSizeBytes,
+    _In_ size_t* maxItemsInBatch,
+    _In_ uint32_t* maxBatchWaitTimeInSeconds,
+    _In_ size_t* maxBatchesInFlight,
+    _In_ uint32_t* pollDelayInMs
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+
+    EventPipelineSettings settings;
+    if (queue)
+    {
+        settings.queue = TaskQueue{ queue };
+    }
+    if (minimumBufferSizeBytes)
+    {
+        settings.minimumBufferSizeInBytes = *minimumBufferSizeBytes;
+    }
+    if (maxItemsInBatch)
+    {
+        settings.maxItemsInBatch = *maxItemsInBatch;
+    }
+    if (maxBatchWaitTimeInSeconds)
+    {
+        settings.maxBatchWaitTimeInSeconds = *maxBatchWaitTimeInSeconds;
+    }
+    if (maxBatchesInFlight)
+    {
+        settings.maxBatchesInFlight = *maxBatchesInFlight;
+    }
+    if (pollDelayInMs)
+    {
+        settings.pollDelayInMs = *pollDelayInMs;
+    }
+    return entityHandle->entity->eventManagerAPI.CustomizePipelineSettings(pipeline, settings);
+}
+
 HRESULT PlayFabEventManagerWriteEventAsync(
     _In_ PlayFabEntityHandle entityHandle,
     _In_ PlayFabEventManagerEventHandle eventHandle,
@@ -192,6 +233,7 @@ HRESULT PlayFabEventManagerTerminate(
 
         std::lock_guard<std::mutex> lock{ context->mutex };
         context->terminated = true;
+        context->cv.notify_all();
     });
 
     RETURN_IF_FAILED(hr);

@@ -37,10 +37,10 @@ private:
     HRESULT Cancel(TaskQueue&& queue) override;
 
 private:
-    void SendBatch(Vector<EventContext>&& batch, const TaskQueue& queue);
+    void SendBatch(const TaskQueue& queue);
 
     WeakPtr<EventPipeline> m_pipeline;
-    EventPipelineType const m_pipelineType; // redundant with m_pipeline->pipelineType but we need this to write events even if m_pipline is expired
+    PlayFabEventManagerPipelineType const m_pipelineType; // redundant with m_pipeline->pipelineType but we need this to write events even if m_pipline is expired
 
     EventsAPI const m_eventsAPI;
 
@@ -54,39 +54,70 @@ private:
     Clock::time_point m_batchCreationTime;
 };
 
-SharedPtr<EventPipeline> EventPipeline::Make(
-    EventPipelineType type,
-    SharedPtr<HttpClient const> httpClient,
-    SharedPtr<AuthTokens const> tokens,
-    const TaskQueue& queue
-)
+EventPipeline::EventPipeline(PlayFabEventManagerPipelineType type, SharedPtr<HttpClient const> httpClient, SharedPtr<AuthTokens const> tokens) :
+    pipelineType{ type },
+    m_httpClient{ std::move(httpClient) },
+    m_tokens{ std::move(tokens) },
+    m_state{ State::Created }
 {
-    auto pipeline = SharedPtr<EventPipeline>(new (Allocator<EventPipeline>{}.allocate(1)) EventPipeline(type));
-
-    // Create and start WriteEventsProvider. EventPipeline has a non-owning pointer to it - it's lifetime is managed automatically
-    // by the Provider class. The background operation will run until it's explicitly terminated or the pipeline its consuming
-    // events from is destroyed.
-    pipeline->m_writeEventsProvider = MakeUnique<WriteEventsProvider>(pipeline, std::move(httpClient), std::move(tokens), queue).release();
-    Provider::Run(UniquePtr<Provider>{ pipeline->m_writeEventsProvider });
-
-    return pipeline;
 }
 
-EventPipeline::EventPipeline(EventPipelineType type) :
-    pipelineType{ type },
-    m_buffer{ settings.bufferSize }
+HRESULT EventPipeline::CustomizeSettings(EventPipelineSettings settings)
 {
+    switch (m_state)
+    {
+    case State::Created:
+    {
+        m_settings = settings;
+        return S_OK;
+    }
+    case State::Active:
+    case State::Terminated:
+    {
+        // Settings cannot be changed after events have already been added to the pipeline
+        return E_PLAYFAB_EVENTMANAGERINVALIDOPERATION;
+    }
+    default:
+    {
+        assert(false);
+        return E_UNEXPECTED;
+    }
+    }
 }
 
 AsyncOp<String> EventPipeline::IntakeEvent(SharedPtr<Event const> event)
 {
+    switch (m_state)
+    {
+    case State::Created:
+    {
+        // Create the EventBuffer and WriteEventsProvider the first time IntakeEvent is called. This will lock the pipeline settings.
+        m_state.store(State::Active);
+
+        m_buffer = MakeUnique<EventBuffer>(m_settings.minimumBufferSizeInBytes);
+
+        // EventPipeline has a non-owning pointer to the WriteEventsProvider - it's lifetime is managed automatically
+        // by the Provider class. The background operation will run until it's explicitly terminated or the pipeline its consuming
+        // events from is destroyed.
+        m_writeEventsProvider = MakeUnique<WriteEventsProvider>(shared_from_this(), m_httpClient, m_tokens, m_settings.queue).release();
+        Provider::Run(UniquePtr<Provider>{ m_writeEventsProvider });
+     
+        break;
+    }
+    case State::Terminated:
+    {
+        return E_PLAYFAB_EVENTMANAGERINVALIDOPERATION;
+    }
+    default: break;
+    }
+
     auto eventAsyncContext = MakeShared<AsyncOpContext<String>>();
     EventContext eventContext{ std::move(event), eventAsyncContext };
 
-    auto putBufferResult = m_buffer.TryPut(std::move(eventContext));
+    auto putBufferResult = m_buffer->TryPut(std::move(eventContext));
     if (Failed(putBufferResult))
     {
-        return putBufferResult.hr;
+        eventAsyncContext->Complete(putBufferResult.hr);
     }
 
     return eventAsyncContext;
@@ -94,8 +125,28 @@ AsyncOp<String> EventPipeline::IntakeEvent(SharedPtr<Event const> event)
 
 HRESULT EventPipeline::Terminate(TerminationCallback callback)
 {
-    RETURN_IF_FAILED(m_buffer.Terminate());
-    return m_writeEventsProvider->Terminate(std::move(callback));
+    auto state = m_state.exchange(State::Terminated);
+
+    switch (state)
+    {
+    case State::Created:
+    case State::Terminated:
+    {
+        // Trivially done
+        callback();
+        return S_OK;
+    }
+    case State::Active:
+    {
+        RETURN_IF_FAILED(m_buffer->Terminate());
+        return m_writeEventsProvider->Terminate(std::move(callback));
+    }
+    default:
+    {
+        assert(false);
+        return E_UNEXPECTED;
+    }
+    }
 }
 
 WriteEventsProvider::WriteEventsProvider(SharedPtr<EventPipeline> pipeline, SharedPtr<HttpClient const> httpClient, SharedPtr<AuthTokens const> tokens, const TaskQueue& queue) :
@@ -125,7 +176,7 @@ HRESULT WriteEventsProvider::Terminate(TerminationCallback callback)
     if (m_terminated)
     {
         // Calling Terminate twice is not allowed
-        return E_PLAYFAB_EVENTMANAGERTERMINATED;
+        return E_PLAYFAB_EVENTMANAGERINVALIDOPERATION;
     }
 
     m_terminationCallback = std::move(callback);
@@ -135,8 +186,11 @@ HRESULT WriteEventsProvider::Terminate(TerminationCallback callback)
 
 HRESULT WriteEventsProvider::DoWork(TaskQueue&& queue)
 {
-    // XAsync should never call XAsyncOp::DoWork after XAsyncOp::Cancel
-    assert(!m_terminated);
+    if (m_terminated)
+    {
+        // The pipeline was terminated. Awaiting for batches in flight to complete, but no more work to do
+        return E_PENDING;
+    }
 
     SharedPtr<EventPipeline> pipeline = m_pipeline.lock();
     if (!pipeline)
@@ -147,17 +201,17 @@ HRESULT WriteEventsProvider::DoWork(TaskQueue&& queue)
         return E_PENDING;
     }
 
-    m_batch.reserve(pipeline->settings.maxItemsInBatch);
+    m_batch.reserve(pipeline->m_settings.maxItemsInBatch);
 
-    if (m_batchesInFlight >= pipeline->settings.maxBatchesInFlight)
+    if (m_batchesInFlight >= pipeline->m_settings.maxBatchesInFlight)
     {
         // do not take new events from m_buffer if batches currently in flight are at the maximum allowed number
         // and are not sent out (or received an error) yet
-        RETURN_IF_FAILED(Schedule(pipeline->settings.waitTimeInMs));
+        RETURN_IF_FAILED(Schedule(pipeline->m_settings.pollDelayInMs));
         return E_PENDING;
     }
 
-    auto getFromBufferResult = pipeline->m_buffer.TryTake();
+    auto getFromBufferResult = pipeline->m_buffer->TryTake();
     if (Succeeded(getFromBufferResult))
     {
         // Successfully took event from buffer. Add it to current batch
@@ -170,9 +224,9 @@ HRESULT WriteEventsProvider::DoWork(TaskQueue&& queue)
         }
 
         // Send batch if its full
-        if (m_batch.size() >= pipeline->settings.maxItemsInBatch)
+        if (m_batch.size() >= pipeline->m_settings.maxItemsInBatch)
         {
-            SendBatch(std::move(m_batch), queue);
+            SendBatch(queue);
         }
 
         RETURN_IF_FAILED(Schedule(0));
@@ -183,16 +237,16 @@ HRESULT WriteEventsProvider::DoWork(TaskQueue&& queue)
     {
         // check if the batch wait time expired
         std::chrono::seconds batchAge = std::chrono::duration_cast<std::chrono::seconds>(Clock::now() - m_batchCreationTime);
-        if (batchAge.count() >= (int32_t)pipeline->settings.maxBatchWaitTimeInSeconds)
+        if (batchAge.count() >= (int32_t)pipeline->m_settings.maxBatchWaitTimeInSeconds)
         {
             // batch wait time elapsed, send incomplete batch
-            SendBatch(std::move(m_batch), queue);
-            RETURN_IF_FAILED(Schedule(0));
+            SendBatch(queue);
+            RETURN_IF_FAILED(Schedule(pipeline->m_settings.pollDelayInMs));
             return E_PENDING;
         }
     }
 
-    RETURN_IF_FAILED(Schedule(pipeline->settings.waitTimeInMs));
+    RETURN_IF_FAILED(Schedule(pipeline->m_settings.pollDelayInMs));
     return E_PENDING;
 }
 
@@ -207,7 +261,7 @@ HRESULT WriteEventsProvider::Cancel(TaskQueue&& queue)
         // during termination
         for(;;)
         {
-            auto getFromBufferResult = pipeline->m_buffer.TryTake();
+            auto getFromBufferResult = pipeline->m_buffer->TryTake();
             if (Succeeded(getFromBufferResult))
             {
                 m_batch.emplace_back(getFromBufferResult.ExtractPayload());
@@ -221,7 +275,7 @@ HRESULT WriteEventsProvider::Cancel(TaskQueue&& queue)
 
     if (!m_batch.empty())
     {
-        SendBatch(std::move(m_batch), queue);
+        SendBatch(queue);
     }
     else if (m_batchesInFlight == 0)
     {
@@ -231,11 +285,15 @@ HRESULT WriteEventsProvider::Cancel(TaskQueue&& queue)
     return S_OK;
 }
 
-void WriteEventsProvider::SendBatch(Vector<EventContext>&& batch, const TaskQueue& queue)
+void WriteEventsProvider::SendBatch(const TaskQueue& queue)
 {
+    auto batch{ std::move(m_batch) };
+    m_batch.clear();
+
     // create a WriteEvents API request to send the batch
     PlayFabEventsWriteEventsRequest request{};
-    Vector<const PlayFabEventsEventContents*> events(batch.size());
+    Vector<const PlayFabEventsEventContents*> events;
+    events.reserve(batch.size());
 
     for (const auto& eventContext : batch)
     {
@@ -249,13 +307,13 @@ void WriteEventsProvider::SendBatch(Vector<EventContext>&& batch, const TaskQueu
 
     switch (m_pipelineType)
     {
-    case EventPipelineType::PlayStream:
+    case PlayFabEventManagerPipelineType::PlayStream:
     {
         // call Events API to send the batch
         writeOperation = m_eventsAPI.WriteEvents(request, queue);
         break;
     }
-    case EventPipelineType::Telemetry:
+    case PlayFabEventManagerPipelineType::Telemetry:
     {
         // call Events API to send the batch, bypassing Playstream
         writeOperation = m_eventsAPI.WriteTelemetryEvents(request, queue);
