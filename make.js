@@ -41,7 +41,7 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         enumtypes: getEnumTypes(api.datatypes),
         sortedClasses: getSortedClasses(api),
         dictionaryEntryTypes: getDictionaryEntryTypes(api.datatypes),
-        getBaseType: getBaseType,
+        getBaseTypes: getBaseTypes,
         getPropertyDefinition: getPropertyDefinition,
         getPropertyFromJson: getPropertyFromJson,
         addPropertyToJson: addPropertyToJson,
@@ -328,11 +328,19 @@ function isSerializable(datatype) {
     return true;
 }
 
-function getBaseType(datatype) {
+function getBaseTypes(datatype) {
+    var baseType = "";
     if (isSerializable(datatype) || isFixedSize(datatype)) {
-        return "SerializableModel";
+        baseType += "public SerializableModel";
+    } else {
+        baseType += "public BaseModel";
     }
-    return "BaseModel";
+
+    if (datatype.className.toLowerCase().endsWith("response") || datatype.className.toLowerCase().endsWith("result")) {
+        baseType += ", public ApiResult";
+    }
+
+    return baseType;
 }
 
 function getDictionaryEntryTypeFromValueType(valueType) {
@@ -384,17 +392,17 @@ function getInternalPropertyType(property, prefix) {
     if (!(property.actualtype === "object")) {
         if (property.collection === "map") {
             if (property.isclass) {
-                return "AssociativeArray<" + getDictionaryEntryTypeFromValueType(prefix + type) + ", " + type + ">";
+                return "AssociativeArrayModel<" + getDictionaryEntryTypeFromValueType(prefix + type) + ", " + type + ">";
             } else if (type === "String") {
-                return "AssociativeArray<PlayFabStringDictionaryEntry, String>";
+                return "AssociativeArrayModel<PlayFabStringDictionaryEntry, String>";
             } else {
-                return "AssociativeArray<" + getDictionaryEntryTypeFromValueType(type) + ", void>";
+                return "AssociativeArrayModel<" + getDictionaryEntryTypeFromValueType(type) + ", void>";
             }
         } else if (property.collection === "array") {
             if (property.isclass) {
-                return "PointerArray<" + prefix + type + ", " + type + ">";
+                return "PointerArrayModel<" + prefix + type + ", " + type + ">";
             } else if (type === "String") {
-                return "PointerArray<const char, String>";
+                return "PointerArrayModel<const char, String>";
             } else {
                 return "Vector<" + type + ">";
             }

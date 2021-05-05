@@ -1,58 +1,33 @@
 #pragma once
 
-#if defined (PLAYFAB_PLATFORM_WINDOWS) || defined (PLAYFAB_PLATFORM_XBOX)
-
-#include "QoS.h"
-#include "QoSResult.h"
-#include "QoSSocket.h"
-#include <Events/EventsDataModels.h>
-
-#include <chrono>
-#include <future>
-#include <unordered_map>
+#include "QoSDataModels.h"
+#include "Multiplayer/MultiplayerApi.h"
+#include "Events/EventsApi.h"
 
 namespace PlayFab
 {
-    class EventsAPI;
-    class MultiplayerAPI;
 
-    namespace QoS
-    {
-        class PlayFabQoSApi
-        {
-        public:
-            PlayFabQoSApi();
+namespace QoS
+{
 
-            // Runs a QoS operation asynchronously. The operation pings a set of regions and returns a result with average response times.
-            std::future<QoSResult> GetQoSResultAsync(unsigned int numThreads, unsigned int timeoutMs = DEFAULT_TIMEOUT_MS);
+class QoSAPI
+{
+public:
+    QoSAPI(SharedPtr<HttpClient const> httpClient, SharedPtr<AuthTokens const> tokens);
 
-            // Runs a QoS operation synchronously. The operation pings a set of regions and returns a result with average response times.
-            QoSResult GetQoSResult(unsigned int numThreads, unsigned int timeoutMs = DEFAULT_TIMEOUT_MS);
+    AsyncOp<Measurements> GetMeasurements(uint32_t pingIterations, uint32_t timeoutMs, const TaskQueue& queue) const;
 
-        private:
-            SharedPtr<EventsAPI> eventsApi;
-            SharedPtr<MultiplayerAPI> multiplayerApi;
+private:
+    EventsAPI const m_eventsApi;
+    MultiplayerAPI const m_multiplayerApi;
 
-            Vector<String> GetPingList(unsigned int serverCount);
-            void InitializeAccumulatedPingResults(UnorderedMap<String, PingResult>& accumulatedPingResults);
-            int SetupSockets(Vector<SharedPtr<QoSSocket>>& sockets, unsigned int numThreads, unsigned int timeoutMs);
-            void InitializeAsyncPingResults(Vector<std::future<PingResult>>& asyncPingResults);
-            void PingServers(const Vector<String>& pings, Vector<std::future<PingResult>>& asyncPingResults, const Vector<SharedPtr<QoSSocket>>& sockets, UnorderedMap<String, PingResult>& accumulatedPingResults, unsigned int timeoutMs);
-            void UpdateAccumulatedPingResult(const PingResult& result, const String& region, UnorderedMap<String, PingResult>& accumulatedPingResults, unsigned int timeoutMs);
-            QoSResult GetResult(unsigned int numThreads, unsigned int timeoutMs);
+    AsyncOp<void> GetServers(const TaskQueue& queue) const;
+    AsyncOp<Measurements> PingServers(uint32_t pingIterations, uint32_t timeoutMs, const TaskQueue& queue) const;
 
-            void PingThunderheadForServerList();
-            void SendResultsToPlayFab(const QoSResult& result);
+private:
+    // Cached QoS servers
+    mutable Vector<Server> m_servers;
+};
 
-            static PingResult GetQoSResultForRegion(SharedPtr<QoSSocket> socket);
-
-        private:
-            const int numOfPingIterations = NUM_OF_PING_ITERATIONS; // Number of pings to do to each server, to calculate an average latency.
-            const std::chrono::milliseconds threadWaitTimespan = std::chrono::milliseconds(THREAD_WAIT_MS);
-
-            UnorderedMap<String, String> regionMap;
-            bool listQosServersCompleted;
-        };
-    }
-}
-#endif // defined (PLAYFAB_PLATFORM_WINDOWS) || defined (PLAYFAB_PLATFORM_XBOX)
+} // namespace QoS
+} // namespace PlayFab

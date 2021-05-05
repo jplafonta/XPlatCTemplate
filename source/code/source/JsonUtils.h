@@ -9,8 +9,8 @@ namespace PlayFab
 // forward declarations
 class BaseModel;
 class JsonObject;
-template<typename PointerT, typename ObjectT> class PointerArray;
-template <typename EntryT, typename ValueT> class AssociativeArray;
+template<typename PointerT, typename ObjectT> class PointerArrayModel;
+template <typename EntryT, typename ValueT> class AssociativeArrayModel;
 
 namespace JsonUtils
 {
@@ -176,10 +176,10 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<T>& o
 void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<time_t>& output, time_t*& outputPtr, uint32_t& outputCount, bool convertFromIso8601String = false);
 
 template <typename ObjectT, typename PointerT>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, PointerArray<PointerT, ObjectT>& output, PointerT**& outputPtr, uint32_t& outputCount);
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, PointerArrayModel<PointerT, ObjectT>& output, PointerT**& outputPtr, uint32_t& outputCount);
 
 template <typename EntryT, typename ValueT>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, AssociativeArray<EntryT, ValueT>& output, EntryT*& outputPtr, uint32_t& outputCount);
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, AssociativeArrayModel<EntryT, ValueT>& output, EntryT*& outputPtr, uint32_t& outputCount);
 
 //------------------------------------------------------------------------------
 // Template implementations
@@ -349,7 +349,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<T>& o
 }
 
 template <typename T, typename PointerT>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, PointerArray<PointerT, T>& output, PointerT**& outputPtr, uint32_t& outputCount)
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, PointerArrayModel<PointerT, T>& output, PointerT**& outputPtr, uint32_t& outputCount)
 {
     output.Clear();
     if (jsonObject.IsObject())
@@ -366,7 +366,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, PointerArray
 }
 
 template <typename EntryT, typename ValueT>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, AssociativeArray<EntryT, ValueT>& output, EntryT*& outputPtr, uint32_t& outputCount)
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, AssociativeArrayModel<EntryT, ValueT>& output, EntryT*& outputPtr, uint32_t& outputCount)
 {
     output.Clear();
     if (jsonObject.IsObject())

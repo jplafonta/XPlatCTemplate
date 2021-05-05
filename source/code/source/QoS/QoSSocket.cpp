@@ -1,93 +1,62 @@
 #include "stdafx.h"
-
-#if defined (PLAYFAB_PLATFORM_WINDOWS) || defined (PLAYFAB_PLATFORM_XBOX)
-
-#include <chrono>
-#include <thread>
-#include <iostream>
-#include <cstdint>
-
 #include "QoS.h"
 #include "QoSSocket.h"
-
-using namespace std;
+#include "TaskQueue.h"
 
 namespace PlayFab
 {
-    namespace QoS
+namespace QoS
+{
+
+// Clear the buffer with this value before receiving the reply.
+constexpr char BUFFER_VALUE = '1';
+
+// Port the QoS server listen on
+constexpr int PORT = 3075;
+
+Result<SharedPtr<QoSSocket>> QoSSocket::MakeAndConfigure(int timeoutMs)
+{
+    auto socketResult = Socket::Make();
+    if (Failed(socketResult))
     {
-        QoSSocket::QoSSocket()
-        {
-            xPlatSocket = MakeUnique<XPlatSocket>();
-        }
-
-        int QoSSocket::ConfigureSocket(int timeoutMs)
-        {
-            int errorCode = xPlatSocket->InitializeSocket();
-
-            if (errorCode == 0)
-            {
-                // Set the port
-                errorCode = xPlatSocket->SetPort(PORT);
-            }
-
-            if (errorCode == 0)
-            {
-                // Set the timeout
-                errorCode = xPlatSocket->SetTimeout(timeoutMs);
-            }
-
-            // If the errorCode is not 0, return the last socket error.
-            return (errorCode == 0) ? 0 : xPlatSocket->GetLastErrorCode();
-        }
-
-        int QoSSocket::SetAddress(const char * socketAddr)
-        {
-            // Set the socket to ping to the input address
-            return xPlatSocket->SetAddress(socketAddr);
-        }
-
-        PingResult QoSSocket::GetQoSServerLatencyMs()
-        {
-            // Clear the buffer
-            memset(buf, BUFFER_VALUE, BUFLEN);
-
-            PingResult result(INT32_MAX, 0, 0);
-
-            // Snap the start time
-            std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
-            // Send the message
-            if (xPlatSocket->SendMessage(message) == SOCKET_ERROR)
-            {
-                result.errorCode = xPlatSocket->GetLastErrorCode();
-                LOG_QOS("sendto() failed with error code : " << result.errorCode << endl);
-
-                return result;
-            }
-
-            // Wait for the reply.
-            if (xPlatSocket->ReceiveReply(buf, BUFLEN) == SOCKET_ERROR)
-            {
-                result.errorCode = xPlatSocket->GetLastErrorCode();
-                LOG_QOS("recvfrom() failed with error code : " << result.errorCode << endl);
-
-                return result;
-            }
-
-            // Snap the end time
-            chrono::steady_clock::time_point end = chrono::steady_clock::now();
-
-            // TODO : Can add error checking for the reply and return based on that
-            //	The first 2 bytes should be set to 0s.
-
-            // Calculate the total time
-            chrono::milliseconds totalMilliseconds = chrono::duration_cast<chrono::milliseconds>(end - begin);
-
-            result.latencyMs = static_cast<int>(totalMilliseconds.count());
-
-            return result;
-        }
+        return socketResult.hr;
     }
+
+    auto socket = socketResult.ExtractPayload();
+
+    RETURN_IF_FAILED(socket->SetPort(PORT));
+    RETURN_IF_FAILED(socket->SetTimeout(timeoutMs));
+
+    return SharedPtr<QoSSocket>{ new (Allocator<QoSSocket>{}.allocate(1)) QoSSocket{ std::move(socket) } };
 }
-#endif // defined (PLAYFAB_PLATFORM_WINDOWS) || defined (PLAYFAB_PLATFORM_XBOX)
+
+QoSSocket::QoSSocket(SharedPtr<Socket> socket) : m_socket{ std::move(socket) }
+{
+}
+
+Result<uint32_t> QoSSocket::PingServer(const char* address)
+{
+    RETURN_IF_FAILED(m_socket->SetAddress(address));
+
+    // Clear the buffer
+    memset(buf, BUFFER_VALUE, BUFLEN);
+
+    // Snap the start time
+    auto begin = Clock::now();
+
+    // Send the message & await the reply
+    RETURN_IF_FAILED(m_socket->SendMessage(message));
+    RETURN_IF_FAILED(m_socket->ReceiveReply(buf, BUFLEN));
+
+    // Snap the end time
+    auto end = Clock::now();
+
+    // TODO : Can add error checking for the reply and return based on that
+    // The first 2 bytes should be set to 0s.
+
+    // Calculate the total time
+    return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+}
+
+} // namespace QoS
+} // namespace PlayFab
