@@ -19,12 +19,9 @@ JsonValue ToJson(const char* string)
 
 JsonValue ToJson(const PlayFabJsonObject& jsonObject)
 {
-    // TODO Seems like there is an extra copy here. Is there is a better way to do this?
     JsonDocument document{ &allocator };
     document.Parse(jsonObject.stringValue);
-    JsonValue value;
-    value.CopyFrom(document, allocator);
-    return value;
+    return JsonValue{ document, allocator };
 }
 
 JsonValue ToJson(time_t value, bool convertToIso8601String)
