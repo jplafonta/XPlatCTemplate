@@ -108,7 +108,7 @@ AsyncOp<Measurements> QoSAPI::PingServers(uint32_t pingIterations, uint32_t time
 {
     if (m_servers.empty())
     {
-        // This means we've successfully queried the QoS servers but there were't any. Return an empty set of measurements
+        // This means we've successfully queried the QoS servers but there weren't any. Return an empty set of measurements
         return Result<Measurements>{ Measurements{} };
     }
 
