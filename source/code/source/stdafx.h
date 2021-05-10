@@ -42,6 +42,7 @@
 #include "Error.h"
 #include "PlayFabPlatformMacros.h"
 #include "PlatformUtils.h"
+#include "Trace.h"
 
 #define UNREFERENCED_PARAMETER(P) (P)
 
