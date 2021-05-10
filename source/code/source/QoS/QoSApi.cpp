@@ -105,9 +105,8 @@ AsyncOp<Measurements> QoSAPI::PingServers(uint32_t pingIterations, uint32_t time
 {
     if (m_servers.empty())
     {
-        // TODO should we define a new HRESULT for this case? This only happens if the GetServers call succeeds
-        // but no servers are returned. Not sure this is even possible (404 seems to be returned if no servers are configured)
-        return E_FAIL;
+        // This means we've successfully queried the QoS servers but there were't any. Return an empty set of measurements
+        return Result<Measurements>{ Measurements{} };
     }
 
     struct PingServersContext

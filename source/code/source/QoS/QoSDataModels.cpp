@@ -45,6 +45,10 @@ void RegionResult::AddPingResult(Result<uint32_t> pingResult)
     }
 }
 
+Measurements::Measurements() : PlayFabQoSMeasurements {}
+{
+}
+
 Measurements::Measurements(const UnorderedMap<String, RegionResult>& regionResultsMap) :
     PlayFabQoSMeasurements{},
     m_regionResults{ SortRegionResults(regionResultsMap) }

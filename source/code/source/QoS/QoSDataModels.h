@@ -31,6 +31,7 @@ private:
 
 struct Measurements : public PlayFabQoSMeasurements, public ApiResult
 {
+    Measurements();
     Measurements(const UnorderedMap<String, RegionResult>& regionResultsMap);
     Measurements(const Measurements& src);
     Measurements(Measurements&& src) = default;
