@@ -48,7 +48,7 @@ HRESULT PlayFab<%- api.name %><%- call.name %>Async(
         // No Get Result method needed
     } else if (isFixedSize(api.datatypes[call.result])) { %>
 /// <summary>
-/// Gets the result of a successful <%- call.name %> call.
+/// Gets the result of a successful PlayFab<%- api.name %><%- call.name %>Async call.
 /// </summary>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <param name="result">PlayFab<%- api.name %><%- call.result %> object that will be populated with the result.</param>
@@ -70,7 +70,7 @@ HRESULT PlayFab<%- api.name %><%- call.name %>GetResultSize(
 ) noexcept;
 
 /// <summary>
-/// Gets the result of a successful <%- call.name %> call.
+/// Gets the result of a successful PlayFab<%- api.name %><%- call.name %>Async call.
 /// </summary>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <param name="bufferSize">The size of the buffer for the result object.</param>
@@ -90,7 +90,7 @@ HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
 ) noexcept;
 <%  } else { %>
 /// <summary>
-/// Gets the result of a successful <%- call.name %> call.
+/// Gets the result of a successful PlayFab<%- api.name %><%- call.name %>Async call.
 /// </summary>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <param name="resultHandle">Opaque handle to the result object.</param>

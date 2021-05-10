@@ -4,7 +4,8 @@
     "Header Files\\playfab",
     "Source Files",
     "Source Files\\Api",
-    "Source Files\\Events\\Manager"
+    "Source Files\\Events\\Manager",
+    "Source Files\\QoS"
   ],
   "includeFiles": {
     "\\include\\playfab\\PlayFab.h": "Header Files\\playfab",
@@ -12,7 +13,8 @@
     "\\include\\playfab\\PlayFabEntity.h": "Header Files\\playfab",
     "\\include\\playfab\\PlayFabErrors.h": "Header Files\\playfab",
     "\\include\\playfab\\PlayFabEventManagerApi.h": "Header Files\\playfab",
-    "\\include\\playfab\\PlayFabGlobal.h": "Header Files\\playfab"
+    "\\include\\playfab\\PlayFabGlobal.h": "Header Files\\playfab",
+    "\\include\\playfab\\PlayFabQoSApi.h": "Header Files\\playfab"
   },
   "sourceFiles": {
     "source\\ApiAsyncProviders.h": "Source Files",
@@ -39,6 +41,8 @@
     "source\\Result.h": "Source Files",
     "source\\ResultMacros.h": "Source Files",
     "source\\SdkVersion.h": "Source Files",
+    "source\\Socket.cpp": "Source Files",
+    "source\\Socket.h": "Source Files",
     "source\\SpinLock.cpp": "Source Files",
     "source\\SpinLock.h": "Source Files",
     "source\\StdOptional.h": "Source Files",
@@ -58,6 +62,13 @@
     "source\\Events\\Manager\\EventManagerApi.h": "Source Files\\Events\\Manager",
     "source\\Events\\Manager\\EventPipeline.cpp": "Source Files\\Events\\Manager",
     "source\\Events\\Manager\\EventPipeline.h": "Source Files\\Events\\Manager",
-    "source\\Events\\Manager\\PlayFabEventManagerApi.cpp": "Source Files\\Events\\Manager"
+    "source\\Events\\Manager\\PlayFabEventManagerApi.cpp": "Source Files\\Events\\Manager",
+    "source\\QoS\\PlayFabQoSApi.cpp": "Source Files\\QoS",
+    "source\\QoS\\QoSApi.cpp": "Source Files\\QoS",
+    "source\\QoS\\QoSApi.h": "Source Files\\QoS",
+    "source\\QoS\\QoSDataModels.cpp": "Source Files\\QoS",
+    "source\\QoS\\QoSDataModels.h": "Source Files\\QoS",
+    "source\\QoS\\QoSSocket.cpp": "Source Files\\QoS",
+    "source\\QoS\\QoSSocket.h": "Source Files\\QoS"
   }
 }

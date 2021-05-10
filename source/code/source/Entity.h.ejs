@@ -3,7 +3,8 @@
 #include <Client/ClientDataModels.h>
 #include <Server/ServerDataModels.h>
 #include <Authentication/AuthenticationDataModels.h>
-#include <Events/Manager/EventManagerApi.h><%
+#include <Events/Manager/EventManagerApi.h>
+#include <QoS/QoSApi.h><%
 for(var apiName in categorizedApis) {
     var api = categorizedApis[apiName];
     if (api.otherCalls.length > 0 && !api.otherCallsRequireSecretKey) { %>
@@ -46,8 +47,9 @@ public:
     // EntityToken if the call succeeds.
     AsyncOp<void> GetEntityToken(const PlayFabAuthenticationGetEntityTokenRequest& request, const TaskQueue& queue);
 
-    // Non-generated API
+    // Non-generated APIs
     EventManager::EventManagerAPI eventManagerAPI;
+    QoS::QoSAPI const QoSAPI;
 <% for(var apiName in categorizedApis) {
     var api = categorizedApis[apiName];
     if (api.otherCalls.length > 0 && !api.otherCallsRequireSecretKey) { 
@@ -57,12 +59,7 @@ public:
 } %>
 
 private:
-    // DisableAdvertising is provided for completeness, but changing it is not suggested
-    // Disabling this may prevent your advertising-related PlayFab marketplace partners from working correctly
-    bool m_disableAdvertising; 
     String const m_playFabId; // Master_Player_Entity Id for the Player that logged in
-    String m_advertisingIdType; // Set this to the appropriate AD_TYPE_X constant below
-    String m_advertisingIdValue; // Set this to corresponding device value
     String m_entityId; // Entity Id for the active entity
     String m_entityType; // Entity Type for the active entity
 };

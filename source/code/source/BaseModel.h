@@ -7,8 +7,30 @@ namespace PlayFab
 {
 
 /// <summary>
+/// Base class for any object returned from a public API via a PlayFabResult
+/// </summary>
+struct ApiResult
+{
+    virtual ~ApiResult() = default;
+};
+
+}
+
+struct PlayFabResult
+{
+    PlayFabResult(PlayFab::SharedPtr<PlayFab::ApiResult> result_) : result{ result_ } {}
+    PlayFabResult(const PlayFabResult&) = default;
+    ~PlayFabResult() = default;
+
+    PlayFab::SharedPtr<PlayFab::ApiResult> result;
+};
+
+namespace PlayFab
+{
+
+/// <summary>
 /// Base class for all PlayFab Models
-/// Provides interface for converting to/from json
+/// Provides interface for converting service Models to/from json
 /// </summary>
 class BaseModel
 {
@@ -17,20 +39,6 @@ public:
     virtual void FromJson(const JsonValue& input) = 0;
     virtual JsonValue ToJson() const = 0;
 };
-
-}
-
-struct PlayFabResult
-{
-    PlayFabResult(PlayFab::SharedPtr<PlayFab::BaseModel> model_) : model{ model_ } {}
-    PlayFabResult(const PlayFabResult&) = default;
-    ~PlayFabResult() = default;
-
-    PlayFab::SharedPtr<PlayFab::BaseModel> model;
-};
-
-namespace PlayFab
-{
 
 /// <summary>
 /// A model that can be (trivially) serialized into a continuous memory buffer.
@@ -63,20 +71,20 @@ private:
 };
 
 /// <summary>
-/// Helper class for managing C-style arrays of pointers to PlayFab models.
-/// By design, the only way to populate array is using FromJson (no insert/remove methods)
+/// Helper class for managing C-style arrays of pointers to internal objects.
+/// By design, the only ways to modify contents after construction is the assignment operator (no way to insert/remove)
 /// </summary>
-template<typename PointerT, typename ObjectT> class PointerArray : public BaseModel
+template<typename PointerT, typename ObjectT> class PointerArray
 {
 public:
     using DataPtr = PointerT**;
     using ConstDataPtr = const PointerT**;
 
     PointerArray() = default;
+    PointerArray(Vector<ObjectT>&& objects);
     PointerArray(const PointerArray& src);
     PointerArray(PointerArray&& src) = default;
-    PointerArray& operator=(PointerArray src);
-    PointerArray& operator=(PointerArray&& src) = default;
+    PointerArray& operator=(const PointerArray& src) = delete;
     virtual ~PointerArray() = default;
 
     bool Empty() const;
@@ -85,31 +93,45 @@ public:
     size_t Size() const;
     void Clear();
 
-    void FromJson(const JsonValue& input) override;
-    JsonValue ToJson() const override;
-
-private:
+protected:
     Vector<PointerT*> m_pointers;
     Vector<ObjectT> m_objects;
 };
 
 /// <summary>
-/// Helper class for managing arrays of key value pairs. Key type must always be a string.
-/// Currently only have support for populating these arrays using PointerArray::FromJson (no other way to insert)
+/// PointerArray that supports conversion to/from Json.
+/// </summary>
+template<typename PointerT, typename ObjectT> class PointerArrayModel : public PointerArray<PointerT, ObjectT>, public BaseModel
+{
+public:
+    PointerArrayModel() = default;
+    PointerArrayModel(const PointerArrayModel& src) = default;
+    PointerArrayModel(PointerArrayModel&& src) = default;
+    PointerArrayModel& operator=(const PointerArrayModel& src) = default;
+    PointerArrayModel& operator=(PointerArrayModel&& src) = default;
+    virtual ~PointerArrayModel() = default;
+
+    void FromJson(const JsonValue& input) override;
+    JsonValue ToJson() const override;
+};
+
+/// <summary>
+/// Helper class for managing arrays of key value pairs. Key type must always be a string. Supports conversion to/from Json.
+/// By design, the only ways to modify contents after construction are FromJson & assignment operator (no way to insert/remove).
 /// </summary>
 template <typename EntryT, typename ValueT>
-class AssociativeArray : public BaseModel
+class AssociativeArrayModel : public BaseModel
 {
 public:
     using DataPtr = EntryT*;
     using ConstDataPtr = const EntryT*;
 
-    AssociativeArray() = default;
-    AssociativeArray(const AssociativeArray& src);
-    AssociativeArray(AssociativeArray&& src) = default;
-    AssociativeArray& operator=(AssociativeArray src);
-    AssociativeArray& operator=(AssociativeArray&& src) = default;
-    virtual ~AssociativeArray() = default;
+    AssociativeArrayModel() = default;
+    AssociativeArrayModel(const AssociativeArrayModel& src);
+    AssociativeArrayModel(AssociativeArrayModel&& src) = default;
+    AssociativeArrayModel& operator=(AssociativeArrayModel src);
+    AssociativeArrayModel& operator=(AssociativeArrayModel&& src) = default;
+    virtual ~AssociativeArrayModel() = default;
 
     bool Empty() const;
     DataPtr Data();
@@ -127,18 +149,18 @@ private:
 
 // Specialization for EntryT where EntryT::value doesn't require storage outside the Entry struct
 template<typename EntryT>
-class AssociativeArray<EntryT, void> : public BaseModel
+class AssociativeArrayModel<EntryT, void> : public BaseModel
 {
 public:
     using DataPtr = EntryT*;
     using ConstDataPtr = const EntryT*;
 
-    AssociativeArray() = default;
-    AssociativeArray(const AssociativeArray& src);
-    AssociativeArray(AssociativeArray&& src) = default;
-    AssociativeArray& operator=(AssociativeArray src);
-    AssociativeArray& operator=(AssociativeArray&& src) = default;
-    virtual ~AssociativeArray() = default;
+    AssociativeArrayModel() = default;
+    AssociativeArrayModel(const AssociativeArrayModel& src);
+    AssociativeArrayModel(AssociativeArrayModel&& src) = default;
+    AssociativeArrayModel& operator=(AssociativeArrayModel src);
+    AssociativeArrayModel& operator=(AssociativeArrayModel&& src) = default;
+    virtual ~AssociativeArrayModel() = default;
 
     bool Empty() const;
     EntryT* Data();
@@ -170,11 +192,14 @@ PointerArray<PointerT, ObjectT>::PointerArray(const PointerArray& src) :
 }
 
 template<typename PointerT, typename ObjectT>
-PointerArray<PointerT, ObjectT>& PointerArray<PointerT, ObjectT>::operator=(PointerArray src)
+PointerArray<PointerT, ObjectT>::PointerArray(Vector<ObjectT>&& objects) :
+    m_objects(std::move(objects))
 {
-    m_pointers = std::move(src.m_pointers);
-    m_objects = std::move(src.m_objects);
-    return *this;
+    m_pointers.reserve(m_objects.size());
+    for (const auto& o : m_objects)
+    {
+        m_pointers.push_back((PointerT*)&o);
+    }
 }
 
 template<typename PointerT, typename ObjectT>
@@ -210,31 +235,31 @@ void PointerArray<PointerT, ObjectT>::Clear()
 }
 
 template<typename PointerT, typename ObjectT>
-void PointerArray<PointerT, ObjectT>::FromJson(const JsonValue& input)
+void PointerArrayModel<PointerT, ObjectT>::FromJson(const JsonValue& input)
 {
-    Clear();
+    this->Clear();
     if (input.IsArray())
     {
         auto jsonArray{ input.GetArray() };
 
         // Reserve vector storage to ensure no reallocation happens while inserting
-        m_objects.reserve(jsonArray.Size());
-        m_pointers.reserve(jsonArray.Size());
+        this->m_objects.reserve(jsonArray.Size());
+        this->m_pointers.reserve(jsonArray.Size());
 
         for (auto& value : jsonArray)
         {
-            m_objects.emplace_back();
-            JsonUtils::FromJson(value, m_objects.back());
-            m_pointers.emplace_back((PointerT*)(&m_objects.back()));
+            this->m_objects.emplace_back();
+            JsonUtils::FromJson(value, this->m_objects.back());
+            this->m_pointers.emplace_back((PointerT*)(&this->m_objects.back()));
         }
     }
 }
 
 template<typename PointerT, typename ObjectT>
-JsonValue PointerArray<PointerT, ObjectT>::ToJson() const
+JsonValue PointerArrayModel<PointerT, ObjectT>::ToJson() const
 {
     JsonValue output{ rapidjson::kArrayType };
-    for (const auto& pointer : m_pointers)
+    for (const auto& pointer : this->m_pointers)
     {
         output.PushBack(JsonUtils::ToJson(pointer), JsonUtils::allocator);
     }
@@ -242,7 +267,7 @@ JsonValue PointerArray<PointerT, ObjectT>::ToJson() const
 }
 
 template <typename EntryT, typename ValueT>
-AssociativeArray<EntryT, ValueT>::AssociativeArray(const AssociativeArray& src) :
+AssociativeArrayModel<EntryT, ValueT>::AssociativeArrayModel(const AssociativeArrayModel& src) :
     m_map{ src.m_map }
 {
     m_entries.reserve(m_map.size());
@@ -253,7 +278,7 @@ AssociativeArray<EntryT, ValueT>::AssociativeArray(const AssociativeArray& src) 
 }
 
 template <typename EntryT, typename ValueT>
-AssociativeArray<EntryT, ValueT>& AssociativeArray<EntryT, ValueT>::operator=(AssociativeArray src)
+AssociativeArrayModel<EntryT, ValueT>& AssociativeArrayModel<EntryT, ValueT>::operator=(AssociativeArrayModel src)
 {
     m_entries = std::move(src.m_entries);
     m_map = std::move(src.m_map);
@@ -261,38 +286,38 @@ AssociativeArray<EntryT, ValueT>& AssociativeArray<EntryT, ValueT>::operator=(As
 }
 
 template <typename EntryT, typename ValueT>
-bool AssociativeArray<EntryT, ValueT>::Empty() const
+bool AssociativeArrayModel<EntryT, ValueT>::Empty() const
 {
     return m_entries.empty();
 }
 
 template <typename EntryT, typename ValueT>
-typename AssociativeArray<EntryT, ValueT>::DataPtr AssociativeArray<EntryT, ValueT>::Data()
+typename AssociativeArrayModel<EntryT, ValueT>::DataPtr AssociativeArrayModel<EntryT, ValueT>::Data()
 {
     return m_entries.data();
 }
 
 template <typename EntryT, typename ValueT>
-typename AssociativeArray<EntryT, ValueT>::ConstDataPtr AssociativeArray<EntryT, ValueT>::Data() const
+typename AssociativeArrayModel<EntryT, ValueT>::ConstDataPtr AssociativeArrayModel<EntryT, ValueT>::Data() const
 {
     return m_entries.data();
 }
 
 template <typename EntryT, typename ValueT>
-size_t AssociativeArray<EntryT, ValueT>::Size() const
+size_t AssociativeArrayModel<EntryT, ValueT>::Size() const
 {
     return m_entries.size();
 }
 
 template <typename EntryT, typename ValueT>
-void AssociativeArray<EntryT, ValueT>::Clear()
+void AssociativeArrayModel<EntryT, ValueT>::Clear()
 {
     m_entries.clear();
     m_map.clear();
 }
 
 template <typename EntryT, typename ValueT>
-void AssociativeArray<EntryT, ValueT>::FromJson(const JsonValue& input)
+void AssociativeArrayModel<EntryT, ValueT>::FromJson(const JsonValue& input)
 {
     Clear();
     if (input.IsObject())
@@ -309,7 +334,7 @@ void AssociativeArray<EntryT, ValueT>::FromJson(const JsonValue& input)
 }
 
 template <typename EntryT, typename ValueT>
-JsonValue AssociativeArray<EntryT, ValueT>::ToJson() const
+JsonValue AssociativeArrayModel<EntryT, ValueT>::ToJson() const
 {
     JsonValue output{ rapidjson::kObjectType };
     for (auto& entry : m_entries)
@@ -320,7 +345,7 @@ JsonValue AssociativeArray<EntryT, ValueT>::ToJson() const
 }
 
 template <typename EntryT>
-AssociativeArray<EntryT, void>::AssociativeArray(const AssociativeArray& src) :
+AssociativeArrayModel<EntryT, void>::AssociativeArrayModel(const AssociativeArrayModel& src) :
     m_entries{ src.m_entries },
     m_keys{ src.m_keys }
 {
@@ -331,7 +356,7 @@ AssociativeArray<EntryT, void>::AssociativeArray(const AssociativeArray& src) :
 }
 
 template <typename EntryT>
-AssociativeArray<EntryT, void>& AssociativeArray<EntryT, void>::operator=(AssociativeArray src)
+AssociativeArrayModel<EntryT, void>& AssociativeArrayModel<EntryT, void>::operator=(AssociativeArrayModel src)
 {
     m_entries = std::move(src.m_entries);
     m_keys = std::move(src.m_keys);
@@ -339,38 +364,38 @@ AssociativeArray<EntryT, void>& AssociativeArray<EntryT, void>::operator=(Associ
 }
 
 template <typename EntryT>
-bool AssociativeArray<EntryT, void>::Empty() const
+bool AssociativeArrayModel<EntryT, void>::Empty() const
 {
     return m_entries.empty();
 }
 
 template <typename EntryT>
-typename AssociativeArray<EntryT, void>::DataPtr AssociativeArray<EntryT, void>::Data()
+typename AssociativeArrayModel<EntryT, void>::DataPtr AssociativeArrayModel<EntryT, void>::Data()
 {
     return m_entries.data();
 }
 
 template <typename EntryT>
-typename AssociativeArray<EntryT, void>::ConstDataPtr AssociativeArray<EntryT, void>::Data() const
+typename AssociativeArrayModel<EntryT, void>::ConstDataPtr AssociativeArrayModel<EntryT, void>::Data() const
 {
     return m_entries.data();
 }
 
 template <typename EntryT>
-size_t AssociativeArray<EntryT, void>::Size() const
+size_t AssociativeArrayModel<EntryT, void>::Size() const
 {
     return m_entries.size();
 }
 
 template <typename EntryT>
-void AssociativeArray<EntryT, void>::Clear()
+void AssociativeArrayModel<EntryT, void>::Clear()
 {
     m_entries.clear();
     m_keys.clear();
 }
 
 template <typename EntryT>
-void AssociativeArray<EntryT, void>::FromJson(const JsonValue& input)
+void AssociativeArrayModel<EntryT, void>::FromJson(const JsonValue& input)
 {
     Clear();
     if (input.IsObject())
@@ -387,7 +412,7 @@ void AssociativeArray<EntryT, void>::FromJson(const JsonValue& input)
 }
 
 template <typename EntryT>
-JsonValue AssociativeArray<EntryT, void>::ToJson() const
+JsonValue AssociativeArrayModel<EntryT, void>::ToJson() const
 {
     JsonValue output{ rapidjson::kObjectType };
     for (auto& entry : m_entries)
@@ -408,7 +433,7 @@ inline PointerArray<const char, String>::PointerArray(const PointerArray& src) :
 }
 
 template<>
-inline void PointerArray<const char, String>::FromJson(const JsonValue& input)
+inline void PointerArrayModel<const char, String>::FromJson(const JsonValue& input)
 {
     Clear();
     if (input.IsArray())
@@ -429,7 +454,7 @@ inline void PointerArray<const char, String>::FromJson(const JsonValue& input)
 }
 
 template <>
-inline void AssociativeArray<PlayFabDateTimeDictionaryEntry, void>::FromJson(const JsonValue& input)
+inline void AssociativeArrayModel<PlayFabDateTimeDictionaryEntry, void>::FromJson(const JsonValue& input)
 {
     Clear();
     if (input.IsObject())
@@ -446,7 +471,7 @@ inline void AssociativeArray<PlayFabDateTimeDictionaryEntry, void>::FromJson(con
 }
 
 template <>
-inline JsonValue AssociativeArray<PlayFabDateTimeDictionaryEntry, void>::ToJson() const
+inline JsonValue AssociativeArrayModel<PlayFabDateTimeDictionaryEntry, void>::ToJson() const
 {
     JsonValue output{ rapidjson::kObjectType };
     for (auto& entry : m_entries)

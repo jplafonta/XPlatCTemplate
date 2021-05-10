@@ -12,7 +12,7 @@ namespace <%- api.name %>Models
 // <%- api.name %> Classes<%
 for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) {
     var datatype = sortedClasses[typeIdx]; %>
-struct <%- datatype.name %> : public <%- prefix %><%- datatype.name %>, public <%- getBaseType(datatype) %>
+struct <%- datatype.name %> : public <%- prefix %><%- datatype.name %>, <%- getBaseTypes(datatype) %>
 {
     <%- datatype.name %>();<%
     if (canDefaultCopyConstructor(datatype)) { %>

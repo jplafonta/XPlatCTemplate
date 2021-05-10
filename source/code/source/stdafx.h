@@ -19,6 +19,7 @@
 #include <sstream>
 #include <array>
 #include <assert.h>
+#include <atomic>
 
 // libHttpClient headers
 #include <httpClient/pal.h>

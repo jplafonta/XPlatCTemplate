@@ -75,7 +75,7 @@ HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
     RETURN_HR_INVALIDARG_IF_NULL(result);
 
     RETURN_IF_FAILED(XAsyncGetResult(async, nullptr, sizeof(PlayFabResultHandle), resultHandle, nullptr));
-    *result = (PlayFab<%- api.name %><%- call.result %>*)(std::dynamic_pointer_cast<<%- call.result %>>((*resultHandle)->model).get());
+    *result = (PlayFab<%- api.name %><%- call.result %>*)(std::dynamic_pointer_cast<<%- call.result %>>((*resultHandle)->result).get());
 
     return S_OK;
 }

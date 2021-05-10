@@ -243,12 +243,12 @@ const uint32_t PlayFabEventManagerPollDelayInMsDefault = 10;
 HRESULT PlayFabEventManagerCustomizeEventPipelineSettings(
     _In_ PlayFabEntityHandle entityHandle,
     _In_ PlayFabEventManagerPipelineType pipeline,
-    _In_ XTaskQueueHandle queue,
-    _In_ size_t* minimumBufferSizeBytes,
-    _In_ size_t* maxItemsInBatch,
-    _In_ uint32_t* maxBatchWaitTimeInSeconds,
-    _In_ size_t* maxBatchesInFlight,
-    _In_ uint32_t* pollDelayInMs
+    _In_opt_ XTaskQueueHandle queue,
+    _In_opt_ size_t* minimumBufferSizeBytes,
+    _In_opt_ size_t* maxItemsInBatch,
+    _In_opt_ uint32_t* maxBatchWaitTimeInSeconds,
+    _In_opt_ size_t* maxBatchesInFlight,
+    _In_opt_ uint32_t* pollDelayInMs
 ) noexcept;
 
 /// <summary>
