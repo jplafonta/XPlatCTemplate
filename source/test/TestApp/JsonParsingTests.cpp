@@ -49,7 +49,7 @@ namespace PlayFabUnit
         struct ObjectModel : public BaseModel
         {
             PlayFabEnum EnumValue;
-            PointerArray<int, int> ArrayValue;
+            PointerArrayModel<int, int> ArrayValue;
             SubObjectModel SubObjectValue;
 
             void FromJson(const JsonValue& input)

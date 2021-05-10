@@ -323,6 +323,29 @@ void ApiTests::TestGetEntityTokenWithSecretKey(TestContext& testContext)
     async.release();
 }
 
+void ApiTests::TestGetQoSMeasurements(TestContext& testContext)
+{
+    struct QoSMeasurements : public XAsyncResult
+    {
+        PlayFabQoSMeasurements* qosMeasurements;
+
+        HRESULT Get(XAsyncBlock* async) override
+        {
+            return PlayFabQoSGetMeasurementsGetResult(async, &resultHandle, &qosMeasurements);
+        }
+    };
+
+    auto async = std::make_unique<XAsyncHelper<QoSMeasurements>>(testContext);
+
+    HRESULT hr = PlayFabQoSGetMeasurmentsAsync(entityHandle, 30, 250, &async->asyncBlock);
+    if (FAILED(hr))
+    {
+        testContext.Fail("PlayFabAuthenticationGetEntityTokenAsync", hr);
+        return;
+    }
+    async.release();
+}
+
 void ApiTests::AddTests()
 {
     AddTest("TestApiStaticSizeResult", &ApiTests::TestApiStaticSizeResult);
@@ -334,6 +357,7 @@ void ApiTests::AddTests()
     //AddTest("TestApiNoAuth", &ApiTests::TestApiNoAuth);
     AddTest("TestGetEntityTokenWithAuthContext", &ApiTests::TestGetEntityTokenWithAuthContext);
     AddTest("TestGetEntityTokenWithSecretKey", &ApiTests::TestGetEntityTokenWithSecretKey);
+    AddTest("TestGetQoSMeasurements", &ApiTests::TestGetQoSMeasurements);
 }
 
 void ApiTests::ClassSetUp()

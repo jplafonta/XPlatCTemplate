@@ -26,6 +26,9 @@ private:
     void TestGetEntityTokenWithAuthContext(TestContext& testContext);
     void TestGetEntityTokenWithSecretKey(TestContext& testContext);
 
+    // Test for QoS API
+    void TestGetQoSMeasurements(TestContext& testContext);
+
 protected:
     void AddTests() override;
 

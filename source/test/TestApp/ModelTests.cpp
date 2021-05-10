@@ -44,7 +44,7 @@ namespace PlayFabUnit
         JsonDocument inputJson;
         inputJson.Parse(jsonArray);
 
-        PointerArray<int, int> pointerArray;
+        PointerArrayModel<int, int> pointerArray;
         pointerArray.FromJson(inputJson);
 
         auto movedArray{ std::move(pointerArray) };
@@ -71,7 +71,7 @@ namespace PlayFabUnit
             inputJson.AddMember(JsonValue{ ss.str().data(), a }, JsonValue{ PlayFab::TimeTToIso8601String(times[i]).data(), a }, a);
         }
 
-        AssociativeArray<PlayFabDateTimeDictionaryEntry, void> dictionary;
+        AssociativeArrayModel<PlayFabDateTimeDictionaryEntry, void> dictionary;
         dictionary.FromJson(inputJson);
 
         if (times.size() != inputJson.MemberCount() || times.size() != dictionary.Size())
