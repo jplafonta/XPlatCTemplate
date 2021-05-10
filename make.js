@@ -533,7 +533,7 @@ function getPropertyFromJson(property) {
     var publicPropName = getPropertyName(property, false);
     var internalPropName = getPropertyName(property, true);
 
-    var output = "JsonUtils:: ObjectGetMember(input, \"" + property.name + "\", ";
+    var output = "JsonUtils::ObjectGetMember(input, \"" + property.name + "\", ";
 
     if (!requiresInternalProperty(property)) {
         output += publicPropName;

@@ -70,8 +70,11 @@ AsyncOp<Measurements> QoSAPI::GetMeasurements(uint32_t pingIterations, uint32_t 
 
         return m_eventsApi.WriteTelemetryEvents(request, workerQueue).Then([qosResult = std::move(result) ](Result<WriteEventsResponse> result)
         {
-            UNREFERENCED_PARAMETER(result); // TODO
-            // Do we care to wait on this result before returning qosResult to client?
+            // Wait for WriteTelemetryEvents to complete prior to returning result to client. Although though they won't 
+            // see that result, we don't want to continue work in the background in case they want to close the XTaskQueue
+            // or EntityHandle after the QoS API call completes.
+
+            UNREFERENCED_PARAMETER(result); // TODO log this error
             return qosResult;
         });
     });
@@ -118,7 +121,7 @@ AsyncOp<Measurements> QoSAPI::PingServers(uint32_t pingIterations, uint32_t time
         SharedPtr<AsyncOpContext<Measurements>> asyncOpContext;
     };
 
-    auto context = SharedPtr<PingServersContext>();
+    auto context = MakeShared<PingServersContext>();
     context->queue = queue;
     context->pendingPings = m_servers.size() * pingIterations;
     context->asyncOpContext = MakeShared<AsyncOpContext<Measurements>>();
@@ -129,7 +132,6 @@ AsyncOp<Measurements> QoSAPI::PingServers(uint32_t pingIterations, uint32_t time
         {
             queue.RunWork([timeoutMs, context, server = Server{ server }]
             {
-                // TODO should we pre-allocate/reuse sockets? if so how many?
                 auto makeSocketResult = QoSSocket::MakeAndConfigure(timeoutMs);
                 if (Succeeded(makeSocketResult))
                 {
@@ -142,8 +144,10 @@ AsyncOp<Measurements> QoSAPI::PingServers(uint32_t pingIterations, uint32_t time
                 }
                 else
                 {
-                    // TODO how to handle socket init failure? When does this actually happen
-                    assert(false);
+                    std::lock_guard<std::mutex> lock{ context->mutex };
+                    auto& regionResult = context->regionResults.try_emplace(server.address, server.address).first->second;
+                    // Treat a socket configuration failure the same as a ping failure
+                    regionResult.AddPingResult(makeSocketResult.hr);
                 }
 
                 if (--context->pendingPings == 0)

@@ -8,14 +8,16 @@ namespace QoS
 
 RegionResult::RegionResult(const String& _region) :
     PlayFabQoSRegionResult{},
-    m_region{ _region }
+    m_region{ _region },
+    m_totalLatencyMs{ 0 }
 {
     region = m_region.data();
 }
 
 RegionResult::RegionResult(const RegionResult& src) :
     PlayFabQoSRegionResult{ src },
-    m_region{ src.region }
+    m_region{ src.region },
+    m_totalLatencyMs{ src.m_totalLatencyMs }
 {
     region = m_region.data();
 }
@@ -23,6 +25,7 @@ RegionResult::RegionResult(const RegionResult& src) :
 RegionResult& RegionResult::operator=(const RegionResult& src)
 {
     m_region = src.m_region;
+    m_totalLatencyMs = src.m_totalLatencyMs;
     region = m_region.data();
     averageLatencyMs = src.averageLatencyMs;
     successfulPingCount = src.successfulPingCount;

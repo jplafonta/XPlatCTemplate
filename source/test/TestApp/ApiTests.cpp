@@ -337,7 +337,7 @@ void ApiTests::TestGetQoSMeasurements(TestContext& testContext)
 
     auto async = std::make_unique<XAsyncHelper<QoSMeasurements>>(testContext);
 
-    HRESULT hr = PlayFabQoSGetMeasurmentsAsync(entityHandle, 3, 250, &async->asyncBlock);
+    HRESULT hr = PlayFabQoSGetMeasurmentsAsync(entityHandle, 30, 250, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabAuthenticationGetEntityTokenAsync", hr);
