@@ -28,7 +28,7 @@ HRESULT PlayFab<%- api.name %><%- call.name %>Async(
     RETURN_HR_INVALIDARG_IF_NULL(request); <%
     } %>
 
-    auto provider = MakeProvider(async, std::bind(&<%- api.name %>API::<%- call.name %>, <%- apiInstanceBinder %><%- requestBinder%><%- httpClientBinder %>std::placeholders::_1));
+    auto provider = MakeProvider(async, __FUNCTION__, std::bind(&<%- api.name %>API::<%- call.name %>, <%- apiInstanceBinder %><%- requestBinder%><%- httpClientBinder %>std::placeholders::_1));
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
 <%  if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { 

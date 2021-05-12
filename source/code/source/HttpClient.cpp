@@ -37,14 +37,12 @@ HttpClient::HttpClient(String&& titleId) :
     m_baseServiceHost{ productionEnvironmentURL },
     m_titleId{ std::move(titleId) }
 {
-    m_requestGetParams["sdk"] = versionString;
 }
 
 HttpClient::HttpClient(String&& baseServiceHost, String&& titleId) :
     m_baseServiceHost{ std::move(baseServiceHost) },
     m_titleId{ std::move(titleId) }
 {
-    m_requestGetParams["sdk"] = versionString;
 }
 
 String HttpClient::GetUrl(const char* path) const
@@ -52,22 +50,8 @@ String HttpClient::GetUrl(const char* path) const
     Stringstream fullUrl;
     fullUrl << "https://" << m_titleId << m_baseServiceHost << path;
 
-    bool firstParam = true;
-    for (auto const& paramPair : m_requestGetParams)
-    {
-        if (firstParam)
-        {
-            fullUrl << "?";
-            firstParam = false;
-        }
-        else
-        {
-            fullUrl << "&";
-        }
-        fullUrl << paramPair.first;
-        fullUrl << "=";
-        fullUrl << paramPair.second;
-    }
+    // Add sdk version param (used by service for telemetry)
+    fullUrl << "?sdk=" << versionString;
 
     return fullUrl.str();
 }
@@ -126,11 +110,8 @@ AsyncOp<ServiceResponse> HCHttpCall::Perform(
         }
     }
 
-    JsonStringBuffer jsonString;
-    JsonWriter writer{ jsonString };
-    requestBody.Accept(writer);
-
-    RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyString(call->m_callHandle, jsonString.GetString()));
+    String jsonString = JsonUtils::WriteToString(requestBody);
+    RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyString(call->m_callHandle, jsonString.data()));
 
     call->m_asyncBlock.callback = HCPerformComplete;
     call->m_asyncBlock.context = call.get();
@@ -185,6 +166,7 @@ void HCHttpCall::HCPerformComplete(XAsyncBlock* async)
         {
             Stringstream errorMessage;
             errorMessage << "Failed to parse PlayFab service response: " << rapidjson::GetParseError_En(responseJson.GetParseError());
+            TRACE_ERROR(errorMessage.str().data());
             asyncOpContext->Complete(Result<ServiceResponse>{ E_FAIL, errorMessage.str() });
             return;
         }

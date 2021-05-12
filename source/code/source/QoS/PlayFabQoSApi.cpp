@@ -16,7 +16,7 @@ HRESULT PlayFabQoSGetMeasurmentsAsync(
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
 
-    auto provider = MakeProvider(async, std::bind(&QoSAPI::GetMeasurements, &entityHandle->entity->QoSAPI, pingIterations, timeoutMs, std::placeholders::_1));
+    auto provider = MakeProvider(async, __FUNCTION__, std::bind(&QoSAPI::GetMeasurements, &entityHandle->entity->QoSAPI, pingIterations, timeoutMs, std::placeholders::_1));
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
 

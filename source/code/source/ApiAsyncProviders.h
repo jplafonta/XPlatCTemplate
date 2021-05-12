@@ -12,8 +12,9 @@ template<typename CallT>
 class ApiProvider : public Provider
 {
 public:
-    ApiProvider(XAsyncBlock* async, CallT call) :
-        Provider{ async },
+    template<size_t n>
+    ApiProvider(XAsyncBlock* async, const char(&identityName)[n], CallT call) :
+        Provider{ async, identityName },
         m_call{ call }
     {
     }
@@ -47,6 +48,7 @@ private:
     {
         m_call(queue).Finally([this](Result<void> result)
         {
+            TraceResult(result);
             if (Succeeded(result))
             {
                 this->Complete(0);
@@ -63,6 +65,7 @@ private:
     {
         m_call(queue).Finally([this](Result<ResultT> result)
         {
+            TraceResult(result);
             if (Succeeded(result))
             {
                 this->m_result.emplace(std::move(result));
@@ -80,6 +83,7 @@ private:
     {
         m_call(queue).Finally([this](Result<ResultT> result)
         {
+            TraceResult(result);
             if (Succeeded(result))
             {
                 this->m_result.emplace(std::move(result));
@@ -90,6 +94,18 @@ private:
                 this->Fail(result.hr);
             }
         });
+    }
+
+    inline void TraceResult(const Result<ResultT>& result)
+    {
+        if (Succeeded(result))
+        {
+            TRACE_VERBOSE("ApiProvider[ID=%s] Call suceeded (hr=0x%08x)", identityName, result.hr);
+        }
+        else
+        {
+            TRACE_ERROR("ApiProvider[ID=%s] Call failed with message \"%s\" (hr=0x%08x)", identityName, result.errorMessage.data(), result.hr);
+        }
     }
 
     template<typename T = ResultT>
@@ -119,10 +135,10 @@ private:
     StdExtra::optional<Result<ResultT>> m_result;
 };
 
-template<typename CallT>
-UniquePtr<ApiProvider<CallT>> MakeProvider(XAsyncBlock* async, CallT call)
+template<typename CallT, size_t n>
+UniquePtr<ApiProvider<CallT>> MakeProvider(XAsyncBlock* async, const char(&identityName)[n], CallT call)
 {
-    return MakeUnique<ApiProvider<CallT>>(async, std::move(call));
+    return MakeUnique<ApiProvider<CallT>>(async, identityName, std::move(call));
 }
 
 // XAsync Provider for PlayFab login API calls
@@ -132,8 +148,9 @@ class AuthCallProvider : public Provider
 public:
     static_assert(std::is_same_v<SharedPtr<Entity>, typename Detail::UnwrapAsyncT<typename std::result_of_t<CallT(const TaskQueue&)>>>, "CallT must return a SharedPt<Entity>");
 
-    AuthCallProvider(XAsyncBlock* async, CallT authCall)
-        : Provider{ async },
+    template<size_t n>
+    AuthCallProvider(XAsyncBlock* async, const char(&identityName)[n], CallT authCall)
+        : Provider{ async, identityName },
         m_call{ authCall }
     {
     }
@@ -147,11 +164,13 @@ protected:
         {
             if (Succeeded(result))
             {
+                TRACE_VERBOSE("AuthCallProvider[ID=%s] Call suceeded (hr=0x%08x)", identityName, result.hr);
                 this->m_entity = result.ExtractPayload();
                 this->Complete(sizeof(PlayFabEntity*));
             }
             else
             {
+                TRACE_ERROR("AuthCallProvider[ID=%s] Call failed with message \"%s\" (hr=0x%08x)", identityName, result.errorMessage.data(), result.hr);
                 this->Fail(result.hr);
             }
         });
@@ -172,10 +191,10 @@ private:
     SharedPtr<Entity> m_entity;
 };
 
-template<typename CallT>
-UniquePtr<AuthCallProvider<CallT>> MakeAuthProvider(XAsyncBlock* async, CallT authCall)
+template<typename CallT, size_t n>
+UniquePtr<AuthCallProvider<CallT>> MakeAuthProvider(XAsyncBlock* async, const char(&identityName)[n], CallT authCall)
 {
-    return MakeUnique<AuthCallProvider<CallT>>(async, std::move(authCall));
+    return MakeUnique<AuthCallProvider<CallT>>(async, identityName, std::move(authCall));
 }
 
 }

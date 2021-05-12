@@ -27,7 +27,6 @@ public:
 private:
     String GetUrl(const char* path) const;
 
-    Map<String, String> m_requestGetParams; // TODO Should these be configurable somehow?
     String m_baseServiceHost;
     String m_titleId;
 };

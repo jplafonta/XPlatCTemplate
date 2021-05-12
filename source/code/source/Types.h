@@ -48,8 +48,9 @@ using List = std::list<T, Allocator<T>>;
 
 using JsonDocument = rapidjson::GenericDocument<rapidjson::UTF8<>, JsonAllocator>;
 using JsonValue = rapidjson::GenericValue<rapidjson::UTF8<>, JsonAllocator>;
-using JsonStringBuffer = rapidjson::GenericStringBuffer<rapidjson::UTF8<>, JsonAllocator>;
-using JsonWriter = rapidjson::Writer<JsonStringBuffer>;
+
+template<class OutputStream>
+using JsonWriter = rapidjson::Writer<OutputStream, rapidjson::UTF8<>, rapidjson::UTF8<>, JsonAllocator>;
 
 using Clock = std::chrono::steady_clock;
 using SystemClock = std::chrono::system_clock;

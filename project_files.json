@@ -48,6 +48,8 @@
     "source\\StdOptional.h": "Source Files",
     "source\\TaskQueue.cpp": "Source Files",
     "source\\TaskQueue.h": "Source Files",
+    "source\\Trace.cpp": "Source Files",
+    "source\\Trace.h": "Source Files",
     "source\\Types.h": "Source Files",
     "source\\Api\\PlayFabBaseModel.cpp": "Source Files\\Api",
     "source\\Api\\PlayFabEntity.cpp": "Source Files\\Api",

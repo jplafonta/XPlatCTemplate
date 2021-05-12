@@ -1,12 +1,59 @@
 #include "stdafx.h"
 #include "JsonUtils.h"
 #include "BaseModel.h"
+#include <rapidjson/stream.h>
 
 namespace PlayFab
 {
 namespace JsonUtils
 {
 JsonAllocator allocator{};
+
+// Helper class for writing JsonValue directly into a PlayFab::String. Implements rapidjson write-only stream
+// concept (see rapidjson/stream.h for details). Avoids additional copy needed when first writing to rapidjons::StringBuffer
+class StringOutputStream
+{
+public:
+    using Ch = String::traits_type::char_type;
+
+    StringOutputStream(size_t initialCapacity = kDefaultCapacity)
+    {
+        m_string.reserve(initialCapacity);
+    }
+
+    void Put(Ch c)
+    {
+        m_string.push_back(c);
+    }
+
+    void Flush()
+    {
+        // no-op
+    }
+
+    const String& GetString() const
+    {
+        return m_string;
+    }
+
+    String&& ExtractString()
+    {
+        return std::move(m_string);
+    }
+
+    static const size_t kDefaultCapacity = 256; // use same default capacity as rapidjson::GenericStringBuffer
+
+private:
+    String m_string;
+};
+
+String WriteToString(const JsonValue& jsonValue)
+{
+    StringOutputStream stream;
+    JsonWriter<StringOutputStream> writer{ stream, &allocator };
+    jsonValue.Accept(writer);
+    return stream.ExtractString();
+}
 
 JsonValue ToJson(const char* string)
 {
@@ -19,12 +66,9 @@ JsonValue ToJson(const char* string)
 
 JsonValue ToJson(const PlayFabJsonObject& jsonObject)
 {
-    // TODO Seems like there is an extra copy here. Is there is a better way to do this?
     JsonDocument document{ &allocator };
     document.Parse(jsonObject.stringValue);
-    JsonValue value;
-    value.CopyFrom(document, allocator);
-    return value;
+    return JsonValue{ document, allocator };
 }
 
 JsonValue ToJson(time_t value, bool convertToIso8601String)
@@ -213,13 +257,13 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::op
     }
 }
 
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::optional<time_t>& output, time_t*& outputPtr, bool convertFromIso8601String)
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::optional<time_t>& output, time_t const*& outputPtr, bool convertFromIso8601String)
 {
     ObjectGetMember(jsonObject, name, output, convertFromIso8601String);
     outputPtr = output ? output.operator->() : nullptr;
 }
 
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<time_t>& output, time_t*& outputPtr, uint32_t& outputCount, bool convertFromIso8601String)
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<time_t>& output, time_t const*& outputPtr, uint32_t& outputCount, bool convertFromIso8601String)
 {
     output.clear();
     if (jsonObject.IsObject())

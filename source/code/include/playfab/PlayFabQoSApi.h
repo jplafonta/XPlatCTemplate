@@ -48,7 +48,7 @@ typedef struct PlayFabQoSMeasurements
     /// <summary>
     /// List of QoS measurements for different regions.
     /// </summary>
-    PlayFabQoSRegionResult** regionResults;
+    PlayFabQoSRegionResult const* const* regionResults;
 
     /// <summary>
     /// Count of regionResults.

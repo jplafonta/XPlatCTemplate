@@ -56,15 +56,11 @@ AsyncOp<Measurements> QoSAPI::GetMeasurements(uint32_t pingIterations, uint32_t 
         PlayFabEventsWriteEventsRequest request{};
         PlayFabEventsEventContents event{};
         Vector<PlayFabEventsEventContents*> events{ &event };
-
-        JsonStringBuffer stringBuffer{ &JsonUtils::allocator };
-        JsonWriter writer{ stringBuffer };
-        eventJson.Accept(writer);
-        auto eventJsonString = stringBuffer.GetString();
+        auto eventJsonString = JsonUtils::WriteToString(eventJson);
 
         event.name = "qos_result";
         event.eventNamespace = "playfab.servers";
-        event.payload.stringValue = eventJsonString;
+        event.payload.stringValue = eventJsonString.data();
         request.events = events.data();
         request.eventsCount = static_cast<uint32_t>(events.size());
 
@@ -74,7 +70,7 @@ AsyncOp<Measurements> QoSAPI::GetMeasurements(uint32_t pingIterations, uint32_t 
             // see that result, we don't want to continue work in the background in case they want to close the XTaskQueue
             // or EntityHandle after the QoS API call completes.
 
-            UNREFERENCED_PARAMETER(result); // TODO log this error
+            TRACE_ERROR("WriteTelemetryEvents call failed when uploading QoS measurements (hr=0x%08x, message=%hs)", result.hr, result.errorMessage.data());
             return qosResult;
         });
     });
@@ -146,7 +142,9 @@ AsyncOp<Measurements> QoSAPI::PingServers(uint32_t pingIterations, uint32_t time
                 {
                     std::lock_guard<std::mutex> lock{ context->mutex };
                     auto& regionResult = context->regionResults.try_emplace(server.address, server.address).first->second;
-                    // Treat a socket configuration failure the same as a ping failure
+
+                    // Treat a socket configuration failure the same as a ping failure. Log error, it will never be surfaced to client
+                    TRACE_ERROR_HR(makeSocketResult.hr, "Failed to configured QoSSocket");
                     regionResult.AddPingResult(makeSocketResult.hr);
                 }
 

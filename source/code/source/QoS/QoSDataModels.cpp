@@ -35,7 +35,6 @@ RegionResult& RegionResult::operator=(const RegionResult& src)
 
 void RegionResult::AddPingResult(Result<uint32_t> pingResult)
 {
-    // TODO need to make sure timeouts are handled correctly here
     if (Succeeded(pingResult))
     {
         ++successfulPingCount;

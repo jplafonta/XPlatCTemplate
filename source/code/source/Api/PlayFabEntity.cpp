@@ -41,6 +41,6 @@ HRESULT PlayFabEntityGetEntityTokenAsync(
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
     RETURN_HR_INVALIDARG_IF_NULL(request);
 
-    auto provider = MakeProvider(async, std::bind(&Entity::GetEntityToken, entityHandle->entity.get(), *request, std::placeholders::_1));
+    auto provider = MakeProvider(async, __FUNCTION__, std::bind(&Entity::GetEntityToken, entityHandle->entity.get(), *request, std::placeholders::_1));
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }

@@ -122,7 +122,6 @@ inline time_t Iso8601StringToTimeT(const String& input)
     return UtcTmToTimeT(Iso8601StringToTm(input));
 }
 
-// TODO: Invert this conversion at some point, and serialize the milliseconds as well
 inline String TimePointToIso8601String(const TimePoint& input)
 {
     return UtcTmToIso8601String(TimePointToUtcTm(input));

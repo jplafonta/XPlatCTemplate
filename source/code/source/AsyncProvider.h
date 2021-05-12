@@ -32,6 +32,10 @@ protected:
     // Create a Provider from a client provided XAsyncBlock
     Provider(_In_ XAsyncBlock* async) noexcept;
 
+    // Create a Provider from a client provided XAsyncBlock with the specified identityName
+    template<size_t n>
+    Provider(_In_ XAsyncBlock* async, const char(&_identityName)[n]) noexcept : identityName{ _identityName }, m_async{ async } {}
+
     // Provider Operations to be overriden.
 
     // The Begin operation should start the asynchronous task, either by calling Schedule(), or by calling
@@ -72,6 +76,10 @@ protected:
     // Marks the operation as complete with a failure code. By design, the client won't get a result payload
     // when the operation fails. The Provider's GetResult method will never be invoked in this case.
     void Fail(HRESULT hr);
+
+    // Provider identity name, used for logging purposes. Typically this is set with the __FUNCTION__ compiler macro
+    // or XASYNC_IDENTITY(API)
+    const char* const identityName;
 
 private:
     static HRESULT CALLBACK XAsyncProvider(_In_ XAsyncOp op, _Inout_ const XAsyncProviderData* data) noexcept;

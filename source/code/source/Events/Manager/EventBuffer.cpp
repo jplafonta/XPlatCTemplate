@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "EventBuffer.h"
-#include <playfab/PlayFabErrors.h>
 
 namespace PlayFab
 {

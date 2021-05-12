@@ -29,10 +29,7 @@ Event::Event(const Event& src) :
 const PlayFabEventsEventContents& Event::EventContents() const
 {
     // Lazily update m_eventContents.payload when requested
-    JsonStringBuffer stringBuffer{ &JsonUtils::allocator };
-    JsonWriter writer{ stringBuffer };
-    m_payload.Accept(writer);
-    m_payloadString = stringBuffer.GetString();
+    m_payloadString = JsonUtils::WriteToString(m_payload);
     m_eventContents.payload.stringValue = m_payloadString.data();
 
     return m_eventContents;
