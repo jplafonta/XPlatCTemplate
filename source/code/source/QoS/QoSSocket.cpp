@@ -8,13 +8,10 @@ namespace PlayFab
 namespace QoS
 {
 
-// Clear the buffer with this value before receiving the reply.
-constexpr char BUFFER_VALUE = '1';
-
 // Port the QoS server listen on
 constexpr int PORT = 3075;
 
-Result<SharedPtr<QoSSocket>> QoSSocket::MakeAndConfigure(int timeoutMs)
+Result<SharedPtr<QoSSocket>> QoSSocket::MakeAndConfigure(uint32_t timeoutMs)
 {
     auto socketResult = Socket::Make();
     if (Failed(socketResult))
@@ -27,10 +24,12 @@ Result<SharedPtr<QoSSocket>> QoSSocket::MakeAndConfigure(int timeoutMs)
     RETURN_IF_FAILED(socket->SetPort(PORT));
     RETURN_IF_FAILED(socket->SetTimeout(timeoutMs));
 
-    return SharedPtr<QoSSocket>{ new (Allocator<QoSSocket>{}.allocate(1)) QoSSocket{ std::move(socket) } };
+    return SharedPtr<QoSSocket>{ new (Allocator<QoSSocket>{}.allocate(1)) QoSSocket{ std::move(socket), timeoutMs } };
 }
 
-QoSSocket::QoSSocket(SharedPtr<Socket> socket) : m_socket{ std::move(socket) }
+QoSSocket::QoSSocket(SharedPtr<Socket> socket, uint32_t timeoutMs) :
+    m_socket{ std::move(socket) },
+    m_timeout{ timeoutMs }
 {
 }
 
@@ -38,24 +37,37 @@ Result<uint32_t> QoSSocket::PingServer(const char* address)
 {
     RETURN_IF_FAILED(m_socket->SetAddress(address));
 
-    // Clear the buffer
-    memset(buf, BUFFER_VALUE, BUFLEN);
+    // Clear the buffer with this value before receiving the reply.
+    constexpr char BUFFER_VALUE = '1';
+    memset(m_buf, BUFFER_VALUE, BUFLEN);
 
     // Snap the start time
     auto begin = Clock::now();
 
     // Send the message & await the reply
-    RETURN_IF_FAILED(m_socket->SendMessage(message));
-    RETURN_IF_FAILED(m_socket->ReceiveReply(buf, BUFLEN));
+    RETURN_IF_FAILED(m_socket->SendMessage(m_message));
+    RETURN_IF_FAILED(m_socket->ReceiveReply(m_buf, BUFLEN));
 
     // Snap the end time
     auto end = Clock::now();
 
-    // TODO : Can add error checking for the reply and return based on that
-    // The first 2 bytes should be set to 0s.
-
     // Calculate the total time
-    return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+    auto latencyMs = static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+
+    // For QoS measurement purposes, consider a timeout an error
+    if (latencyMs >= m_timeout)
+    {
+        return E_PLAYFAB_INTERNAL_QOSTIMEOUTEXCEEDED;
+    }
+
+    // Expected QoS server response should have first two bytes set to 0
+    if (m_buf[0] != '\0' || m_buf[1] != '\0')
+    {
+        TRACE_WARNING("Unexpected response from QoS Server: %.512s", m_buf);
+        // Server still responded, and we only really only care about latency, so don't return an error
+    }
+
+    return latencyMs;
 }
 
 } // namespace QoS

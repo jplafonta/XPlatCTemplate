@@ -18,7 +18,7 @@ HRESULT PlayFab<%- api.name %><%- call.name %>Async(
     RETURN_HR_INVALIDARG_IF_NULL(stateHandle);
     RETURN_HR_INVALIDARG_IF_NULL(request);
 
-    auto provider = MakeAuthProvider(async, std::bind(&<%- api.name %>AuthAPI::<%- call.name %>, &stateHandle->state-><%- authApiMemberName %>, *request, std::placeholders::_1));
+    auto provider = MakeAuthProvider(async, __FUNCTION__, std::bind(&<%- api.name %>AuthAPI::<%- call.name %>, &stateHandle->state-><%- authApiMemberName %>, *request, std::placeholders::_1));
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
 <% } %>

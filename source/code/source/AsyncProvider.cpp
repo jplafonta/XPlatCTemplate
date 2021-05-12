@@ -7,15 +7,18 @@
 namespace PlayFab
 {
 
+constexpr char defaultProviderIdentity[]{ "UnnamedProvider" };
+
 Provider::Provider(_In_ XAsyncBlock* async) noexcept
-    : m_async{ async }
+    : identityName{ defaultProviderIdentity },
+    m_async{ async }
 {
 }
 
 HRESULT Provider::Run(_In_ UniquePtr<Provider>&& provider) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(provider->m_async);
-    RETURN_IF_FAILED(XAsyncBegin(provider->m_async, provider.get(), nullptr, nullptr, XAsyncProvider));
+    RETURN_IF_FAILED(XAsyncBegin(provider->m_async, provider.get(), nullptr, provider->identityName, XAsyncProvider));
     provider.release();
     return S_OK;
 }
@@ -56,9 +59,13 @@ void Provider::Fail(HRESULT hr)
 {
     XAsyncComplete(m_async, hr, 0);
 }
+
 HRESULT CALLBACK Provider::XAsyncProvider(_In_ XAsyncOp op, _Inout_ const XAsyncProviderData* data) noexcept
 {
     auto provider{ static_cast<Provider*>(data->context) };
+
+    TRACE_VERBOSE("Provider[ID=%s] XAsyncOp::%s", provider->identityName, EnumName(op));
+
     switch (op)
     {
     case XAsyncOp::Begin:

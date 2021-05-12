@@ -13,7 +13,7 @@ class QoSSocket
 {
 public:
     // Make and configure a QoSSocket with appriate port and timeout
-    static Result<SharedPtr<QoSSocket>> MakeAndConfigure(int timeoutMs);
+    static Result<SharedPtr<QoSSocket>> MakeAndConfigure(uint32_t timeoutMs);
 
     QoSSocket(const QoSSocket&) = delete;
     QoSSocket& operator=(const QoSSocket&) = delete;
@@ -23,7 +23,7 @@ public:
     Result<uint32_t> PingServer(const char* serverAddress);
 
 private:
-    QoSSocket(SharedPtr<Socket> socket);
+    QoSSocket(SharedPtr<Socket> socket, uint32_t timeoutMs);
 
     // Length of the message send and received
     static const int BUFLEN = 512;
@@ -32,10 +32,11 @@ private:
     static const unsigned int MSGHEADER = 255;
 
     SharedPtr<Socket> m_socket;
+    uint32_t const m_timeout;
 
     // Message sent. Should start with 2 bytes set to 255 each (all bits set to 1)
-    const char message[BUFLEN]{ static_cast<char>(MSGHEADER), static_cast<char>(MSGHEADER) };
-    char buf[BUFLEN];
+    const char m_message[BUFLEN]{ static_cast<char>(MSGHEADER), static_cast<char>(MSGHEADER) };
+    char m_buf[BUFLEN];
 };
 
 } // namespace QoS

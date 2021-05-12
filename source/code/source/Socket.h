@@ -33,10 +33,10 @@ public:
     HRESULT SetAddress(const char* socketAddr);
 
     // Set the port the socket would ping
-    HRESULT SetPort(int port);
+    HRESULT SetPort(uint32_t port);
 
     // Set the timeout for an individual socket call
-    HRESULT SetTimeout(int timeout);
+    HRESULT SetTimeout(uint32_t timeoutMs);
 
     // Send the message and return the error code
     HRESULT SendMessage(const char* message);

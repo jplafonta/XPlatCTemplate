@@ -17,12 +17,8 @@ const char* JsonObject::StringValue() const
 
 void JsonObject::FromJson(const PlayFab::JsonValue& input)
 {
-    // TODO might be away to avoid copying from string buffer into PlayFab::String
     JsonUtils::FromJson(input, m_value);
-    JsonStringBuffer stringBuffer{ &JsonUtils::allocator };
-    JsonWriter writer{ stringBuffer };
-    m_value.Accept(writer);
-    m_string = stringBuffer.GetString();
+    m_string = JsonUtils::WriteToString(m_value);
 }
 
 JsonValue JsonObject::ToJson() const

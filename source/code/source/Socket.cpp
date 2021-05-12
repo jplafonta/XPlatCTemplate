@@ -94,13 +94,13 @@ HRESULT Socket::SetAddress(const char* socketAddr)
     return S_OK;
 }
 
-HRESULT Socket::SetPort(int port)
+HRESULT Socket::SetPort(uint32_t port)
 {
     m_siOther.sin_port = htons(static_cast<u_short>(port));
     return S_OK;
 }
 
-HRESULT Socket::SetTimeout(int timeoutMs)
+HRESULT Socket::SetTimeout(uint32_t timeoutMs)
 {
     // Input timeout is in milliseconds, tv_sec is in seconds
     m_timeOutVal.tv_sec = timeoutMs / 1000;
@@ -147,6 +147,7 @@ HRESULT Socket::TranslateError(int error) const
 {
     if (error == SOCKET_ERROR)
     {
+        TRACE_ERROR("Socket API returned error, code=%u", GetLastError());
 #if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
         return HRESULT_FROM_WIN32(GetLastError());
 #else

@@ -345,7 +345,7 @@ function getBaseTypes(datatype) {
 
 function getDictionaryEntryTypeFromValueType(valueType) {
     var types = {
-        "String": "String", "const char*": "String", "bool": "Bool", "int16_t": "Int16", "uint16_t": "Uint16", "int32_t": "Int32", "uint32_t": "Uint32",
+        "String": "String", "char const*": "String", "bool": "Bool", "int16_t": "Int16", "uint16_t": "Uint16", "int32_t": "Int32", "uint32_t": "Uint32",
         "int64_t": "int64_t", "uint64_t": "int64_t", "float": "float", "double": "double", "time_t": "DateTime"
     };
 
@@ -402,7 +402,7 @@ function getInternalPropertyType(property, prefix) {
             if (property.isclass) {
                 return "PointerArrayModel<" + prefix + type + ", " + type + ">";
             } else if (type === "String") {
-                return "PointerArrayModel<const char, String>";
+                return "PointerArrayModel<char, String>";
             } else {
                 return "Vector<" + type + ">";
             }
@@ -423,14 +423,13 @@ function getPublicPropertyType(property, prefix) {
 
     // Service types that can be mapped directly to C types
     var types = {
-        "String": "const char*", "Boolean": "bool", "int16": "int16_t", "uint16": "uint16_t", "int32": "int32_t", "uint32": "uint32_t",
+        "String": "char const*", "Boolean": "bool", "int16": "int16_t", "uint16": "uint16_t", "int32": "int32_t", "uint32": "uint32_t",
         "int64": "int64_t", "uint64": "uint64_t", "float": "float", "double": "double", "DateTime": "time_t", "object": "PlayFabJsonObject"
     };
 
     if (property.actualtype in types) {
         type = types[property.actualtype];
     } else if (property.isclass || property.isenum) {
-        // TODO should we include 'struct' keyword to distinguish structs vs enums
         type = prefix + property.actualtype;
     } else {
         throw Error("Unrecognized property type " + property.actualtype);
@@ -439,29 +438,28 @@ function getPublicPropertyType(property, prefix) {
     // By design class properties are always pointers. Pointers will ultimately point to derived C++ internal Objects which
     // can automatically manage their cleanup & copying via destructors and copy constructors
 
-    // Modify type depending on collection & optional attributes
-    // TODO figure out const correctness here
+    // Add type modifications depending on "collection" & "optional" attributes
     if (!(property.actualtype === "object")) {
         if (property.collection === "map") {
             // array of dictionary entries
-            return "struct " + getDictionaryEntryTypeFromValueType(type) + "*";
+            return "struct " + getDictionaryEntryTypeFromValueType(type) + " const*";
         } else if (property.collection === "array") {
             if (property.isclass) {
                 // array of pointers
-                return type + "**";
+                return type + " const* const*";
             } else {
-                return type + "*";
+                return type + " const*";
             }
         } else if (property.optional) {
             // Types which aren't already nullable will be made pointer types
-            if (!(type === "const char*" || type === "PlayFabJsonObject")) {
-                return type + "*";
+            if (!(type === "char const*" || type === "PlayFabJsonObject")) {
+                return type + " const*";
             }
         }
     }
 
     if (property.isclass) {
-        return type + "*";
+        return type + " const*";
     }
 
     return type;

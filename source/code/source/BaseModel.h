@@ -77,8 +77,8 @@ private:
 template<typename PointerT, typename ObjectT> class PointerArray
 {
 public:
-    using DataPtr = PointerT**;
-    using ConstDataPtr = const PointerT**;
+    using DataPtr = PointerT const* const*;
+    using ConstDataPtr = DataPtr const;
 
     PointerArray() = default;
     PointerArray(Vector<ObjectT>&& objects);
@@ -94,7 +94,7 @@ public:
     void Clear();
 
 protected:
-    Vector<PointerT*> m_pointers;
+    Vector<PointerT const*> m_pointers;
     Vector<ObjectT> m_objects;
 };
 
@@ -123,8 +123,8 @@ template <typename EntryT, typename ValueT>
 class AssociativeArrayModel : public BaseModel
 {
 public:
-    using DataPtr = EntryT*;
-    using ConstDataPtr = const EntryT*;
+    using DataPtr = EntryT const*;
+    using ConstDataPtr = DataPtr const;
 
     AssociativeArrayModel() = default;
     AssociativeArrayModel(const AssociativeArrayModel& src);
@@ -152,8 +152,8 @@ template<typename EntryT>
 class AssociativeArrayModel<EntryT, void> : public BaseModel
 {
 public:
-    using DataPtr = EntryT*;
-    using ConstDataPtr = const EntryT*;
+    using DataPtr = EntryT const*;
+    using ConstDataPtr = DataPtr const;
 
     AssociativeArrayModel() = default;
     AssociativeArrayModel(const AssociativeArrayModel& src);
@@ -163,8 +163,8 @@ public:
     virtual ~AssociativeArrayModel() = default;
 
     bool Empty() const;
-    EntryT* Data();
-    const EntryT* Data() const;
+    DataPtr Data();
+    ConstDataPtr Data() const;
     size_t Size() const;
     void Clear();
 
@@ -422,7 +422,7 @@ JsonValue AssociativeArrayModel<EntryT, void>::ToJson() const
     return output;
 }
 
-inline PointerArray<const char, String>::PointerArray(const PointerArray& src) :
+inline PointerArray<char, String>::PointerArray(const PointerArray& src) :
     m_objects(src.m_objects)
 {
     m_pointers.reserve(m_objects.size());
@@ -433,7 +433,7 @@ inline PointerArray<const char, String>::PointerArray(const PointerArray& src) :
 }
 
 template<>
-inline void PointerArrayModel<const char, String>::FromJson(const JsonValue& input)
+inline void PointerArrayModel<char, String>::FromJson(const JsonValue& input)
 {
     Clear();
     if (input.IsArray())

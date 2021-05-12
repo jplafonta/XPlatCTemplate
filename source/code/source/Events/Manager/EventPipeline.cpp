@@ -3,7 +3,6 @@
 #include <Events/EventsApi.h>
 #include "Event.h"
 #include "AsyncProvider.h"
-#include <playfab/PlayFabErrors.h>
 
 using namespace PlayFab::EventsModels;
 
@@ -150,7 +149,7 @@ HRESULT EventPipeline::Terminate(TerminationCallback callback)
 }
 
 WriteEventsProvider::WriteEventsProvider(SharedPtr<EventPipeline> pipeline, SharedPtr<HttpClient const> httpClient, SharedPtr<AuthTokens const> tokens, const TaskQueue& queue) :
-    Provider{ &m_asyncBlock },
+    Provider{ &m_asyncBlock, XASYNC_IDENTITY(WriteEventsProvider) },
     m_pipeline{ pipeline },
     m_pipelineType{ pipeline->pipelineType },
     m_eventsAPI{ std::move(httpClient), std::move(tokens) },
@@ -299,7 +298,7 @@ void WriteEventsProvider::SendBatch(const TaskQueue& queue)
     {
         events.push_back(&eventContext.event->EventContents());
     }
-    request.events = const_cast<PlayFabEventsEventContents**>(events.data()); // TODO PlayFabEventsWriteEventsRequest.events should be const
+    request.events = events.data();
     request.eventsCount = static_cast<uint32_t>(events.size());
 
     ++m_batchesInFlight;

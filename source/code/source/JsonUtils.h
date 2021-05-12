@@ -31,6 +31,9 @@ struct IsDictionaryEntry<T, std::enable_if_t<std::is_same_v<decltype(T::key), co
 // Allocator to be used by rapidjson for all needed allocations
 extern JsonAllocator allocator;
 
+// Write JsonValue to String
+String WriteToString(const JsonValue& jsonValue);
+
 //------------------------------------------------------------------------------
 // Helpers for serializing to JsonValue
 //------------------------------------------------------------------------------
@@ -168,18 +171,18 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::op
 template <typename T, typename PointerT>
 void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::optional<T>& output, PointerT*& outputPtr);
 
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::optional<time_t>& output, time_t*& outputPtr, bool convertFromIso8601String = false);
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::optional<time_t>& output, time_t const*& outputPtr, bool convertFromIso8601String = false);
 
 template <typename T>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<T>& output, T*& outputPtr, uint32_t& outputCount);
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<T>& output, T const*& outputPtr, uint32_t& outputCount);
 
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<time_t>& output, time_t*& outputPtr, uint32_t& outputCount, bool convertFromIso8601String = false);
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<time_t>& output, time_t const*& outputPtr, uint32_t& outputCount, bool convertFromIso8601String = false);
 
 template <typename ObjectT, typename PointerT>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, PointerArrayModel<PointerT, ObjectT>& output, PointerT**& outputPtr, uint32_t& outputCount);
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, PointerArrayModel<PointerT, ObjectT>& output, PointerT const* const*& outputPtr, uint32_t& outputCount);
 
 template <typename EntryT, typename ValueT>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, AssociativeArrayModel<EntryT, ValueT>& output, EntryT*& outputPtr, uint32_t& outputCount);
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, AssociativeArrayModel<EntryT, ValueT>& output, EntryT const*& outputPtr, uint32_t& outputCount);
 
 //------------------------------------------------------------------------------
 // Template implementations
@@ -293,7 +296,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, T& output)
 }
 
 template <typename T, typename PointerT>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, T& output, PointerT*& outputPtr)
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, T& output, PointerT const*& outputPtr)
 {
     static_assert(std::is_convertible_v<T*, PointerT*>, "T must be a PointerT");
 
@@ -317,7 +320,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::op
 }
 
 template <typename T, typename PointerT>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::optional<T>& output, PointerT*& outputPtr)
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::optional<T>& output, PointerT const*& outputPtr)
 {
     static_assert(std::is_convertible_v<T*, PointerT*>, "T must be a PointerT");
 
@@ -326,7 +329,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::op
 }
 
 template <typename T>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<T>& output, T*& outputPtr, uint32_t& outputCount)
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<T>& output, T const*& outputPtr, uint32_t& outputCount)
 {
     output.clear();
     if (jsonObject.IsObject())
@@ -349,7 +352,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, Vector<T>& o
 }
 
 template <typename T, typename PointerT>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, PointerArrayModel<PointerT, T>& output, PointerT**& outputPtr, uint32_t& outputCount)
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, PointerArrayModel<PointerT, T>& output, PointerT const* const*& outputPtr, uint32_t& outputCount)
 {
     output.Clear();
     if (jsonObject.IsObject())
@@ -366,7 +369,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, PointerArray
 }
 
 template <typename EntryT, typename ValueT>
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, AssociativeArrayModel<EntryT, ValueT>& output, EntryT*& outputPtr, uint32_t& outputCount)
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, AssociativeArrayModel<EntryT, ValueT>& output, EntryT const*& outputPtr, uint32_t& outputCount)
 {
     output.Clear();
     if (jsonObject.IsObject())

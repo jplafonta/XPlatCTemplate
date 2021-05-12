@@ -218,33 +218,23 @@ void ApiTests::TestApiEntityToken(TestContext& testContext)
 
 void ApiTests::TestApiSecretKey(TestContext& testContext)
 {
-    static char newsTitle[] = "News Title";
-    static char newsBody[] = "News!";
-
-    struct AddNewsResult : public XAsyncResult
+    struct GetTitleDataResult : public XAsyncResult
     {
-        PlayFabAdminAddNewsResult* result;
+        PlayFabAdminGetTitleDataResult* result;
 
         HRESULT Get(XAsyncBlock* async) override
         {
-            size_t requiredBufferSize;
-            RETURN_IF_FAILED(PlayFabAdminAddNewsGetResultSize(async, &requiredBufferSize));
-
-            resultBuffer.resize(requiredBufferSize);
-            return PlayFabAdminAddNewsGetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr);
+            return PlayFabAdminGetTitleDataGetResult(async, &resultHandle, &result);
         }
     };
 
-    auto async = std::make_unique<XAsyncHelper<AddNewsResult>>(testContext);
+    auto async = std::make_unique<XAsyncHelper<GetTitleDataResult>>(testContext);
 
-    PlayFabAdminAddNewsRequest request{};
-    request.title = newsTitle;
-    request.body = newsBody;
-
-    HRESULT hr = PlayFabAdminAddNewsAsync(stateHandle, &request, &async->asyncBlock);
+    PlayFabAdminGetTitleDataRequest request{};
+    HRESULT hr = PlayFabAdminGetTitleDataAsync(stateHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
-        testContext.Fail("PlayFabAdminAddNewsAsync", hr);
+        testContext.Fail("PlayFabAdminGetTitleDataAsync", hr);
         return;
     }
     async.release();

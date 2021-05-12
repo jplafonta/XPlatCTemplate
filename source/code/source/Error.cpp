@@ -6,10 +6,86 @@ namespace PlayFab
 
 HRESULT ServiceErrorToHR(ServiceErrorCode errorCode)
 {
-    // TODO define appropriate HRs for PlayFab service errors. Probably want to bucket them or translate
-    // to generic PlayFab service error hr. Just returning E_FAIL for now.
-    UNREFERENCED_PARAMETER(errorCode);
-    return E_FAIL;
+    // Translating most global errors that apply to all PlayFab APIs. See 
+    // https://docs.microsoft.com/en-us/gaming/playfab/api-references/global-api-method-error-codes for more details about
+    // the various global API errors.
+    //
+    // API specific errors are being translated to E_PLAYFAB_SERVICEERROR. More details can be found in http response
+    // and/or via SDK traces.
+
+    switch (errorCode)
+    {
+    case ServiceErrorCode::Success:
+    {
+        return S_OK;
+    }
+    case ServiceErrorCode::UnkownError:
+    case ServiceErrorCode::UnknownError:
+    {
+        return E_PLAYFAB_UNKNOWNERROR;
+    }
+    case ServiceErrorCode::APIClientRequestRateLimitExceeded:
+    case ServiceErrorCode::APIConcurrentRequestLimitExceeded:
+    case ServiceErrorCode::ConcurrentEditError:
+    case ServiceErrorCode::DataUpdateRateExceeded:
+    {
+        return E_PLAYFAB_RATELIMITEXCEEDED;
+    }
+    case ServiceErrorCode::DownstreamServiceUnavailable:
+    case ServiceErrorCode::ServiceUnavailable:
+    {
+        return E_PLAYFAB_SERVICEUNAVAILABLE;
+    }
+    case ServiceErrorCode::OverLimit:
+    {
+        return E_PLAYFAB_OVERGAMEMANAGERLIMIT;
+    }
+    case ServiceErrorCode::AccountBanned:
+    {
+        return E_PLAYFAB_ACCOUNTBANNED;
+    }
+    case ServiceErrorCode::AccountDeleted:
+    {
+        return E_PLAYFAB_ACCOUNTDELETED;
+    }
+    case ServiceErrorCode::AccountNotFound:
+    {
+        return E_PLAYFAB_ACCOUNTNOTFOUND;
+    }
+    case ServiceErrorCode::APIRequestsDisabledForTitle:
+    {
+        return E_PLAYFAB_APIREQUESTSDISABLEDFORTITLE;
+    }
+    case ServiceErrorCode::InvalidContentType:
+    case ServiceErrorCode::InvalidParams:
+    case ServiceErrorCode::InvalidRequest:
+    case ServiceErrorCode::InvalidTitleId:
+    {
+        return E_PLAYFAB_INVALIDREQUEST;
+    }
+    case ServiceErrorCode::NotAuthenticated:
+    {
+        return E_PLAYFAB_NOTAUTHENTICATED;
+    }
+    case ServiceErrorCode::NotAuthorized:
+    case ServiceErrorCode::NotAuthorizedByTitle:
+    {
+        return E_PLAYFAB_NOTAUTHORIZED;
+    }
+    case ServiceErrorCode::ProfileDoesNotExist:
+    {
+        return E_PLAYFAB_PROFILEDOESNOTEXIST;
+    }
+    case ServiceErrorCode::TitleDeleted:
+    {
+        return E_PLAYFAB_TITLEDELETED;
+    }
+    default:
+    {
+        // Generic service error
+        return E_PLAYFAB_SERVICEERROR;
+    }
+    }
 }
 
 #define MAKE_HTTP_HRESULT(httpStatus) MAKE_HRESULT(1, 0x019, httpStatus)

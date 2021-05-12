@@ -56,7 +56,7 @@ namespace PlayFabUnit
             {
                 JsonUtils::ObjectGetMember(input, "EnumValue", EnumValue);
                 uint32_t arraySize;
-                int** arrayPtr;
+                int const* const* arrayPtr;
                 JsonUtils::ObjectGetMember(input, "ArrayValue", ArrayValue, arrayPtr, arraySize);
                 JsonUtils::ObjectGetMember(input, "SubObjectValue", SubObjectValue);
             }

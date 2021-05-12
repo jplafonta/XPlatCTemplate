@@ -11,7 +11,7 @@ namespace PlayFab
 template <typename E>
 struct EnumRange
 {
-    // Provide an arbitrary range for enum values by default. If enum has values greated that this default,
+    // Provide an arbitrary range for enum values by default. If enum has values greater that this default,
     // specialize this class to provide a custom value.
     static constexpr E maxValue = static_cast<E>(100);
 };
