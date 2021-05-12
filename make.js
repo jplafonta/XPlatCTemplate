@@ -345,7 +345,7 @@ function getBaseTypes(datatype) {
 
 function getDictionaryEntryTypeFromValueType(valueType) {
     var types = {
-        "String": "String", "char const*": "String", "bool": "Bool", "int16_t": "Int16", "uint16_t": "Uint16", "int32_t": "Int32", "uint32_t": "Uint32",
+        "String": "String", "const char*": "String", "bool": "Bool", "int16_t": "Int16", "uint16_t": "Uint16", "int32_t": "Int32", "uint32_t": "Uint32",
         "int64_t": "int64_t", "uint64_t": "int64_t", "float": "float", "double": "double", "time_t": "DateTime"
     };
 
@@ -423,7 +423,7 @@ function getPublicPropertyType(property, prefix) {
 
     // Service types that can be mapped directly to C types
     var types = {
-        "String": "char const*", "Boolean": "bool", "int16": "int16_t", "uint16": "uint16_t", "int32": "int32_t", "uint32": "uint32_t",
+        "String": "const char*", "Boolean": "bool", "int16": "int16_t", "uint16": "uint16_t", "int32": "int32_t", "uint32": "uint32_t",
         "int64": "int64_t", "uint64": "uint64_t", "float": "float", "double": "double", "DateTime": "time_t", "object": "PlayFabJsonObject"
     };
 
@@ -452,7 +452,7 @@ function getPublicPropertyType(property, prefix) {
             }
         } else if (property.optional) {
             // Types which aren't already nullable will be made pointer types
-            if (!(type === "char const*" || type === "PlayFabJsonObject")) {
+            if (!(type === "const char*" || type === "PlayFabJsonObject")) {
                 return type + " const*";
             }
         }
