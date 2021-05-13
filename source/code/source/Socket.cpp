@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "Socket.h"
 
-#if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#if HC_PLATFORM_IS_MICROSOFT
 #include <sys/utime.h>
 #else
 #include <sys/ioctl.h>
 #include <utime.h>
-#endif // #if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#endif
 
 namespace PlayFab
 {
@@ -17,7 +17,7 @@ Result<SharedPtr<Socket>> Socket::Make()
 
     int errorCode = 0;
 
-#if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#if HC_PLATFORM_IS_MICROSOFT
     // Initializing
     if ((errorCode = WSAStartup(MAKEWORD(2, 2), &out->m_wsa)) != 0)
     {
@@ -27,13 +27,13 @@ Result<SharedPtr<Socket>> Socket::Make()
 
     // create socket
     out->m_socket = static_cast<decltype(m_socket)>(socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP));
-#if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#if HC_PLATFORM_IS_MICROSOFT
     if (out->m_socket == INVALID_SOCKET)
     {
         return HRESULT_FROM_WIN32(WSAGetLastError());
     }
 #else
-    if (m_socket == SOCKET_ERROR)
+    if (out->m_socket == SOCKET_ERROR)
     {
         return E_FAIL;
     }
@@ -54,42 +54,50 @@ Socket::Socket() :
 
 Socket::~Socket()
 {
-#if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#if HC_PLATFORM_IS_MICROSOFT
     closesocket(m_socket);
     WSACleanup();
 #else
     close(s);
-#endif // defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#endif
 }
 
-HRESULT Socket::SetAddress(const char* socketAddr)
+HRESULT Socket::SetAddress(const char* socketAddr, const char* serviceName)
 {
-    struct hostent *host = gethostbyname(socketAddr);
-
-    if (host == NULL)
+    // Cleanup helper for getarrinfo result
+    struct GetAddrInfoResult
     {
-#if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
-        return HRESULT_FROM_WIN32(WSAGetLastError());
+        ~GetAddrInfoResult()
+        {
+            if (addrInfo)
+            {
+                freeaddrinfo(addrInfo);
+            }
+        }
+        addrinfo* addrInfo{ nullptr };
+    } result;
+
+    addrinfo hints{};
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+
+    auto status = getaddrinfo(socketAddr, serviceName, &hints, &result.addrInfo);
+    if (status != 0)
+    {
+#if HC_PLATFORM_IS_MICROSOFT
+        return HRESULT_FROM_WIN32(status);
 #else
         return E_FAIL;
 #endif
     }
 
-    in_addr* inAddr = reinterpret_cast<in_addr*>(host->h_addr_list[0]);
-
-#if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
-    if (inAddr->S_un.S_addr == 0)
+    sockaddr_in* addr = reinterpret_cast<sockaddr_in*>(result.addrInfo[0].ai_addr);
+    if (addr->sin_addr.S_un.S_addr == 0)
     {
         return E_FAIL;
     }
-    m_siOther.sin_addr.S_un.S_addr = inAddr->S_un.S_addr;
-#else
-    if (inAddr->s_addr == 0)
-    {
-        return E_FAIL;
-    }
-    siOther.sin_addr.s_addr = inAddr->s_addr;
-#endif
+    m_siOther.sin_addr.S_un.S_addr = addr->sin_addr.S_un.S_addr;
 
     return S_OK;
 }
@@ -107,7 +115,7 @@ HRESULT Socket::SetTimeout(uint32_t timeoutMs)
 
     // tv_usec takes microseconds, hence convert the input milliseconds to microseconds
     m_timeOutVal.tv_usec = (timeoutMs - m_timeOutVal.tv_sec * 1000) * 1000;
-#if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#if HC_PLATFORM_IS_MICROSOFT
     return TranslateError(setsockopt(m_socket, SOL_SOCKET, SO_RCVTIMEO | SO_SNDTIMEO, reinterpret_cast<const char*>(&timeoutMs), sizeof(timeoutMs)));
 #else
     return TranslateError(setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *) &timeOutVal, sizeof(struct timeval)));
@@ -148,7 +156,7 @@ HRESULT Socket::TranslateError(int error) const
     if (error == SOCKET_ERROR)
     {
         TRACE_ERROR("Socket API returned error, code=%u", GetLastError());
-#if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#if HC_PLATFORM_IS_MICROSOFT
         return HRESULT_FROM_WIN32(GetLastError());
 #else
         return E_FAIL;

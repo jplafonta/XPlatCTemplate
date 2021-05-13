@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#if HC_PLATFORM_IS_MICROSOFT
 #include <winsock2.h>
 #include <Windows.h>
 #include <ws2tcpip.h>
@@ -10,12 +10,12 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#if !defined (PLAYFAB_PLATFORM_PLAYSTATION)
+#if HC_PLATFORM != HC_PLATFORM_SONY_PLAYSTATION_4
 #include <netdb.h>
-#endif // !defined (PLAYFAB_PLATFORM_PLAYSTATION)
+#endif
 constexpr int SOCKET_ERROR = -1;
 constexpr int WSAEWOULDBLOCK = 10035;
-#endif // defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#endif
 
 namespace PlayFab
 {
@@ -30,7 +30,7 @@ public:
     ~Socket();
 
     // Set the address the socket would ping
-    HRESULT SetAddress(const char* socketAddr);
+    HRESULT SetAddress(const char* socketAddr, const char* serviceName);
 
     // Set the port the socket would ping
     HRESULT SetPort(uint32_t port);
@@ -57,17 +57,17 @@ private:
     struct sockaddr_in m_siOther;
     struct timeval m_timeOutVal;
 
-#if defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#if HC_PLATFORM_IS_MICROSOFT
     SOCKET m_socket{ 0 };
     int m_slen;
     WSADATA m_wsa{};
-#elif defined(PLAYFAB_PLATFORM_ANDROID) || defined(PLAYFAB_PLATFORM_LINUX)
+#elif HC_PLATFORM == HC_PLATFORM_ANDROID
     unsigned int m_socket{ 0 };
     socklen_t m_slen;
 #else
     unsigned int m_socket{ 0 };
     unsigned int m_slen;
-#endif // defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#endif
 };
 
 } // namespace PlayFab

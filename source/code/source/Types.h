@@ -54,5 +54,6 @@ using JsonWriter = rapidjson::Writer<OutputStream, rapidjson::UTF8<>, rapidjson:
 
 using Clock = std::chrono::steady_clock;
 using SystemClock = std::chrono::system_clock;
+using TimePoint = std::chrono::time_point<SystemClock>;
 
 }
