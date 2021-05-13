@@ -1,0 +1,91 @@
+#include "TestAppPch.h"
+#include "TestContext.h"
+#include "AutoGen<%- api.name %>Tests.h"
+#include "XAsyncHelper.h"
+#include <playfab/PlayFabClientAuthApi.h>
+#include <playfab/PlayFabClientApi.h>
+#include <playfab/PlayFabProfilesApi.h>
+#include <playfab/PlayFabAdminApi.h>
+#include <playfab/PlayFabAuthenticationAuthApi.h>
+#include <playfab/PlayFabClientDataModels.h>
+
+namespace PlayFabUnit
+{
+
+<% 
+var hasFillBeenDefinedMap = {};
+var hasValidateBeenDefinedMap = {};
+for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
+{
+    var call = categorizedApi.otherCalls[i];
+    var asyncName = "PlayFab" + api.name + call.name + "Async"; 
+    if( !(call.request in hasFillBeenDefinedMap) && call.request != "void" ) {  // call.name == "AcceptTrade"
+        hasFillBeenDefinedMap[call.request] = true;
+%>void AutoGen<%- api.name %>Tests::FillPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request )
+{<% 
+    var found = false;
+    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
+    {
+        var datatype = sortedClasses[classIdx];
+        if( datatype.name == call.request )
+        {
+            found = true; 
+%>
+    // PlayFab<%- api.name + call.request %> struct:<% 
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
+    {
+        var property = datatype.properties[propIdx];
+        var isInternal = false;
+        var type = getPublicPropertyType(property, prefix);
+        var propName = getPropertyName(property, isInternal);
+%>
+    // <%- "request->" + propName + ": " + type %><%
+        // For public collection properties add an additional "count" property
+        if (property.collection && !(type === "PlayFabJsonObject")) 
+        {
+%>
+    // <%- "request->" + propName + "Count: " + "uint32_t" %><%}
+    } 
+ } }
+if( !found ) { throw Error('Not found ' + call.request) } %>
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( <%- getRequestExample(api, call) %> );
+    request->FromJson(inputJson);
+}
+
+<% } if (!(call.result in hasValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") {
+    hasValidateBeenDefinedMap[call.result] = true;
+%>HRESULT AutoGen<%- api.name %>Tests::ValidatePlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result )
+{<% 
+    var found = false;
+    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
+    {
+        var datatype = sortedClasses[classIdx];
+        if( datatype.name == call.request )
+        {
+            found = true; 
+%>
+    // Found <%- datatype.name %><% 
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
+    {
+        var property = datatype.properties[propIdx];
+        var isInternal = false;
+        var type = getPublicPropertyType(property, prefix);
+        var propName = getPropertyName(property, isInternal);
+%>
+    // <%- "request." + propName + " = " + type + ";" %><%
+        // For public collection properties add an additional "count" property
+        if (property.collection && !(type === "PlayFabJsonObject")) 
+        {
+%>
+    // <%- "result." + propName + "Count = " + "uint32_t;" %><%}
+    } 
+ } }
+if( !found ) { %>    // Not found <%- datatype.name %><%} %>
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
+
+<% } } %> 
+
+}

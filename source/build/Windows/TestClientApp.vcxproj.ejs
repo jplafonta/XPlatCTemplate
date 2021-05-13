@@ -119,6 +119,7 @@
     <ClInclude Include="$(TestSourceDir)\TestApp\ModelTests.h" />
     <ClInclude Include="$(TestSourceDir)\TestApp\ApiTests.h" />
     <ClInclude Include="$(TestSourceDir)\TestApp\EventManagerTests.h" />
+    <ClInclude Include="$(TestSourceDir)\TestApp\XAsyncHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(TestSourceDir)\TestApp\TestApp.cpp" />
@@ -132,8 +133,15 @@
     <ClCompile Include="$(TestSourceDir)\TestApp\TestUtils.cpp" />
     <ClCompile Include="$(TestSourceDir)\TestApp\JsonParsingTests.cpp" />
     <ClCompile Include="$(TestSourceDir)\TestApp\ModelTests.cpp" />
-    <ClCompile Include="$(TestSourceDir)\TestApp\ApiTests.cpp" />
     <ClCompile Include="$(TestSourceDir)\TestApp\EventManagerTests.cpp" />
+    <ClCompile Include="$(TestSourceDir)\TestApp\ApiTests.cpp" /> <%
+for(var apiName in categorizedApis) { 
+    var api = categorizedApis[apiName]; 
+    if (apiName == "Client") {  %>
+    <ClInclude Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.h" />
+    <ClCompile Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestData.cpp" />
+    <ClCompile Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.cpp" /> <%
+} } %>
     <ClCompile Include="MainWin32.cpp" />
     <ClCompile Include="TestAppWin32.cpp" />
   </ItemGroup>
