@@ -1,0 +1,225 @@
+#include "TestAppPch.h"
+#include "TestContext.h"
+#include "AutoGen<%- api.name %>Tests.h"
+#include "XAsyncHelper.h"
+#include <playfab/PlayFabClientAuthApi.h>
+#include <playfab/PlayFabClientApi.h>
+#include <playfab/PlayFabProfilesApi.h>
+#include <playfab/PlayFabAdminApi.h>
+#include <playfab/PlayFabAuthenticationAuthApi.h>
+#include <playfab/PlayFabClientDataModels.h>
+
+<%
+var skipTestList = [ 
+    "TestClientAcceptTrade", // this test crashes
+    "TestClientConsumeMicrosoftStoreEntitlements", // this test crashes
+    "TestClientUnlinkOpenIdConnect", // this test crashes
+    "TestClientUnlinkWindowsHello", // this test crashes
+    "TestClientValidateAmazonIAPReceipt", // this test crashes
+    "TestClientValidateGooglePlayPurchase", // this test crashes
+    "TestClientValidateWindowsStoreReceipt", // this test crashes
+    "TestClientAddFriend",
+    "TestClientAddSharedGroupMembers",
+    "TestClientAddUserVirtualCurrency",
+    "TestClientAddUsernamePassword",
+    "TestClientAndroidDevicePushNotificationRegistration",
+    "TestClientAttributeInstall",
+    "TestClientCancelTrade",
+    "TestClientConfirmPurchase",
+    "TestClientConsumeItem",
+    "TestClientConsumePS5Entitlements",
+    "TestClientConsumePSNEntitlements",
+    "TestClientConsumeXboxEntitlements",
+    "TestClientCreateSharedGroup",
+    "TestClientGetAccountInfo",
+    "TestClientGetAllUsersCharacters",
+    "TestClientGetCharacterData",
+    "TestClientGetCharacterInventory",
+    "TestClientGetCharacterReadOnlyData",
+    "TestClientGetCharacterStatistics",
+    "TestClientGetGameServerRegions",
+    "TestClientGetLeaderboardAroundCharacter",
+    "TestClientGetPaymentToken",
+    "TestClientGetPhotonAuthenticationToken",
+    "TestClientGetPlayerCombinedInfo",
+    "TestClientGetPlayerProfile",
+    "TestClientGetPlayerStatisticVersions",
+    "TestClientGetPlayerTags",
+    "TestClientGetPurchase",
+    "TestClientGetStoreItems",
+    "TestClientGetTitlePublicKey",
+    "TestClientGetTradeStatus",
+    "TestClientGetWindowsHelloChallenge",
+    "TestClientGrantCharacterToUser",
+    "TestClientLinkApple",
+    "TestClientLinkFacebookAccount",
+    "TestClientLinkFacebookInstantGamesId",
+    "TestClientLinkGoogleAccount",
+    "TestClientLinkKongregate",
+    "TestClientLinkNintendoServiceAccount",
+    "TestClientLinkOpenIdConnect",
+    "TestClientLinkPSNAccount",
+    "TestClientLinkSteamAccount",
+    "TestClientLinkTwitch",
+    "TestClientLinkWindowsHello",
+    "TestClientLinkXboxAccount",
+    "TestClientMatchmake",
+    "TestClientOpenTrade",
+    "TestClientPayForPurchase",
+    "TestClientPurchaseItem",
+    "TestClientRedeemCoupon",
+    "TestClientRefreshPSNAuthToken",
+    "TestClientRegisterForIOSPushNotification",
+    "TestClientRemoveFriend",
+    "TestClientReportAdActivity",
+    "TestClientRestoreIOSPurchases",
+    "TestClientRewardAdActivity",
+    "TestClientSendAccountRecoveryEmail",
+    "TestClientSetFriendTags",
+    "TestClientSetPlayerSecret",
+    "TestClientStartGame",
+    "TestClientStartPurchase",
+    "TestClientSubtractUserVirtualCurrency",
+    "TestClientUnlinkApple",
+    "TestClientUnlinkFacebookAccount",
+    "TestClientUnlinkFacebookInstantGamesId",
+    "TestClientUnlinkGoogleAccount",
+    "TestClientUnlinkKongregate",
+    "TestClientUnlinkNintendoServiceAccount",
+    "TestClientUnlinkPSNAccount",
+    "TestClientUnlinkSteamAccount",
+    "TestClientUnlinkTwitch",
+    "TestClientUnlinkXboxAccount",
+    "TestClientUnlockContainerInstance",
+    "TestClientUnlockContainerItem",
+    "TestClientUpdateCharacterData",
+    "TestClientUpdateCharacterStatistics",
+    "TestClientUpdatePlayerStatistics",
+    "TestClientValidateIOSReceipt",
+    "TestClientWriteCharacterEvent",
+    ];
+%>
+
+namespace PlayFabUnit
+{
+
+void AutoGen<%- api.name %>Tests::AddTests()
+{
+    // Generated tests 
+<%
+for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
+{
+    var call = categorizedApi.otherCalls[i];
+    var testName = "Test" + api.name + call.name;
+    var skipTest = skipTestList.includes(testName);
+    if( call.Name )
+%>    <% if( skipTest ) { %>//<% } %>AddTest("<%- testName %>", &AutoGen<%- api.name %>Tests::<%- testName %>);<% if( skipTest ) { %> // TODO: debug failing test<% } %>
+<% } %>}
+
+void AutoGen<%- api.name %>Tests::ClassSetUp()
+{
+    HRESULT hr = PlayFabInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), &stateHandle);
+    if (SUCCEEDED(hr))
+    {
+        PlayFabClientLoginWithCustomIDRequest request{};
+        request.customId = "CustomId";
+        bool createAccount = true;
+        request.createAccount = &createAccount;
+        request.titleId = testTitleData.titleId.data();
+
+        XAsyncBlock async{};
+        hr = PlayFabClientLoginWithCustomIDAsync(stateHandle, &request, &async);
+        if (SUCCEEDED(hr))
+        {
+            // Synchronously what for login to complete
+            hr = XAsyncGetStatus(&async, true);
+            if (SUCCEEDED(hr))
+            {
+                PlayFabGetAuthResult(&async, &entityHandle);
+            }
+        }
+    }
+}
+
+void AutoGen<%- api.name %>Tests::ClassTearDown()
+{
+    PlayFabEntityCloseHandle(entityHandle);
+
+    XAsyncBlock async{};
+    HRESULT hr = PlayFabCleanupAsync(stateHandle, &async);
+    assert(SUCCEEDED(hr));
+
+    hr = XAsyncGetStatus(&async, true);
+    assert(SUCCEEDED(hr));
+
+    UNREFERENCED_PARAMETER(hr);
+}
+
+void AutoGen<%- api.name %>Tests::SetUp(TestContext& testContext)
+{
+    if (!entityHandle)
+    {
+        testContext.Skip("Skipping test because login failed");
+    }
+}
+
+<% for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
+{
+    var call = categorizedApi.otherCalls[i];
+    var contextHandleParam = categorizedApi.otherCallsRequireSecretKey || call.auth === "None" ? "stateHandle" : "entityHandle";
+    var asyncName = "PlayFab" + api.name + call.name + "Async"; 
+    var testName =  "Test" + api.name + call.name;
+%>void AutoGen<%- api.name %>Tests::<%- testName %>(TestContext& testContext)
+{
+    struct <%- call.name %>Result : public XAsyncResult
+    {
+<% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { %>
+<% } else if (isFixedSize(api.datatypes[call.result])) { %>        PlayFab<%- api.name %><%- call.result %> result{};
+<% } else if (isSerializable(api.datatypes[call.result])) { %>        PlayFab<%- api.name %><%- call.result %>* result = nullptr;
+<% } else { %>        PlayFab<%- api.name %><%- call.result %>* result = nullptr;
+<% } // end if %>        HRESULT Get(XAsyncBlock* async) override
+        { <% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { %>
+            // style 1
+            // No Get Result method needed
+            return XAsyncGetStatus(async, true);<% } else if (isFixedSize(api.datatypes[call.result])) { %>
+            // style 2
+            return PlayFab<%- api.name + call.name %>GetResult(async, &result); <% } else if (isSerializable(api.datatypes[call.result])) { %>
+            // style 3
+            size_t requiredBufferSize;
+            RETURN_IF_FAILED(PlayFab<%- api.name %><%- call.name %>GetResultSize(async, &requiredBufferSize));
+
+            resultBuffer.resize(requiredBufferSize);
+            return PlayFab<%- api.name + call.name %>GetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr); <% } else { %>
+            // style 4
+            return PlayFab<%- api.name + call.name %>GetResult(async, &resultHandle, &result); <% } // end if %>
+        }
+
+        HRESULT Validate()
+        {
+<% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { %>            // style 1
+            return S_OK;
+<% } else if (isFixedSize(api.datatypes[call.result])) { %>            // style 2
+            return ValidatePlayFab<%- api.name %><%- call.result %>( &result );
+<% } else if (isSerializable(api.datatypes[call.result])) { %>            // style 3
+            return ValidatePlayFab<%- api.name %><%- call.result %>( result );
+<% } else { %>            // style 4
+            return ValidatePlayFab<%- api.name %><%- call.result %>( result );
+<% } // end if %>        }
+    };
+
+    auto async = std::make_unique<XAsyncHelper<<%- call.name %>Result>>(testContext);
+<% if (call.request != "void") { %>
+    PlayFab::<%- api.name %>Models::<%- call.request %> request;
+    FillPlayFab<%- api.name + call.request %>( &request );
+    HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &request, &async->asyncBlock); <% } else { %>    
+    HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &async->asyncBlock); <% } %>
+    if (FAILED(hr))
+    {
+        testContext.Fail("PlayFab<%- api.name + call.name %>Async", hr);
+        return;
+    }
+    async.release(); 
+} 
+
+<% } %>
+}

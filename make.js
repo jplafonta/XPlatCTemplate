@@ -6,12 +6,19 @@ if (typeof templatizeTree === "undefined") templatizeTree = function () { };
 
 var categorizedApis = {};
 var xmlRefDocs = {};
+var propertyReplacements = {};
 
 exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     console.log("Generating Combined api from: " + sourceDir + " to: " + apiOutputDir);
 
+    try {
+        propertyReplacements = require(path.resolve(sourceDir, "replacements.json"));
+    } catch (ex) {
+        throw "The file: replacements.json was not properly formatted JSON";
+    }
+
     categorizeCalls(apis);
-    parseXmlRefDocs();
+    xmlRefDocs = parseDataFile("XMLRefDocs.json");
 
     var locals = {
         apis: apis,
@@ -54,8 +61,20 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         isSerializable: isSerializable,
         isFixedSize: isFixedSize,
         getFormattedDatatypeDescription: getFormattedDatatypeDescription,
-        getFormattedCallDescription: getFormattedCallDescription
+        getFormattedCallDescription: getFormattedCallDescription,
+        getRequestExample: getRequestExample,
+        getPublicPropertyType: getPublicPropertyType
     };
+
+    var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.cpp.ejs"));
+    writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "Tests.cpp"), iapihTemplate(locals));
+
+    var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/TestData.cpp.ejs"));
+    writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "TestData.cpp"), iapihTemplate(locals));
+
+    var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "Tests.h"), iapihTemplate(locals));
+
 
     var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.h.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "Api.h"), iapihTemplate(locals));
@@ -109,17 +128,29 @@ function parseProjectFiles(filename) {
     return projectFiles;
 }
 
-function parseXmlRefDocs() {
-    var fullPath = path.resolve(__dirname, "XMLRefDocs.json");
-    console.log("Begin reading File: " + fullPath);
-    try {
-        xmlRefDocs = require(fullPath);
-    }
-    catch (err) {
-        console.log(" ***** Failed to Load: " + fullPath);
-        throw err;
-    }
-    console.log("Finished reading: " + fullPath);
+function jsonEscape(str)
+{
+    return str.replace(/\n/g, "").replace(/\r/g, "").replace(/\t/g, "").replace(/  /g, " ").replace(/  /g, " ");
+}
+
+function parseDataFile(filename) {
+    const fs = require('fs');
+
+    let fullPath = path.resolve(__dirname, filename);
+    let rawdata = fs.readFileSync(fullPath, 'utf8');
+    let dataEscaped = jsonEscape(rawdata);
+    let data = JSON.parse(dataEscaped);
+    return data;
+
+//    var fullPath = path.resolve(__dirname, filename);
+//    console.log("Reading File: " + fullPath);
+//    try {
+//        return require(fullPath);
+//    }
+//    catch (err) {
+//        console.log(" ***** Failed to Load: " + fullPath);
+//        throw err;
+//    }
 }
 
 function pruneEmptyTypes(api) {
@@ -695,4 +726,65 @@ function getFormattedCallDescription(apiName, call) {
         }
     }
     return "/// " + call.name + " documentation not found in XmlRefDocs."
+}
+
+
+
+function jsonEscapeQuotes(input) {
+    if (input != null)
+        input = input.replace(/"/g, "\\\"");
+    return input;
+}
+
+function getCorrectedRequestExample(api, apiCall) {
+    var output = JSON.parse(apiCall.requestExample);
+    checkReplacements(api, output);
+    return "\"" + jsonEscapeQuotes(jsonEscape(JSON.stringify(output, null, 2))) + "\"";
+}
+
+function doReplace(obj, paramName, newValue) {
+    if (obj.hasOwnProperty(paramName)) {
+        console.log("Replaced: " + obj[paramName] + " with " + newValue);
+        obj[paramName] = newValue;
+    }
+};
+
+function checkReplacements(api, obj) {
+    for (var replaceCategory in propertyReplacements) {
+        if (replaceCategory === "generic") {
+            for (var genReplaceName1 in propertyReplacements[replaceCategory])
+                doReplace(obj, genReplaceName1, propertyReplacements[replaceCategory][genReplaceName1]);
+        }
+        if (replaceCategory === api.name) {
+            for (var apiReplaceName in propertyReplacements[replaceCategory]) {
+                if (apiReplaceName === "generic") {
+                    for (var genReplaceName2 in propertyReplacements[replaceCategory][apiReplaceName])
+                        doReplace(obj, genReplaceName2, propertyReplacements[replaceCategory][apiReplaceName][genReplaceName2]);
+                }
+                doReplace(obj, apiReplaceName, propertyReplacements[replaceCategory][apiReplaceName]);
+            }
+        }
+    }
+}
+
+function getRequestExample(api, apiCall) {
+    var msg = null;
+    if (apiCall.requestExample.length > 0 && apiCall.requestExample.indexOf("{") >= 0) {
+        if (apiCall.requestExample.indexOf("\\\"") === -1) // I can't handle json in a string in json in a string...
+            return getCorrectedRequestExample(api, apiCall);
+        else
+            msg = "CANNOT PARSE EXAMPLE BODY: ";
+    }
+
+    var props = api.datatypes[apiCall.request].properties;
+    var output = {};
+    for (var p = 0; p < props.length; p++) {
+        output[props[p].name] = props[p].jsontype;
+    }
+
+    if (msg == null)
+        msg = "AUTO GENERATED BODY FOR: ";
+    console.log(msg + api.name + "." + apiCall.name);
+    // console.log("    " + JSON.stringify(output, null, 2));
+    return "\"" + jsonEscapeQuotes(jsonEscape(JSON.stringify(output, null, 2))) + "\"";;
 }
