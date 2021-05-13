@@ -265,7 +265,7 @@ void ApiTests::AddTests()
     AddTest("TestApiResultHandle", &ApiTests::TestApiResultHandle);
     //AddTest("TestApiSessionTicket", &ApiTests::TestApiSessionTicket);
     AddTest("TestApiEntityToken", &ApiTests::TestApiEntityToken);
-    //AddTest("TestApiSecretKey", &ApiTests::TestApiSecretKey); // Failing test
+    AddTest("TestApiSecretKey", &ApiTests::TestApiSecretKey);
     //AddTest("TestApiNoAuth", &ApiTests::TestApiNoAuth);
     AddTest("TestGetEntityTokenWithAuthContext", &ApiTests::TestGetEntityTokenWithAuthContext);
     AddTest("TestGetEntityTokenWithSecretKey", &ApiTests::TestGetEntityTokenWithSecretKey);
