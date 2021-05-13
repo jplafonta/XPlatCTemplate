@@ -141,16 +141,6 @@ function parseDataFile(filename) {
     let dataEscaped = jsonEscape(rawdata);
     let data = JSON.parse(dataEscaped);
     return data;
-
-//    var fullPath = path.resolve(__dirname, filename);
-//    console.log("Reading File: " + fullPath);
-//    try {
-//        return require(fullPath);
-//    }
-//    catch (err) {
-//        console.log(" ***** Failed to Load: " + fullPath);
-//        throw err;
-//    }
 }
 
 function pruneEmptyTypes(api) {
@@ -731,8 +721,9 @@ function getFormattedCallDescription(apiName, call) {
 
 
 function jsonEscapeQuotes(input) {
-    if (input != null)
+    if (input != null) {
         input = input.replace(/"/g, "\\\"");
+    }
     return input;
 }
 

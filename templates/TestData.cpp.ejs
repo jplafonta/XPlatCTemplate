@@ -47,7 +47,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
     // <%- "request->" + propName + "Count: " + "uint32_t" %><%}
     } 
  } }
-if( !found ) { %>    // Not found <%- datatype.name %><%} %>
+if( !found ) { throw Error('Not found ' + call.request) } %>
     PlayFab::JsonDocument inputJson;
     inputJson.Parse( <%- getRequestExample(api, call) %> );
     request->FromJson(inputJson);
