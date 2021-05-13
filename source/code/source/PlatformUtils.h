@@ -9,24 +9,10 @@
 namespace PlayFab
 {
 
-#if defined(PLAYFAB_PLATFORM_SWITCH)
-static_assert("You must request the Nintendo specific XPlat SDK from PlayFab support.");
-#else
-using TimePoint = std::chrono::time_point<SystemClock>;
-#endif
-
 // The primary purpose of these format strings is to communicate to and from the PlayFab server with consistent accuracy across platforms supported by this SDK
 constexpr char TIMESTAMP_READ_FORMAT[] = "%Y-%m-%dT%T";
 constexpr char TIMESTAMP_WRITE_FORMAT[] = "%Y-%m-%dT%H:%M:%S.000Z";
 constexpr int TIMESTAMP_BUFFER_SIZE = 64; // Arbitrary number sufficiently large enough to contain the timestamp strings sent by PlayFab server
-
-// Initialize may be required on some platforms
-inline void InitializeClock()
-{
-#if defined(PLAYFAB_PLATFORM_SWITCH)
-    static_assert("You must request the Nintendo specific XPlat SDK from PlayFab support.");
-#endif
-}
 
 // Time type conversions
 inline time_t TimePointToTimeT(const TimePoint& input)
@@ -42,9 +28,10 @@ inline TimePoint TimeTToTimePoint(time_t input)
 inline tm TimeTToUtcTm(time_t input)
 {
     tm timeInfo{ 0 };
-#if defined(PLAYFAB_PLATFORM_PLAYSTATION)
+
+#if HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_4
     gmtime_s(&input, &timeInfo);
-#elif defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#elif HC_PLATFORM_IS_MICROSOFT
     gmtime_s(&timeInfo, &input);
 #else
     gmtime_r(&input, &timeInfo);
@@ -54,9 +41,9 @@ inline tm TimeTToUtcTm(time_t input)
 
 inline time_t UtcTmToTimeT(tm input)
 {
-#if defined(PLAYFAB_PLATFORM_PLAYSTATION)
+#if HC_PLATFORM == HC_PLATFORM_SONY_PLAYSTATION_4
     return mktime(&input);
-#elif defined(PLAYFAB_PLATFORM_WINDOWS) || defined(PLAYFAB_PLATFORM_XBOX)
+#elif HC_PLATFORM_IS_MICROSOFT
     return _mkgmtime(&input);
 #else
     return timegm(&input);
@@ -88,12 +75,8 @@ inline time_t GetTimeTNow()
 // Get a tick count that represents now in milliseconds (not useful for absolute time)
 inline int64_t GetMilliTicks()
 {
-#if defined(PLAYFAB_PLATFORM_SWITCH)
-    static_assert("You must request the Nintendo specific XPlat SDK from PlayFab support.");
-#else
     auto msClock = std::chrono::time_point_cast<std::chrono::milliseconds>(Clock::now());
     return msClock.time_since_epoch().count();
-#endif
 }
 
 // Time Serialization

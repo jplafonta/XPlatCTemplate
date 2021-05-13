@@ -9,7 +9,8 @@ namespace QoS
 {
 
 // Port the QoS server listen on
-constexpr int PORT = 3075;
+constexpr int kPort = 3075;
+constexpr char kPortString[]{ "3075" };
 
 Result<SharedPtr<QoSSocket>> QoSSocket::MakeAndConfigure(uint32_t timeoutMs)
 {
@@ -21,7 +22,7 @@ Result<SharedPtr<QoSSocket>> QoSSocket::MakeAndConfigure(uint32_t timeoutMs)
 
     auto socket = socketResult.ExtractPayload();
 
-    RETURN_IF_FAILED(socket->SetPort(PORT));
+    RETURN_IF_FAILED(socket->SetPort(kPort));
     RETURN_IF_FAILED(socket->SetTimeout(timeoutMs));
 
     return SharedPtr<QoSSocket>{ new (Allocator<QoSSocket>{}.allocate(1)) QoSSocket{ std::move(socket), timeoutMs } };
@@ -35,7 +36,7 @@ QoSSocket::QoSSocket(SharedPtr<Socket> socket, uint32_t timeoutMs) :
 
 Result<uint32_t> QoSSocket::PingServer(const char* address)
 {
-    RETURN_IF_FAILED(m_socket->SetAddress(address));
+    RETURN_IF_FAILED(m_socket->SetAddress(address, kPortString));
 
     // Clear the buffer with this value before receiving the reply.
     constexpr char BUFFER_VALUE = '1';

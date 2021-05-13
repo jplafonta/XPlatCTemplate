@@ -8,13 +8,14 @@
     "Source Files\\QoS"
   ],
   "includeFiles": {
-    "\\include\\playfab\\PlayFab.h": "Header Files\\playfab",
-    "\\include\\playfab\\PlayFabBaseModel.h": "Header Files\\playfab",
-    "\\include\\playfab\\PlayFabEntity.h": "Header Files\\playfab",
-    "\\include\\playfab\\PlayFabErrors.h": "Header Files\\playfab",
-    "\\include\\playfab\\PlayFabEventManagerApi.h": "Header Files\\playfab",
-    "\\include\\playfab\\PlayFabGlobal.h": "Header Files\\playfab",
-    "\\include\\playfab\\PlayFabQoSApi.h": "Header Files\\playfab"
+    "include\\playfab\\PlayFab.h": "Header Files\\playfab",
+    "include\\playfab\\PlayFabBaseModel.h": "Header Files\\playfab",
+    "include\\playfab\\PlayFabEntity.h": "Header Files\\playfab",
+    "include\\playfab\\PlayFabErrors.h": "Header Files\\playfab",
+    "include\\playfab\\PlayFabEventManagerApi.h": "Header Files\\playfab",
+    "include\\playfab\\PlayFabGlobal.h": "Header Files\\playfab",
+    "include\\playfab\\PlayFabPal.h": "Header Files\\playfab",
+    "include\\playfab\\PlayFabQoSApi.h": "Header Files\\playfab"
   },
   "sourceFiles": {
     "source\\ApiAsyncProviders.h": "Source Files",
@@ -37,7 +38,6 @@
     "source\\JsonUtils.cpp": "Source Files",
     "source\\JsonUtils.h": "Source Files",
     "source\\PlatformUtils.h": "Source Files",
-    "source\\PlayFabPlatformMacros.h": "Source Files",
     "source\\Result.h": "Source Files",
     "source\\ResultMacros.h": "Source Files",
     "source\\SdkVersion.h": "Source Files",
