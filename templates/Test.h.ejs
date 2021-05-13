@@ -1,0 +1,50 @@
+#pragma once
+
+#include "TestCase.h"
+#include <playfab/PlayFabGlobal.h>
+#include <playfab/PlayFabEntity.h>
+#include <playfab/PlayFabClientDataModels.h>
+#include "../../../code/source/Client/<%- api.name %>DataModels.h"
+
+namespace PlayFabUnit
+{
+
+class AutoGen<%- api.name %>Tests : public PlayFabApiTestCase
+{
+private: 
+<% for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
+{
+    var call = categorizedApi.otherCalls[i];
+    var asyncName = "PlayFab" + api.name + call.name + "Async"; 
+%>    void Test<%- api.name + call.name %>(TestContext& testContext); 
+<% } %>
+
+protected:
+    void AddTests();
+
+<% 
+var hasFillBeenDefinedMap = {};
+var hasValidateBeenDefinedMap = {};
+for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
+{
+    var call = categorizedApi.otherCalls[i];
+    if( !(call.request in hasFillBeenDefinedMap) && call.request != "void" ) {
+        hasFillBeenDefinedMap[call.request] = true;
+%>    static void FillPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request );
+<% } if (!(call.result in hasValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") { 
+    hasValidateBeenDefinedMap[call.result] = true;
+%>    static HRESULT ValidatePlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result );
+<% } } %>
+
+public:
+    PlayFabStateHandle stateHandle{ nullptr };
+    PlayFabEntityHandle entityHandle{ nullptr };
+
+    void ClassSetUp() override;
+    void ClassTearDown() override;
+    void SetUp(TestContext& testContext) override;
+
+    void Tick(TestContext&) override {}
+};
+
+}
