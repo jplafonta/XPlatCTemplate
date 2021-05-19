@@ -9,6 +9,7 @@
 
 #include <httpClient/pal.h>
 #include <httpClient/async.h>
+#include <playfab/PlayFabSharedDataModels.h>
 #include <playfab/PlayFabAuthenticationDataModels.h>
 
 extern "C"
@@ -74,6 +75,87 @@ HRESULT PlayFabEntityGetEntityTokenAsync(
     _In_ PlayFabEntityHandle entityHandle,
     _In_ const PlayFabAuthenticationGetEntityTokenRequest* request,
     _Inout_ XAsyncBlock* async
+) noexcept;
+
+/// <summary>
+/// Get the PlayFabId (master_player_account Id) for an Entity.
+/// </summary>
+/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
+/// <param name="playFabId">Returned pointer to the playFabId. Valid until the Entity object is cleaned up.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT PlayFabEntityGetPlayFabId(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const char** playFabId
+) noexcept;
+
+/// <summary>
+/// Get the Entity Id for an Entity.
+/// </summary>
+/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
+/// <param name="entityId">Returned pointer to the entityId. Valid until the Entity object is cleaned up.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT PlayFabEntityGetEntityId(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const char** entityId
+) noexcept;
+
+/// <summary>
+/// Get the Entity type for an entity.
+/// </summary>
+/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
+/// <param name="entityId">Returned pointer to the entityType. Valid until the Entity object is cleaned up.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT PlayFabEntityGetEntityType(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const char** entityType
+) noexcept;
+
+/// <summary>
+/// Get combined player info. Will be null if combined player info was not requested requested during login (see <see cref="PlayFabClientGetPlayerCombinedInfoRequestParams"/>).
+/// </summary>
+/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
+/// <param name="playerCombinedInfo">Returned pointer to player combined info. Valid until the Entity object is cleaned up.</param>
+/// <returns>Result code for this API operation.</returns>
+/// <remarks>
+/// Note that the returned data is only guaranteed to be up to date as of the login request - it will not be automatically refreshed.
+/// To get updated combined player data, call <see cref="PlayFabClientGetPlayerCombinedInfoAsync"/>
+/// </remarks>
+HRESULT PlayFabEntityGetPlayerCombinedInfo(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const PlayFabGetPlayerCombinedInfoResultPayload** playerCombinedInfo
+) noexcept;
+
+/// <summary>
+/// Get last login time. lastLoginTime will be set to null if entity has no previous login.
+/// </summary>
+/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
+/// <param name="lastLoginTime">Returned pointer to the last login time. Valid until the Entity object is cleaned up.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT PlayFabEntityGetLastLoginTime(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const time_t** lastLoginTime
+) noexcept;
+
+/// <summary>
+/// Get UserSettings, if applicable. If unavailable, userSettings will be set to null.
+/// </summary>
+/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
+/// <param name="lastLoginTime">Returned pointer to the UserSettings. Valid until the Entity object is cleaned up.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT PlayFabEntityGetUserSettings(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const PlayFabUserSettings** userSettings
+) noexcept;
+
+/// <summary>
+/// Get experimentation treatments for a user at the time of login. If unavailable, treatmentAssignment will be set to null.
+/// </summary>
+/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
+/// <param name="lastLoginTime">Returned pointer to TreatmentAssignment. Valid until the Entity object is cleaned up.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT PlayFabEntityGetTreatmentAssignment(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const PlayFabTreatmentAssignment** treatmentAssignment
 ) noexcept;
 
 }

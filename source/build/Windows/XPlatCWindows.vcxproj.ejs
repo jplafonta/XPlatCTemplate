@@ -110,20 +110,22 @@ for (var file in projectFiles.sourceFiles) {
     }
 } 
 for(var apiName in categorizedApis) { 
-    var api = categorizedApis[apiName];
-    if (api.loginCalls.length > 0) { %>
+    var api = categorizedApis[apiName];%>
+    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>DataModels.h" />
+    <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.h" />
+    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.cpp" /><%
+    if (!(apiName === "Shared")) {
+        if (api.loginCalls.length > 0) { %>
     <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>AuthApi.h" />
     <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>AuthApi.cpp" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>AuthApi.h" />
     <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\PlayFab<%- apiName %>AuthApi.cpp" /><%
-    } %>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>DataModels.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.h" />
-    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.cpp" />
+        } %>
     <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>Api.h" />
     <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>Api.cpp" />
     <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>Api.h" />
     <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\PlayFab<%- apiName %>Api.cpp" /><%
+    }
 } %>
     <ClInclude Include="$(SdkSourceDir)\source\stdafx.h" />
     <ClCompile Include="$(SdkSourceDir)\source\stdafx.cpp">

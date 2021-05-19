@@ -1,6 +1,6 @@
 #pragma once
 
-#include <playfab/PlayFabBaseModel.h>
+#include <playfab/PlayFabSharedDataModels.h>
 #include "EnumTraits.h"
 
 namespace PlayFab
@@ -40,6 +40,8 @@ String WriteToString(const JsonValue& jsonValue);
 
 JsonValue ToJson(const char* string);
 
+JsonValue ToJson(const String& string);
+
 JsonValue ToJson(const PlayFabJsonObject& jsonObject);
 
 JsonValue ToJson(time_t value, bool convertToIso8601String = false);
@@ -63,6 +65,10 @@ JsonValue ToJson(const ModelT& value);
 // Specialization for pointers. Returns JsonValue{ kNullType } if pointer is null and appropriately converts to JsonValue otherwise
 template <typename PtrT, typename std::enable_if_t<std::is_pointer_v<PtrT>>* = 0>
 JsonValue ToJson(const PtrT value);
+
+// Specialization for StdExtra::optional
+template <typename T>
+JsonValue ToJson(const StdExtra::optional<T>& value);
 
 //------------------------------------------------------------------------------
 // Helpers for deserializing from JsonValue
@@ -115,6 +121,8 @@ void ObjectAddMember(JsonValue& jsonObject, JsonValue&& name, const T& value);
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, time_t value, bool convertToIso8601String = false);
 
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const time_t* value, bool convertToIso8601String = false);
+
+void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const StdExtra::optional<time_t>& value, bool convertToIso8601String = false);
 
 template <typename T, typename std::enable_if_t<!Detail::IsDictionaryEntry<T>::value>* = 0>
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const T* array, uint32_t arrayCount);
@@ -216,6 +224,16 @@ template <typename PtrT, typename std::enable_if_t<std::is_pointer_v<PtrT>>*>
 JsonValue ToJson(const PtrT value)
 {
     if (value != nullptr)
+    {
+        return ToJson(*value);
+    }
+    return JsonValue{ rapidjson::kNullType };
+}
+
+template <typename T>
+JsonValue ToJson(const StdExtra::optional<T>& value)
+{
+    if (value.has_value())
     {
         return ToJson(*value);
     }

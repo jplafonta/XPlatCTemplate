@@ -1,18 +1,23 @@
 #pragma once
 
-#include <playfab/PlayFab<%- api.name %>DataModels.h>
+#include <playfab/PlayFab<%- api.name %>DataModels.h><%
+if (!(api.name === "Shared")) { %>
+#include <Shared/SharedDataModels.h><%
+} %>
 #include "BaseModel.h"
-#include "JsonUtils.h"
 
 namespace PlayFab
-{
+{<%
+if (!(api.name === "Shared")) { %>
 namespace <%- api.name %>Models
-{
+{<%
+} %>
 
 // <%- api.name %> Classes<%
 for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) {
-    var datatype = sortedClasses[typeIdx]; %>
-struct <%- datatype.name %> : public <%- prefix %><%- datatype.name %>, <%- getBaseTypes(datatype) %>
+    var datatype = sortedClasses[typeIdx]; 
+    var propertyVisibility = datatype.isInternalOnly ? "public" : "private"; %>
+struct <%- datatype.name %> : <%- getBaseTypes(prefix, datatype) %>
 {
     <%- datatype.name %>();<%
     if (canDefaultCopyConstructor(datatype)) { %>
@@ -31,20 +36,25 @@ struct <%- datatype.name %> : public <%- prefix %><%- datatype.name %>, <%- getB
     size_t SerializedSize() const override;
     void Serialize(void* buffer, size_t bufferSize) const override;
 <%  } // end if %>
-private:<%
+<%- propertyVisibility %>:<%
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
         var property = datatype.properties[propIdx];
-%><%- getPropertyDefinition("    ", property, prefix, true) %><%
+%><%- getPropertyDefinition("    ", datatype, property, prefix, true) %><%
     } // end for %>
 };
-<% } // end for %>
-} // namespace <%- api.name %>Models
+<% } // end for 
+if (!(api.name === "Shared")) { %>
+} // namespace <%- api.name %>Models<%
+} %>
 
 namespace JsonUtils
 {
 // Serialization methods for public models
 <% for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { 
-    var datatype = sortedClasses[typeIdx]; %>
+    var datatype = sortedClasses[typeIdx]; 
+    if (datatype.isInternalOnly) {
+        continue;
+    } %>
 template<> inline JsonValue ToJson<>(const <%- prefix %><%- datatype.name %>& input);<%
 } // end for %>
 } // namespace JsonUtils

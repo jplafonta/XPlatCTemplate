@@ -1,25 +1,25 @@
 #include "stdafx.h"
 #include "<%- api.name %>DataModels.h"
+#include "JsonUtils.h"
 
 namespace PlayFab
-{
+{<%
+if (!(api.name === "Shared")) { %>
 namespace <%- api.name %>Models
 {<%
-for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) {
-    var datatype = sortedClasses[typeIdx]; %>
-
-<%- datatype.name %>::<%- datatype.name %>() : 
-    <%- prefix %><%- datatype.name %>{}
+} %>
+<% for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) {
+    var datatype = sortedClasses[typeIdx];
+    var initializationList = datatype.isInternalOnly ? "" : " :\n    "  + prefix + datatype.name + "{}"; %>
+<%- datatype.name %>::<%- datatype.name %>()<%- initializationList %>
 {
 }
-<% if (!canDefaultCopyConstructor(datatype)) { %>
-<%- datatype.name %>::<%- datatype.name %>(const <%- datatype.name %>& src) :
-    <%- prefix %><%- datatype.name %>{ src }<%- getCopyConstructorInitializationList("    ", datatype) %>
+<% if (!canDefaultCopyConstructor(datatype)) {  %>
+<%- datatype.name %>::<%- datatype.name %>(const <%- datatype.name %>& src)<%- getCopyConstructorInitializationList("    ", datatype, prefix) %>
 {<%- getCopyConstructorBody("    ", datatype, prefix) %>
 }
 
-<%- datatype.name %>::<%- datatype.name %>(<%- datatype.name %>&& src) :
-    <%- prefix %><%- datatype.name %>{ src }<%- getMoveConstructorInitializationList("    ", datatype) %>
+<%- datatype.name %>::<%- datatype.name %>(<%- datatype.name %>&& src)<%- getMoveConstructorInitializationList("    ", datatype, prefix) %>
 {<%- getCopyConstructorBody("    ", datatype, prefix) %>
 }<%
 } // end if %>
@@ -33,8 +33,17 @@ for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
 }
 
 JsonValue <%- datatype.name %>::ToJson() const
-{
-    return JsonUtils::ToJson<<%- prefix %><%- datatype.name %>>(*this);
+{<%
+if (datatype.isInternalOnly) { %>
+    JsonValue output{ rapidjson::kObjectType };<%
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { 
+        var property = datatype.properties[propIdx]; %>
+    <%- addPropertyToJson(property, datatype) %><%
+    } // end for %>
+    return output;<%
+} else { %>
+    return JsonUtils::ToJson<<%- prefix %><%- datatype.name %>>(*this);<%
+} %>
 }
 <%  if (isSerializable(datatype)) { %>
 size_t <%- datatype.name %>::SerializedSize() const
@@ -69,22 +78,26 @@ void <%- datatype.name %>::Serialize(void* buffer, size_t bufferSize) const
     assert(stringBuffer - bufferSize == buffer);
 }
 <%  } // end if
-} // end for %>
-
-} // namespace <%- api.name %>Models
+} // end for
+if (!(api.name === "Shared")) { %>
+} // namespace <%- api.name %>Models<%
+} %>
 
 namespace JsonUtils
 {
 // Serialization methods for public models
 <% for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { 
-    var datatype = sortedClasses[typeIdx]; %>
+    var datatype = sortedClasses[typeIdx];
+    if (datatype.isInternalOnly) {
+        continue;
+    } %>
 template<>
 inline JsonValue ToJson<>(const <%- prefix %><%- datatype.name %>& input)
 {
     JsonValue output{ rapidjson::kObjectType };<%
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { 
         var property = datatype.properties[propIdx]; %>
-    <%- addPropertyToJson(property) %><%
+    <%- addPropertyToJson(property, datatype) %><%
     } // end for %>
     return output;
 }

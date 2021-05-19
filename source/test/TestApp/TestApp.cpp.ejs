@@ -17,6 +17,7 @@
 #include "ModelTests.h"
 #include "ApiTests.h" 
 #include "EventManagerTests.h"
+#include "EntityTests.h"
 <% for(var apiName in categorizedApis) 
 { 
     var api = categorizedApis[apiName]; 
@@ -93,6 +94,10 @@ namespace PlayFabUnit
 
         ModelTests modelTests;
         testRunner.Add(modelTests);
+
+        EntityTests entityTests;
+        entityTests.SetTitleInfo(testTitleData);
+        testRunner.Add(entityTests);
 
         ApiTests apiTests;
         apiTests.SetTitleInfo(testTitleData);

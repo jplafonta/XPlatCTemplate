@@ -9,7 +9,6 @@
   ],
   "includeFiles": {
     "include\\playfab\\PlayFab.h": "C Public Includes\\playfab",
-    "include\\playfab\\PlayFabBaseModel.h": "C Public Includes\\playfab",
     "include\\playfab\\PlayFabEntity.h": "C Public Includes\\playfab",
     "include\\playfab\\PlayFabErrors.h": "C Public Includes\\playfab",
     "include\\playfab\\PlayFabEventManagerApi.h": "C Public Includes\\playfab",
@@ -51,7 +50,6 @@
     "source\\Trace.cpp": "Source",
     "source\\Trace.h": "Source",
     "source\\Types.h": "Source",
-    "source\\Api\\PlayFabBaseModel.cpp": "Source\\Api",
     "source\\Api\\PlayFabEntity.cpp": "Source\\Api",
     "source\\Api\\PlayFabGlobal.cpp": "Source\\Api",
     "source\\Events\\Manager\\Event.cpp": "Source\\Events\\Manager",

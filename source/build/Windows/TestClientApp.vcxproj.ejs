@@ -119,6 +119,7 @@
     <ClInclude Include="$(TestSourceDir)\TestApp\ModelTests.h" />
     <ClInclude Include="$(TestSourceDir)\TestApp\ApiTests.h" />
     <ClInclude Include="$(TestSourceDir)\TestApp\EventManagerTests.h" />
+    <ClInclude Include="$(TestSourceDir)\TestApp\EntityTests.h" />
     <ClInclude Include="$(TestSourceDir)\TestApp\XAsyncHelper.h" />
   </ItemGroup>
   <ItemGroup>
@@ -134,7 +135,8 @@
     <ClCompile Include="$(TestSourceDir)\TestApp\JsonParsingTests.cpp" />
     <ClCompile Include="$(TestSourceDir)\TestApp\ModelTests.cpp" />
     <ClCompile Include="$(TestSourceDir)\TestApp\EventManagerTests.cpp" />
-    <ClCompile Include="$(TestSourceDir)\TestApp\ApiTests.cpp" /> <%
+    <ClCompile Include="$(TestSourceDir)\TestApp\ApiTests.cpp" />
+    <ClCompile Include="$(TestSourceDir)\TestApp\EntityTests.cpp" /> <%
 for(var apiName in categorizedApis) { 
     var api = categorizedApis[apiName]; 
     if (apiName == "Client") {  %>

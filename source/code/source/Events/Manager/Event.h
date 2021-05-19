@@ -41,7 +41,7 @@ private:
     mutable PlayFabEventsEventContents m_eventContents; // mutable so we can lazily update m_eventContents.payload when it is requested
 
     // PlayFabEventsEventContents fields. Omitting optional customTags, originalId, and originalTimestamp fields.
-    StdExtra::optional<PlayFabEventsEntityKey> m_entity;
+    StdExtra::optional<PlayFabEntityKey> m_entity;
     String m_eventNamespace;
     String m_name;
     JsonValue m_payload;
