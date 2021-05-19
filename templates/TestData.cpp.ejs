@@ -14,10 +14,12 @@ uint32_t g_testIndex = 1;
 <%
 function debugLogProp(varName, propName, propCoutName, property, prefix, padding) 
 {
-    var propType = getPublicPropertyType(property, prefix);
-    var propTypeClassName = getPublicPropertyTypeClassName(property, prefix);
+    var propType = getPublicPropertyType(property, prefix, false);
+    var propTypeWithConst = getPublicPropertyType(property, prefix, true);
     if (propType == "PlayFabJsonObject") {%>
 <%- padding %>if( <%- varName %>-><%- propName %>.stringValue ) { std::cout << "  <%- propCoutName %> " << <%- varName %>-><%- propName %>.stringValue << std::endl; } else { std::cout << "  <%- propName %> = nullptr" << std::endl; }<%} else 
+if (propTypeWithConst == "PlayFabClientRegion const*") {%>
+<%- padding %>if( <%- varName %>-><%- propName %> ) { std::cout << "  <%- propCoutName %> " << (int)*<%- varName %>-><%- propName %> << std::endl; }<%} else 
 if (propType == "PlayFabClientRegion" || propType == "PlayFabClientAdActivity") {%>
 <%- padding %>std::cout << "  <%- propCoutName %> " << (int)<%- varName %>-><%- propName %> << std::endl;<%} else 
 if (propType == "bool const*" || propType == "const char*") {%>
@@ -26,7 +28,7 @@ if (propType == "bool const*" || propType == "const char*") {%>
 }
 
 function debugLogCollection(varName, propName, property, prefix) {
-        var propType = getPublicPropertyTypeClassName(property, prefix);
+        var propType = getPublicPropertyType(property, prefix, false);
 %>    
     std::cout << "  <%- propName %>Count " << <%- varName %>-><%- propName %>Count << std::endl;
 
@@ -45,7 +47,7 @@ function debugLogCollection(varName, propName, property, prefix) {
                     var property = datatype.properties[propIdx];
                     var isInternal = false;
                     var innerPropName = getPropertyName(property, isInternal);
-                    var innerPropType = getPublicPropertyType(property, prefix);
+                    var innerPropType = getPublicPropertyType(property, prefix, true);
                     debugLogProp(varName, propName + "[i]->" + innerPropName, propName + "[\"<<i<<\"]->" + innerPropName, property, prefix, "        ")
                 }
             }
@@ -55,9 +57,9 @@ function debugLogCollection(varName, propName, property, prefix) {
         if( propType == "PlayFabJsonObject" ) {%>
         std::cout << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i].stringValue << std::endl;
         <%} else if( 
-            propType == "UserDataRecordDictionaryEntry" || 
-            propType == "VirtualCurrencyRechargeTimeDictionaryEntry" ||
-            propType == "SharedGroupDataRecordDictionaryEntry" || 
+            propType == "PlayFabUserDataRecordDictionaryEntry" || 
+            propType == "PlayFabVirtualCurrencyRechargeTimeDictionaryEntry" ||
+            propType == "PlayFabClientSharedGroupDataRecordDictionaryEntry" ||
             propType == "PlayFabStringDictionaryEntry" || 
             propType == "PlayFabUint32DictionaryEntry" || 
             propType == "PlayFabInt32DictionaryEntry" ) {%>
@@ -112,7 +114,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
     {
         var property = datatype.properties[propIdx];
         var isInternal = false;
-        var type = getPublicPropertyType(property, prefix);
+        var type = getPublicPropertyType(property, prefix, true);
         var propName = getPropertyName(property, isInternal);
 %>
     // <%- "request->" + propName + ": " + type %><%
@@ -126,7 +128,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
     {
         var property = datatype.properties[propIdx];
         var isInternal = false;
-        var type = getPublicPropertyType(property, prefix);
+        var type = getPublicPropertyType(property, prefix, true);
         var propName = getPropertyName(property, isInternal);
 
         // For public collection properties add an additional "count" property
@@ -162,7 +164,7 @@ if( !found ) { throw Error('Not found ' + call.request) } %>
     {
         var property = datatype.properties[propIdx];
         var isInternal = false;
-        var type = getPublicPropertyType(property, prefix);
+        var type = getPublicPropertyType(property, prefix, true);
         var propName = getPropertyName(property, isInternal);
 %><%    // For public collection properties add an additional "count" property
         if (property.collection && !(type === "PlayFabJsonObject")) { 

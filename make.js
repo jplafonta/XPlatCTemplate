@@ -161,7 +161,7 @@ let testStatusList = new Map([
     ["TestClientWriteCharacterEvent", "Failing"],
     ["TestClientWritePlayerEvent", "Passing"],
     ["TestClientWriteTitleEvent", "Passing"],
-
+]);
 
 exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     console.log("Generating Combined api from: " + sourceDir + " to: " + apiOutputDir);
@@ -232,7 +232,6 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         getFormattedCallDescription: getFormattedCallDescription,
         getRequestExample: getRequestExample,
         getPublicPropertyType: getPublicPropertyType,
-        getPublicPropertyTypeClassName: getPublicPropertyTypeClassName,
         testStatusList: testStatusList
     };
 
@@ -743,54 +742,7 @@ function getInternalPropertyType(property, prefix) {
     return type;
 }
 
-function getPublicPropertyTypeClassName(property, prefix) {
-    var type = "";
-
-    // Service types that can be mapped directly to C types
-    var types = {
-        "String": "const char*", "Boolean": "bool", "int16": "int16_t", "uint16": "uint16_t", "int32": "int32_t", "uint32": "uint32_t",
-        "int64": "int64_t", "uint64": "uint64_t", "float": "float", "double": "double", "DateTime": "time_t", "object": "PlayFabJsonObject"
-    };
-
-    if (property.actualtype in types) {
-        type = types[property.actualtype];
-    } else if (property.isclass || property.isenum) {
-        type = property.actualtype;
-    } else {
-        throw Error("Unrecognized property type " + property.actualtype);
-    }
-
-    // By design class properties are always pointers. Pointers will ultimately point to derived C++ internal Objects which
-    // can automatically manage their cleanup & copying via destructors and copy constructors
-
-    // Add type modifications depending on "collection" & "optional" attributes
-    if (!(property.actualtype === "object")) {
-        if (property.collection === "map") {
-            // array of dictionary entries
-            return getDictionaryEntryTypeFromValueType(type);
-        } else if (property.collection === "array") {
-            if (property.isclass) {
-                // array of pointers
-                return type;
-            } else {
-                return type;
-            }
-        } else if (property.optional) {
-            // Types which aren't already nullable will be made pointer types
-            if (!(type === "const char*" || type === "PlayFabJsonObject")) {
-                return type;
-            }
-        }
-    }
-
-    if (property.isclass) {
-        return type + " const*";
-    }
-
-    return type;
-}
-
-function getPublicPropertyType(property, prefix) {
+function getPublicPropertyType(property, prefix, addConsts) {
     var type = "";
 
     // If property type is shared, override 'prefix' with the global prefix
@@ -815,28 +767,54 @@ function getPublicPropertyType(property, prefix) {
     // By design class properties are always pointers. Pointers will ultimately point to derived C++ internal Objects which
     // can automatically manage their cleanup & copying via destructors and copy constructors
 
-    // Add type modifications depending on "collection" & "optional" attributes
-    if (!(property.actualtype === "object")) {
-        if (property.collection === "map") {
-            // array of dictionary entries
-            return "struct " + getDictionaryEntryTypeFromValueType(type) + " const*";
-        } else if (property.collection === "array") {
-            if (property.isclass) {
-                // array of pointers
-                return type + " const* const*";
-            } else {
-                return type + " const*";
-            }
-        } else if (property.optional) {
-            // Types which aren't already nullable will be made pointer types
-            if (!(type === "const char*" || type === "PlayFabJsonObject")) {
-                return type + " const*";
+    if (addConsts === false) {
+        if (!(property.actualtype === "object")) {
+            if (property.collection === "map") {
+                // array of dictionary entries
+                return getDictionaryEntryTypeFromValueType(type);
+            } else if (property.collection === "array") {
+                if (property.isclass) {
+                    // array of pointers
+                    return type;
+                } else {
+                    return type;
+                }
+            } else if (property.optional) {
+                // Types which aren't already nullable will be made pointer types
+                if (!(type === "const char*" || type === "PlayFabJsonObject")) {
+                    return type;
+                }
             }
         }
-    }
 
-    if (property.isclass) {
-        return type + " const*";
+        if (property.isclass) {
+            return type;
+        }
+    }
+    else {
+        // Add type modifications depending on "collection" & "optional" attributes
+        if (!(property.actualtype === "object")) {
+            if (property.collection === "map") {
+                // array of dictionary entries
+                return "struct " + getDictionaryEntryTypeFromValueType(type) + " const*";
+            } else if (property.collection === "array") {
+                if (property.isclass) {
+                    // array of pointers
+                    return type + " const* const*";
+                } else {
+                    return type + " const*";
+                }
+            } else if (property.optional) {
+                // Types which aren't already nullable will be made pointer types
+                if (!(type === "const char*" || type === "PlayFabJsonObject")) {
+                    return type + " const*";
+                }
+            }
+        }
+
+        if (property.isclass) {
+            return type + " const*";
+        }
     }
 
     return type;
@@ -892,7 +870,7 @@ function getPropertyDefinition(tabbing, datatype, property, prefix, isInternal) 
     }
 
     if (!isInternal || datatype.isInternalOnly || requiresDynamicStorage(property)) {
-        var type = isInternal ? getInternalPropertyType(property, prefix) : getPublicPropertyType(property, prefix);
+        var type = isInternal ? getInternalPropertyType(property, prefix) : getPublicPropertyType(property, prefix, true);
         var propName = getPropertyName(property, datatype.isInternalOnly ? false : isInternal);
         output += ("\n" + tabbing + type + " " + propName + ";");
 
@@ -1025,7 +1003,7 @@ function getCopyConstructorBody(tabbing, datatype, prefix) {
             } else if (property.optional) {
                 output += ("\n" + tabbing + publicPropName + " = " + privatePropName + " ? " + privatePropName + ".operator->() : nullptr;");
             } else if (property.isclass) {
-                output += ("\n" + tabbing + publicPropName + " = (" + getPublicPropertyType(property, prefix) + ")&" + privatePropName + ";");
+                output += ("\n" + tabbing + publicPropName + " = (" + getPublicPropertyType(property, prefix, true) + ")&" + privatePropName + ";");
             } else {
                 throw Error("Unable to copy property of type " + property.actualtype);
             }
