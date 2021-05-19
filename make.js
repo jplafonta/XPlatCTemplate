@@ -8,6 +8,152 @@ var categorizedApis = {};
 var xmlRefDocs = {};
 var propertyReplacements = {};
 
+let testStatusList = new Map([
+    ["TestClientAcceptTrade", "Crashes"],
+    ["TestClientAddFriend", "Failing"],
+    ["TestClientAddGenericID", "Passing"],
+    ["TestClientAddOrUpdateContactEmail", "Passing"],
+    ["TestClientAddSharedGroupMembers", "Failing"],
+    ["TestClientAddUsernamePassword", "Failing"],
+    ["TestClientAddUserVirtualCurrency", "Failing"],
+    ["TestClientAndroidDevicePushNotificationRegistration", "Failing"],
+    ["TestClientAttributeInstall", "Failing"],
+    ["TestClientCancelTrade", "Failing"],
+    ["TestClientConfirmPurchase", "Failing"],
+    ["TestClientConsumeItem", "Failing"],
+    ["TestClientConsumeMicrosoftStoreEntitlements", "Crashes"],
+    ["TestClientConsumePS5Entitlements", "Failing"],
+    ["TestClientConsumePSNEntitlements", "Failing"],
+    ["TestClientConsumeXboxEntitlements", "Failing"],
+    ["TestClientCreateSharedGroup", "Failing"],
+    ["TestClientExecuteCloudScript", "Passing"],
+    ["TestClientGetAccountInfo", "Failing"],
+    ["TestClientGetAdPlacements", "Passing"],
+    ["TestClientGetAllUsersCharacters", "Failing"],
+    ["TestClientGetCatalogItems", "Passing"],
+    ["TestClientGetCharacterData", "Failing"],
+    ["TestClientGetCharacterInventory", "Failing"],
+    ["TestClientGetCharacterLeaderboard", "Passing"],
+    ["TestClientGetCharacterReadOnlyData", "Failing"],
+    ["TestClientGetCharacterStatistics", "Failing"],
+    ["TestClientGetContentDownloadUrl", "Passing"],
+    ["TestClientGetCurrentGames", "Passing"],
+    ["TestClientGetFriendLeaderboard", "Passing"],
+    ["TestClientGetFriendLeaderboardAroundPlayer", "Passing"],
+    ["TestClientGetFriendsList", "Passing"],
+    ["TestClientGetGameServerRegions", "Failing"],
+    ["TestClientGetLeaderboard", "Passing"],
+    ["TestClientGetLeaderboardAroundCharacter", "Failing"],
+    ["TestClientGetLeaderboardAroundPlayer", "Passing"],
+    ["TestClientGetLeaderboardForUserCharacters", "Passing"],
+    ["TestClientGetPaymentToken", "Failing"],
+    ["TestClientGetPhotonAuthenticationToken", "Failing"],
+    ["TestClientGetPlayerCombinedInfo", "Failing"],
+    ["TestClientGetPlayerProfile", "Failing"],
+    ["TestClientGetPlayerSegments", "Passing"],
+    ["TestClientGetPlayerStatistics", "Passing"],
+    ["TestClientGetPlayerStatisticVersions", "Failing"],
+    ["TestClientGetPlayerTags", "Failing"],
+    ["TestClientGetPlayerTrades", "Passing"],
+    ["TestClientGetPlayFabIDsFromFacebookIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromFacebookInstantGamesIds", "Passing"],
+    ["TestClientGetPlayFabIDsFromGameCenterIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromGenericIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromGoogleIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromKongregateIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromNintendoSwitchDeviceIds", "Passing"],
+    ["TestClientGetPlayFabIDsFromPSNAccountIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromSteamIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromTwitchIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromXboxLiveIDs", "Passing"],
+    ["TestClientGetPublisherData", "Passing"],
+    ["TestClientGetPurchase", "Failing"],
+    ["TestClientGetSharedGroupData", "Passing"],
+    ["TestClientGetStoreItems", "Failing"],
+    ["TestClientGetTime", "Passing"],
+    ["TestClientGetTitleData", "Passing"],
+    ["TestClientGetTitleNews", "Passing"],
+    ["TestClientGetTitlePublicKey", "Failing"],
+    ["TestClientGetTradeStatus", "Failing"],
+    ["TestClientGetUserData", "Passing"],
+    ["TestClientGetUserInventory", "Passing"],
+    ["TestClientGetUserPublisherData", "Passing"],
+    ["TestClientGetUserPublisherReadOnlyData", "Passing"],
+    ["TestClientGetUserReadOnlyData", "Passing"],
+    ["TestClientGrantCharacterToUser", "Failing"],
+    ["TestClientLinkAndroidDeviceID", "Passing"],
+    ["TestClientLinkApple", "Failing"],
+    ["TestClientLinkCustomID", "Passing"],
+    ["TestClientLinkFacebookAccount", "Failing"],
+    ["TestClientLinkFacebookInstantGamesId", "Failing"],
+    ["TestClientLinkGameCenterAccount", "Passing"],
+    ["TestClientLinkGoogleAccount", "Failing"],
+    ["TestClientLinkIOSDeviceID", "Passing"],
+    ["TestClientLinkKongregate", "Failing"],
+    ["TestClientLinkNintendoServiceAccount", "Failing"],
+    ["TestClientLinkNintendoSwitchDeviceId", "Passing"],
+    ["TestClientLinkOpenIdConnect", "Failing"],
+    ["TestClientLinkPSNAccount", "Failing"],
+    ["TestClientLinkSteamAccount", "Failing"],
+    ["TestClientLinkTwitch", "Failing"],
+    ["TestClientLinkXboxAccount", "Failing"],
+    ["TestClientMatchmake", "Failing"],
+    ["TestClientOpenTrade", "Failing"],
+    ["TestClientPayForPurchase", "Failing"],
+    ["TestClientPurchaseItem", "Failing"],
+    ["TestClientRedeemCoupon", "Failing"],
+    ["TestClientRefreshPSNAuthToken", "Failing"],
+    ["TestClientRegisterForIOSPushNotification", "Failing"],
+    ["TestClientRemoveContactEmail", "Passing"],
+    ["TestClientRemoveFriend", "Failing"],
+    ["TestClientRemoveGenericID", "Passing"],
+    ["TestClientRemoveSharedGroupMembers", "Passing"],
+    ["TestClientReportAdActivity", "Failing"],
+    ["TestClientReportDeviceInfo", "Passing"],
+    ["TestClientReportPlayer", "Passing"],
+    ["TestClientRestoreIOSPurchases", "Failing"],
+    ["TestClientRewardAdActivity", "Failing"],
+    ["TestClientSendAccountRecoveryEmail", "Failing"],
+    ["TestClientSetFriendTags", "Failing"],
+    ["TestClientSetPlayerSecret", "Failing"],
+    ["TestClientStartGame", "Failing"],
+    ["TestClientStartPurchase", "Failing"],
+    ["TestClientSubtractUserVirtualCurrency", "Failing"],
+    ["TestClientUnlinkAndroidDeviceID", "Passing"],
+    ["TestClientUnlinkApple", "Failing"],
+    ["TestClientUnlinkCustomID", "Passing"],
+    ["TestClientUnlinkFacebookAccount", "Failing"],
+    ["TestClientUnlinkFacebookInstantGamesId", "Failing"],
+    ["TestClientUnlinkGameCenterAccount", "Passing"],
+    ["TestClientUnlinkGoogleAccount", "Failing"],
+    ["TestClientUnlinkIOSDeviceID", "Passing"],
+    ["TestClientUnlinkKongregate", "Failing"],
+    ["TestClientUnlinkNintendoServiceAccount", "Failing"],
+    ["TestClientUnlinkNintendoSwitchDeviceId", "Passing"],
+    ["TestClientUnlinkOpenIdConnect", "Crashes"],
+    ["TestClientUnlinkPSNAccount", "Failing"],
+    ["TestClientUnlinkSteamAccount", "Failing"],
+    ["TestClientUnlinkTwitch", "Failing"],
+    ["TestClientUnlinkXboxAccount", "Failing"],
+    ["TestClientUnlockContainerInstance", "Failing"],
+    ["TestClientUnlockContainerItem", "Failing"],
+    ["TestClientUpdateAvatarUrl", "Passing"],
+    ["TestClientUpdateCharacterData", "Failing"],
+    ["TestClientUpdateCharacterStatistics", "Failing"],
+    ["TestClientUpdatePlayerStatistics", "Failing"],
+    ["TestClientUpdateSharedGroupData", "Passing"],
+    ["TestClientUpdateUserData", "Passing"],
+    ["TestClientUpdateUserPublisherData", "Passing"],
+    ["TestClientUpdateUserTitleDisplayName", "Passing"],
+    ["TestClientValidateAmazonIAPReceipt", "Crashes"],
+    ["TestClientValidateGooglePlayPurchase", "Crashes"],
+    ["TestClientValidateIOSReceipt", "Failing"],
+    ["TestClientValidateWindowsStoreReceipt", "Crashes"],
+    ["TestClientWriteCharacterEvent", "Failing"],
+    ["TestClientWritePlayerEvent", "Passing"],
+    ["TestClientWriteTitleEvent", "Passing"],
+]);
+
 exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     console.log("Generating Combined api from: " + sourceDir + " to: " + apiOutputDir);
 
@@ -63,7 +209,9 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         getFormattedDatatypeDescription: getFormattedDatatypeDescription,
         getFormattedCallDescription: getFormattedCallDescription,
         getRequestExample: getRequestExample,
-        getPublicPropertyType: getPublicPropertyType
+        getPublicPropertyType: getPublicPropertyType,
+        getPublicPropertyTypeClassName: getPublicPropertyTypeClassName,
+        testStatusList: testStatusList
     };
 
     var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.cpp.ejs"));
@@ -439,6 +587,53 @@ function getInternalPropertyType(property, prefix) {
     return type;
 }
 
+function getPublicPropertyTypeClassName(property, prefix) {
+    var type = "";
+
+    // Service types that can be mapped directly to C types
+    var types = {
+        "String": "const char*", "Boolean": "bool", "int16": "int16_t", "uint16": "uint16_t", "int32": "int32_t", "uint32": "uint32_t",
+        "int64": "int64_t", "uint64": "uint64_t", "float": "float", "double": "double", "DateTime": "time_t", "object": "PlayFabJsonObject"
+    };
+
+    if (property.actualtype in types) {
+        type = types[property.actualtype];
+    } else if (property.isclass || property.isenum) {
+        type = property.actualtype;
+    } else {
+        throw Error("Unrecognized property type " + property.actualtype);
+    }
+
+    // By design class properties are always pointers. Pointers will ultimately point to derived C++ internal Objects which
+    // can automatically manage their cleanup & copying via destructors and copy constructors
+
+    // Add type modifications depending on "collection" & "optional" attributes
+    if (!(property.actualtype === "object")) {
+        if (property.collection === "map") {
+            // array of dictionary entries
+            return getDictionaryEntryTypeFromValueType(type);
+        } else if (property.collection === "array") {
+            if (property.isclass) {
+                // array of pointers
+                return type;
+            } else {
+                return type;
+            }
+        } else if (property.optional) {
+            // Types which aren't already nullable will be made pointer types
+            if (!(type === "const char*" || type === "PlayFabJsonObject")) {
+                return type;
+            }
+        }
+    }
+
+    if (property.isclass) {
+        return type + " const*";
+    }
+
+    return type;
+}
+
 function getPublicPropertyType(property, prefix) {
     var type = "";
 
@@ -686,7 +881,6 @@ function getFormattedDatatypeDescription(prefix, datatype) {
     var callUsage = ""; // addition info on which API calls the struct is used in
     if (datatype.isRequest) {
         callUsage += "Request object for";
-
     } else if (datatype.isResult) {
         callUsage += "Result payload for";
     }
@@ -718,8 +912,6 @@ function getFormattedCallDescription(apiName, call) {
     return "/// " + call.name + " documentation not found in XmlRefDocs."
 }
 
-
-
 function jsonEscapeQuotes(input) {
     if (input != null) {
         input = input.replace(/"/g, "\\\"");
@@ -743,14 +935,16 @@ function doReplace(obj, paramName, newValue) {
 function checkReplacements(api, obj) {
     for (var replaceCategory in propertyReplacements) {
         if (replaceCategory === "generic") {
-            for (var genReplaceName1 in propertyReplacements[replaceCategory])
+            for (var genReplaceName1 in propertyReplacements[replaceCategory]) {
                 doReplace(obj, genReplaceName1, propertyReplacements[replaceCategory][genReplaceName1]);
+            }
         }
         if (replaceCategory === api.name) {
             for (var apiReplaceName in propertyReplacements[replaceCategory]) {
                 if (apiReplaceName === "generic") {
-                    for (var genReplaceName2 in propertyReplacements[replaceCategory][apiReplaceName])
+                    for (var genReplaceName2 in propertyReplacements[replaceCategory][apiReplaceName]) {
                         doReplace(obj, genReplaceName2, propertyReplacements[replaceCategory][apiReplaceName][genReplaceName2]);
+                    }
                 }
                 doReplace(obj, apiReplaceName, propertyReplacements[replaceCategory][apiReplaceName]);
             }
@@ -761,10 +955,11 @@ function checkReplacements(api, obj) {
 function getRequestExample(api, apiCall) {
     var msg = null;
     if (apiCall.requestExample.length > 0 && apiCall.requestExample.indexOf("{") >= 0) {
-        if (apiCall.requestExample.indexOf("\\\"") === -1) // I can't handle json in a string in json in a string...
+        if (apiCall.requestExample.indexOf("\\\"") === -1) { // I can't handle json in a string in json in a string...
             return getCorrectedRequestExample(api, apiCall);
-        else
+        } else {
             msg = "CANNOT PARSE EXAMPLE BODY: ";
+        }
     }
 
     var props = api.datatypes[apiCall.request].properties;
@@ -773,9 +968,12 @@ function getRequestExample(api, apiCall) {
         output[props[p].name] = props[p].jsontype;
     }
 
-    if (msg == null)
+    if (msg == null) {
         msg = "AUTO GENERATED BODY FOR: ";
+    }
     console.log(msg + api.name + "." + apiCall.name);
     // console.log("    " + JSON.stringify(output, null, 2));
     return "\"" + jsonEscapeQuotes(jsonEscape(JSON.stringify(output, null, 2))) + "\"";;
 }
+
+

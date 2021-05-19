@@ -9,6 +9,69 @@
 #include <playfab/PlayFabAuthenticationAuthApi.h>
 #include <playfab/PlayFabClientDataModels.h>
 
+uint32_t g_testIndex = 1;
+
+<%
+function debugLogProp(varName, propName, propCoutName, property, prefix, padding) 
+{
+    var propType = getPublicPropertyType(property, prefix);
+    var propTypeClassName = getPublicPropertyTypeClassName(property, prefix);
+    if (propType == "PlayFabJsonObject") {%>
+<%- padding %>if( <%- varName %>-><%- propName %>.stringValue ) { std::cout << "  <%- propCoutName %> " << <%- varName %>-><%- propName %>.stringValue << std::endl; } else { std::cout << "  <%- propName %> = nullptr" << std::endl; }<%} else 
+if (propType == "PlayFabClientRegion" || propType == "PlayFabClientAdActivity") {%>
+<%- padding %>std::cout << "  <%- propCoutName %> " << (int)<%- varName %>-><%- propName %> << std::endl;<%} else 
+if (propType == "bool const*" || propType == "const char*") {%>
+<%- padding %>if( <%- varName %>-><%- propName %> ) { std::cout << "  <%- propCoutName %> " << <%- varName %>-><%- propName %> << std::endl; } else { std::cout << "  <%- propCoutName %> = nullptr" << std::endl; }<%} else {%>
+<%- padding %>std::cout << "  <%- propCoutName %> " << <%- varName %>-><%- propName %> << std::endl;<%} %> // Class: <%-propType%> <%
+}
+
+function debugLogCollection(varName, propName, property, prefix) {
+        var propType = getPublicPropertyTypeClassName(property, prefix);
+%>    
+    std::cout << "  <%- propName %>Count " << <%- varName %>-><%- propName %>Count << std::endl;
+
+    // <%- propType %>
+    for( uint32_t i=0; i<<%- varName %>-><%- propName %>Count; i++ )
+    {<%
+        var found = false;
+        for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
+        {
+            var datatype = sortedClasses[classIdx];
+            if( datatype.name == propType )
+            {
+                found = true;
+                for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
+                {
+                    var property = datatype.properties[propIdx];
+                    var isInternal = false;
+                    var innerPropName = getPropertyName(property, isInternal);
+                    var innerPropType = getPublicPropertyType(property, prefix);
+                    debugLogProp(varName, propName + "[i]->" + innerPropName, propName + "[\"<<i<<\"]->" + innerPropName, property, prefix, "        ")
+                }
+            }
+        }
+    if (!found)
+    {
+        if( propType == "PlayFabJsonObject" ) {%>
+        std::cout << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i].stringValue << std::endl;
+        <%} else if( 
+            propType == "UserDataRecordDictionaryEntry" || 
+            propType == "VirtualCurrencyRechargeTimeDictionaryEntry" ||
+            propType == "SharedGroupDataRecordDictionaryEntry" || 
+            propType == "PlayFabStringDictionaryEntry" || 
+            propType == "PlayFabUint32DictionaryEntry" || 
+            propType == "PlayFabInt32DictionaryEntry" ) {%>
+        std::cout << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i].key << "=" << <%- varName + "->" + propName %>[i].value << std::endl;
+        <%}
+        else {%>
+        std::cout << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i] << std::endl; // <%- propType %><%  
+        }
+    }
+        %>
+    } <%
+}
+%>
+
 namespace PlayFabUnit
 {
 
@@ -19,10 +82,17 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
 {
     var call = categorizedApi.otherCalls[i];
     var asyncName = "PlayFab" + api.name + call.name + "Async"; 
+    var testName = "Test" + api.name + call.name;
+    let testStatusListStatus = testStatusList.get(testName);
+    var skipTest = (testStatusListStatus != "Passing");
     if( !(call.request in hasFillBeenDefinedMap) && call.request != "void" ) {  // call.name == "AcceptTrade"
         hasFillBeenDefinedMap[call.request] = true;
 %>void AutoGen<%- api.name %>Tests::FillPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request )
-{<% 
+{
+    std::cout << "----------" << std::endl;
+    std::cout << "Test #" << g_testIndex++ << ": <%- api.name + call.request %>" << std::endl;
+    std::cout << "Request:" << std::endl;
+<% 
     var found = false;
     for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
     {
@@ -30,7 +100,13 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
         if( datatype.name == call.request )
         {
             found = true; 
-%>
+%><% if (skipTest) { %>
+    // TODO: debug
+<% } %>
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( <%- getRequestExample(api, call) %> );
+    request->FromJson(inputJson);
+
     // PlayFab<%- api.name + call.request %> struct:<% 
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
     {
@@ -45,44 +121,58 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
         {
 %>
     // <%- "request->" + propName + "Count: " + "uint32_t" %><%}
-    } 
- } }
-if( !found ) { throw Error('Not found ' + call.request) } %>
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( <%- getRequestExample(api, call) %> );
-    request->FromJson(inputJson);
-}
 
-<% } if (!(call.result in hasValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") {
-    hasValidateBeenDefinedMap[call.result] = true;
-%>HRESULT AutoGen<%- api.name %>Tests::ValidatePlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result )
-{<% 
-    var found = false;
-    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
-    {
-        var datatype = sortedClasses[classIdx];
-        if( datatype.name == call.request )
-        {
-            found = true; 
-%>
-    // Found <%- datatype.name %><% 
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
     {
         var property = datatype.properties[propIdx];
         var isInternal = false;
         var type = getPublicPropertyType(property, prefix);
         var propName = getPropertyName(property, isInternal);
-%>
-    // <%- "request." + propName + " = " + type + ";" %><%
+
         // For public collection properties add an additional "count" property
-        if (property.collection && !(type === "PlayFabJsonObject")) 
+        if (property.collection && !(type === "PlayFabJsonObject")) { 
+            debugLogCollection("request", propName, property, prefix) 
+        } else {
+            debugLogProp("request", propName, propName, property, prefix, "    ")
+        }
+    } 
+
+    } 
+ } }
+if( !found ) { throw Error('Not found ' + call.request) } %>
+
+}
+
+<% } if (!(call.result in hasValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") {
+    hasValidateBeenDefinedMap[call.result] = true;
+%>HRESULT AutoGen<%- api.name %>Tests::ValidatePlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result )
+{
+    std::cout << "Response:" << std::endl;
+<% 
+    var found = false;
+    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
+    {
+        var datatype = sortedClasses[classIdx];
+        if( datatype.name == call.result )
         {
+            found = true; 
 %>
-    // <%- "result." + propName + "Count = " + "uint32_t;" %><%}
+    // Found PlayFab<%- api.name %><%- datatype.name %><% 
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
+    {
+        var property = datatype.properties[propIdx];
+        var isInternal = false;
+        var type = getPublicPropertyType(property, prefix);
+        var propName = getPropertyName(property, isInternal);
+%><%    // For public collection properties add an additional "count" property
+        if (property.collection && !(type === "PlayFabJsonObject")) { 
+            debugLogCollection("result", propName, property, prefix) } 
+        else {
+            debugLogProp("result", propName, propName, property, prefix, "    ")
+        }
     } 
  } }
 if( !found ) { %>    // Not found <%- datatype.name %><%} %>
-    UNREFERENCED_PARAMETER(result);
     return S_OK;
 }
 
