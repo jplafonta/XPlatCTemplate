@@ -9,7 +9,7 @@ var xmlRefDocs = {};
 var propertyReplacements = {};
 var globalPrefix = "PlayFab"; // Global prefix for all public types
 
-// Shared API. Structured the same as other api objects so it can be used the same in template files. Used to generated Shared DataModel
+// Shared API. Structured the same as other api objects so it can be used the same in template files. Used to generate shared DataModels
 var sharedApi = {
     "name": "Shared",
     "datatypes": {},
@@ -98,7 +98,7 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
     var dataModelTemplate_c = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels.h.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/include/playFab", "PlayFab" + api.name + "DataModels.h"), dataModelTemplate_c(locals));
 
-    // Currently don't need anything except data models for "Shared" APi
+    // Currently don't need anything except data models for Shared API
     if (!(api.name === "Shared")) {
 
         var testCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.cpp.ejs"));
@@ -216,6 +216,7 @@ function pruneEmptyTypes(api) {
 
 }
 
+// When adding a datatype to sharedApi.datatypes, ensure that the types are actually identical (have the same properties & property types)
 function ensureTypesMatch(type1, type2) {
     if (type1.isenum) {
         if (type2.isenum) {
@@ -247,7 +248,7 @@ function populateSharedDatatypes(apis) {
     // its stored as part of the returned Entity object. Client & Server Login results are identical (but have different service namespaces & typenames), and returning the
     // data from the Entity is much simpler if we unify those types. 
 
-    // First rename all LoginResults & all references to them to a common name
+    // First rename all LoginResults & update all references to them
     var unifiedLoginResultName = "LoginResult";
 
     for (var i = 0; i < apis.length; i++) {
@@ -272,7 +273,7 @@ function populateSharedDatatypes(apis) {
         }
     }
 
-    // Now extract those types (and their subtypes) into sharedApi.datatypes 
+    // Now extract those types (and their subtypes) from each api.datatypes into sharedApi.datatypes 
     var extractType = function (typename) {
         console.log("extracting " + typename);
         for (var i = 0; i < apis.length; i++) {
@@ -543,7 +544,7 @@ function requiresDynamicStorage(property) {
 function getInternalPropertyType(property, prefix) {
     var type = "";
 
-        // If property type is shared, override 'prefix' with the global prefix
+    // If property type is shared, override 'prefix' with the global prefix
     if (sharedApi.datatypes.hasOwnProperty(property.actualtype)) {
         prefix = globalPrefix;
     }
@@ -668,6 +669,8 @@ function getPropertyName(property, isPrivate) {
         name = "M" + name.slice(1);
     } else if (name.startsWith("iPAddress")) {
         name = "I" + name.slice(1);
+    } else if (name.startsWith("oS")) {
+        name = "O" + name.slice(1);
     }
 
     return isPrivate ? "m_" + name : name;
