@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "GlobalState.h"
+#include "BaseModel.h"
 #include <httpClient/httpClient.h>
+
+using namespace PlayFab;
 
 STDAPI PlayFabMemSetFunctions(
     _In_opt_ PlayFabMemAllocFunction* memAllocFunc,
@@ -56,4 +59,23 @@ HRESULT PlayFabCleanupAsync(
 {
     RETURN_HR_INVALIDARG_IF_NULL(stateHandle);
     return stateHandle->CleanupAsync(async);
+}
+
+HRESULT PlayFabResultDuplicateHandle(
+    _In_ PlayFabResultHandle resultHandle,
+    _Out_ PlayFabResultHandle* duplicatedHandle
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(resultHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(duplicatedHandle);
+
+    *duplicatedHandle = MakeUnique<PlayFabResult>(*resultHandle).release();
+    return S_OK;
+}
+
+void PlayFabResultCloseHandle(
+    _In_ PlayFabResultHandle resultHandle
+) noexcept
+{
+    UniquePtr<PlayFabResult>{ resultHandle };
 }

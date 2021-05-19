@@ -6,9 +6,9 @@
 #endif
 
 #pragma once
-
-#include <playfab/PlayFabBaseModel.h>
-
+<% if (api.name !== "Shared") { %>
+#include <playfab/PlayFabSharedDataModels.h>
+<% } %>
 extern "C"
 {
 
@@ -23,19 +23,72 @@ enum class <%- prefix %><%- enumtype.name %> : uint32_t
     <% for(var i=0; i < enumtype.enumvalues.length-1; i++) { var enumval = enumtype.enumvalues[i]; %><%- enumval.name %>,
     <% } %><%- enumtype.enumvalues[enumtype.enumvalues.length-1].name %>
 };
-<% } %>
-<% for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { var datatype = sortedClasses[typeIdx]; { %>
+<% } // end for
+
+if (api.name === "Shared") { %>
+/// <summary>
+/// String representation of a Json Object
+/// </summary>
+typedef struct PlayFabJsonObject
+{
+    const char* stringValue;
+} PlayFabJsonObject;
+<% }
+
+for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { 
+    var datatype = sortedClasses[typeIdx];
+    if (datatype.isInternalOnly) {
+        continue;
+    } %>
 /// <summary>
 <%- getFormattedDatatypeDescription(prefix, datatype) %>
 /// </summary>
 typedef struct <%- prefix %><%- datatype.name %>
 {<%
 for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
-%><%- getPropertyDefinition("    ", property, prefix, false) %><% } %>
+%><%- getPropertyDefinition("    ", datatype, property, prefix, false) %><% } %>
 } <%- prefix %><%- datatype.name %>;
-<% }
-} %>
-<% for (var typeIdx = 0; typeIdx < dictionaryEntryTypes.length; typeIdx++) { var datatype = dictionaryEntryTypes[typeIdx]; %>
+<% } // end for
+
+if (api.name === "Shared") { %>
+/// <summary>
+/// Dictionary entry for an associative array with string values.
+/// </summary>
+typedef struct PlayFabStringDictionaryEntry
+{
+    const char* key;
+    const char* value;
+} PlayFabStringDictionaryEntry;
+
+/// <summary>
+/// Dictionary entry for an associative array with int32_t values.
+/// </summary>
+typedef struct PlayFabInt32DictionaryEntry
+{
+    const char* key;
+    int32_t value;
+} PlayFabInt32DictionaryEntry;
+
+/// <summary>
+/// Dictionary entry for an associative array with uint32_t values.
+/// </summary>
+typedef struct PlayFabUint32DictionaryEntry
+{
+    const char* key;
+    uint32_t value;
+} PlayFabUint32DictionaryEntry;
+
+/// <summary>
+/// Dictionary entry for an associative array with time_t values.
+/// </summary>
+typedef struct PlayFabDateTimeDictionaryEntry
+{
+    const char* key;
+    time_t value;
+} PlayFabDateTimeDictionaryEntry;
+<% } // end if
+
+for (var typeIdx in api.dictionaryEntryTypes) { var datatype = api.dictionaryEntryTypes[typeIdx]; %>
 /// <summary>
 /// Dictionary entry for an associative array with <%- prefix %><%- datatype.name %> values.
 /// </summary>

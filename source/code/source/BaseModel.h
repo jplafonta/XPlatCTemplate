@@ -1,6 +1,5 @@
 #pragma once
 
-#include <playfab/PlayFabBaseModel.h>
 #include "JsonUtils.h"
 
 namespace PlayFab
@@ -43,7 +42,7 @@ public:
 /// <summary>
 /// A model that can be (trivially) serialized into a continuous memory buffer.
 /// <summary>
-class SerializableModel : BaseModel
+class SerializableModel : public BaseModel
 {
 public:
     virtual size_t SerializedSize() const = 0;
