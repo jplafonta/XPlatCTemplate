@@ -55,7 +55,7 @@ void Event::SetEntity(const char* entityId, const char* entityType)
     {
         m_entityType = entityType;
     }
-    m_entity.emplace(PlayFabEventsEntityKey{ m_entityId.data(), m_entityType.empty() ? nullptr : m_entityType.data() });
+    m_entity.emplace(PlayFabEntityKey{ m_entityId.data(), m_entityType.empty() ? nullptr : m_entityType.data() });
     m_eventContents.entity = m_entity.operator->();
 }
 

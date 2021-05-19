@@ -1,6 +1,5 @@
 #pragma once
 
-#include <playfab/PlayFabBaseModel.h>
 #include "JsonUtils.h"
 
 namespace PlayFab

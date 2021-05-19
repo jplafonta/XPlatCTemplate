@@ -44,3 +44,88 @@ HRESULT PlayFabEntityGetEntityTokenAsync(
     auto provider = MakeProvider(async, __FUNCTION__, std::bind(&Entity::GetEntityToken, entityHandle->entity.get(), *request, std::placeholders::_1));
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
+
+HRESULT PlayFabEntityGetPlayFabId(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const char** playFabId
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(playFabId);
+
+    *playFabId = entityHandle->entity->PlayFabId().data();
+    return S_OK;
+}
+
+HRESULT PlayFabEntityGetEntityId(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const char** entityId
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(entityId);
+
+    *entityId = entityHandle->entity->EntityId().data();
+    return S_OK;
+}
+
+
+HRESULT PlayFabEntityGetEntityType(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const char** entityType
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(entityType);
+
+    *entityType = entityHandle->entity->EntityType().data();
+    return S_OK;
+}
+
+HRESULT PlayFabEntityGetPlayerCombinedInfo(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const PlayFabGetPlayerCombinedInfoResultPayload** playerCombinedInfo
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(playerCombinedInfo);
+
+    *playerCombinedInfo = entityHandle->entity->PlayerCombinedInfo(); 
+    return S_OK;
+}
+
+HRESULT PlayFabEntityGetLastLoginTime(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const time_t** lastLoginTime
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(lastLoginTime);
+
+    *lastLoginTime = entityHandle->entity->LastLoginTime();
+    return S_OK;
+}
+
+HRESULT PlayFabEntityGetUserSettings(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const PlayFabUserSettings** userSettings
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(userSettings);
+
+    *userSettings = entityHandle->entity->UserSettings();
+    return S_OK;
+}
+
+HRESULT PlayFabEntityGetTreatmentAssignment(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const PlayFabTreatmentAssignment** treatmentAssignment
+) noexcept 
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(treatmentAssignment);
+
+    *treatmentAssignment = entityHandle->entity->TreatmentAssignment();
+    return S_OK;
+}

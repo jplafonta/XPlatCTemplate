@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Client/ClientDataModels.h>
-#include <Server/ServerDataModels.h>
 #include <Authentication/AuthenticationDataModels.h>
 #include <Events/Manager/EventManagerApi.h>
 #include <QoS/QoSApi.h><%
@@ -27,9 +26,8 @@ struct AuthTokens
 class Entity : public std::enable_shared_from_this<Entity>
 {
 public:
-    Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::LoginResult& loginResult);
+    Entity(SharedPtr<HttpClient const> httpClient, const LoginResult& loginResult);
     Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::RegisterPlayFabUserResult& registerUserResult);
-    Entity(SharedPtr<HttpClient const> httpClient, const ServerModels::ServerLoginResult& loginResult);
     Entity(SharedPtr<HttpClient const> httpClient, const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse);
 
     Entity(const Entity&) = delete;
@@ -47,6 +45,16 @@ public:
     // EntityToken if the call succeeds.
     AsyncOp<void> GetEntityToken(const PlayFabAuthenticationGetEntityTokenRequest& request, const TaskQueue& queue);
 
+    // Getter methods to retreive Entity properties. All data only guaranteed to be accurate at the time of login. Lifetime of returned data is tied
+    // to Entity object.
+    const String& PlayFabId() const;
+    const String& EntityId() const;
+    const String& EntityType() const;
+    GetPlayerCombinedInfoResultPayload const* PlayerCombinedInfo() const;
+    time_t const* LastLoginTime() const;
+    UserSettings const* UserSettings() const;
+    TreatmentAssignment const* TreatmentAssignment() const;
+
     // Non-generated APIs
     EventManager::EventManagerAPI eventManagerAPI;
     QoS::QoSAPI const QoSAPI;
@@ -60,8 +68,13 @@ public:
 
 private:
     String const m_playFabId; // Master_Player_Entity Id for the Player that logged in
-    String m_entityId; // Entity Id for the active entity
-    String m_entityType; // Entity Type for the active entity
+    String m_entityId; // Entity Id for the entity
+    String m_entityType; // Entity Type for the entity
+
+    UniquePtr<GetPlayerCombinedInfoResultPayload> m_playerCombinedInfo;
+    StdExtra::optional<time_t const> m_lastLoginTime;
+    StdExtra::optional<PlayFab::UserSettings const> m_userSettings;
+    UniquePtr<PlayFab::TreatmentAssignment> m_treatmentAssignment;
 };
 
 }

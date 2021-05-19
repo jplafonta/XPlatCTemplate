@@ -30,7 +30,7 @@ void JsonParsingTests::BasicJsonParsing(TestContext& testContext)
 {
     struct SubObjectModel : public BaseModel
     {
-        PlayFabClientCountryCode CountryCode;
+        PlayFabCountryCode CountryCode;
 
         void FromJson(const JsonValue& input)
         {

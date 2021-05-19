@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Entity.h"
 
+#define AS_STRING(charPtr) (charPtr ? String{ charPtr } : String{})
+
 namespace PlayFab
 {<% 
 var apiInitializationList = "";
@@ -12,36 +14,30 @@ for(var apiName in categorizedApis) {
     }
 } %>
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::LoginResult& result) :
+Entity::Entity(SharedPtr<HttpClient const> httpClient, const LoginResult& result) :
     m_httpClient{ std::move(httpClient) },
-    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, result.entityToken->entityToken } },
+    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, AS_STRING(result.entityToken->entityToken) } },
     eventManagerAPI{ m_httpClient, m_authTokens },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_playFabId{ result.playFabId },
-    m_entityId{ result.entityToken->entity->id },
-    m_entityType{ result.entityToken->entity->type }
+    m_entityId{ AS_STRING(result.entityToken->entity->id) },
+    m_entityType{ AS_STRING(result.entityToken->entity->type) },
+    m_playerCombinedInfo{ result.infoResultPayload.has_value() ? MakeUnique<GetPlayerCombinedInfoResultPayload>(*result.infoResultPayload) : nullptr },
+    m_lastLoginTime{ result.lastLoginTime },
+    m_userSettings{ result.settingsForUser },
+    m_treatmentAssignment{ result.treatmentAssignment.has_value() ? MakeUnique<PlayFab::TreatmentAssignment>(*result.treatmentAssignment) : nullptr }
 {
 }
 
 Entity::Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::RegisterPlayFabUserResult& result) :
     m_httpClient{ std::move(httpClient) },
-    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, result.entityToken->entityToken } },
+    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, AS_STRING(result.entityToken->entityToken) } },
     eventManagerAPI{ m_httpClient, m_authTokens },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_playFabId{ result.playFabId },
-    m_entityId{ result.entityToken->entity->id },
-    m_entityType{ result.entityToken->entity->type }
-{
-}
-
-Entity::Entity(SharedPtr<HttpClient const> httpClient, const ServerModels::ServerLoginResult& result) :
-    m_httpClient{ std::move(httpClient) },
-    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, result.entityToken->entityToken } },
-    eventManagerAPI{ m_httpClient, m_authTokens },
-    QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
-    m_playFabId{ result.playFabId },
-    m_entityId{ result.entityToken->entity->id },
-    m_entityType{ result.entityToken->entity->type }
+    m_entityId{ AS_STRING(result.entityToken->entity->id) },
+    m_entityType{ AS_STRING(result.entityToken->entity->type) },
+    m_userSettings{ result.settingsForUser }
 {
 }
 
@@ -50,8 +46,8 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, const AuthenticationModel
     m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ "", result.entityToken } },
     eventManagerAPI{ m_httpClient, m_authTokens },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
-    m_entityId{ result.entity->id },
-    m_entityType{ result.entity->type }
+    m_entityId{ AS_STRING(result.entity->id) },
+    m_entityType{ AS_STRING(result.entity->type) }
 {
 }
 
@@ -100,6 +96,41 @@ AsyncOp<void> Entity::GetEntityToken(
             return Result<void>{ ServiceErrorToHR(serviceResponse.ErrorCode), std::move(serviceResponse.ErrorMessage) };
         }
     });
+}
+
+const String& Entity::PlayFabId() const
+{
+    return m_playFabId;
+}
+
+const String& Entity::EntityId() const
+{
+    return m_entityId;
+}
+
+const String& Entity::EntityType() const
+{
+    return m_entityType;
+}
+
+GetPlayerCombinedInfoResultPayload const* Entity::PlayerCombinedInfo() const
+{
+    return m_playerCombinedInfo.get();
+}
+
+time_t const* Entity::LastLoginTime() const
+{
+    return m_lastLoginTime.has_value() ? m_lastLoginTime.operator->() : nullptr;
+}
+
+UserSettings const* Entity::UserSettings() const
+{
+    return m_userSettings.has_value() ? m_userSettings.operator->() : nullptr;
+}
+
+TreatmentAssignment const* Entity::TreatmentAssignment() const
+{
+    return m_treatmentAssignment.get();
 }
 
 }

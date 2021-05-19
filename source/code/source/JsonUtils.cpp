@@ -64,6 +64,16 @@ JsonValue ToJson(const char* string)
     return JsonValue{ string, allocator };
 }
 
+JsonValue ToJson(const String& string)
+{
+    // By design, map empty string to null JsonValue
+    if (string.empty())
+    {
+        return JsonValue{ rapidjson::kNullType };
+    }
+    return JsonValue{ string.data(), allocator };
+}
+
 JsonValue ToJson(const PlayFabJsonObject& jsonObject)
 {
     JsonDocument document{ &allocator };
@@ -160,6 +170,18 @@ void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, time_
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const time_t* value, bool convertToIso8601String)
 {
     if (value != nullptr)
+    {
+        ObjectAddMember(jsonObject, name, ToJson(*value, convertToIso8601String));
+    }
+    else
+    {
+        ObjectAddMember(jsonObject, name, JsonValue{ rapidjson::kNullType });
+    }
+}
+
+void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const StdExtra::optional<time_t>& value, bool convertToIso8601String)
+{
+    if (value.has_value())
     {
         ObjectAddMember(jsonObject, name, ToJson(*value, convertToIso8601String));
     }
