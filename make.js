@@ -17,6 +17,151 @@ var sharedApi = {
     "dictionaryEntryTypes": {}
 }; 
 
+let testStatusList = new Map([
+    ["TestClientAcceptTrade", "Crashes"],
+    ["TestClientAddFriend", "Failing"],
+    ["TestClientAddGenericID", "Passing"],
+    ["TestClientAddOrUpdateContactEmail", "Passing"],
+    ["TestClientAddSharedGroupMembers", "Failing"],
+    ["TestClientAddUsernamePassword", "Failing"],
+    ["TestClientAddUserVirtualCurrency", "Failing"],
+    ["TestClientAndroidDevicePushNotificationRegistration", "Failing"],
+    ["TestClientAttributeInstall", "Failing"],
+    ["TestClientCancelTrade", "Failing"],
+    ["TestClientConfirmPurchase", "Failing"],
+    ["TestClientConsumeItem", "Failing"],
+    ["TestClientConsumeMicrosoftStoreEntitlements", "Crashes"],
+    ["TestClientConsumePS5Entitlements", "Failing"],
+    ["TestClientConsumePSNEntitlements", "Failing"],
+    ["TestClientConsumeXboxEntitlements", "Failing"],
+    ["TestClientCreateSharedGroup", "Failing"],
+    ["TestClientExecuteCloudScript", "Passing"],
+    ["TestClientGetAccountInfo", "Failing"],
+    ["TestClientGetAdPlacements", "Passing"],
+    ["TestClientGetAllUsersCharacters", "Failing"],
+    ["TestClientGetCatalogItems", "Passing"],
+    ["TestClientGetCharacterData", "Failing"],
+    ["TestClientGetCharacterInventory", "Failing"],
+    ["TestClientGetCharacterLeaderboard", "Passing"],
+    ["TestClientGetCharacterReadOnlyData", "Failing"],
+    ["TestClientGetCharacterStatistics", "Failing"],
+    ["TestClientGetContentDownloadUrl", "Passing"],
+    ["TestClientGetCurrentGames", "Passing"],
+    ["TestClientGetFriendLeaderboard", "Passing"],
+    ["TestClientGetFriendLeaderboardAroundPlayer", "Passing"],
+    ["TestClientGetFriendsList", "Passing"],
+    ["TestClientGetGameServerRegions", "Failing"],
+    ["TestClientGetLeaderboard", "Passing"],
+    ["TestClientGetLeaderboardAroundCharacter", "Failing"],
+    ["TestClientGetLeaderboardAroundPlayer", "Passing"],
+    ["TestClientGetLeaderboardForUserCharacters", "Passing"],
+    ["TestClientGetPaymentToken", "Failing"],
+    ["TestClientGetPhotonAuthenticationToken", "Failing"],
+    ["TestClientGetPlayerCombinedInfo", "Failing"],
+    ["TestClientGetPlayerProfile", "Failing"],
+    ["TestClientGetPlayerSegments", "Passing"],
+    ["TestClientGetPlayerStatistics", "Passing"],
+    ["TestClientGetPlayerStatisticVersions", "Failing"],
+    ["TestClientGetPlayerTags", "Failing"],
+    ["TestClientGetPlayerTrades", "Passing"],
+    ["TestClientGetPlayFabIDsFromFacebookIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromFacebookInstantGamesIds", "Passing"],
+    ["TestClientGetPlayFabIDsFromGameCenterIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromGenericIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromGoogleIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromKongregateIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromNintendoSwitchDeviceIds", "Passing"],
+    ["TestClientGetPlayFabIDsFromPSNAccountIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromSteamIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromTwitchIDs", "Passing"],
+    ["TestClientGetPlayFabIDsFromXboxLiveIDs", "Passing"],
+    ["TestClientGetPublisherData", "Passing"],
+    ["TestClientGetPurchase", "Failing"],
+    ["TestClientGetSharedGroupData", "Passing"],
+    ["TestClientGetStoreItems", "Failing"],
+    ["TestClientGetTime", "Passing"],
+    ["TestClientGetTitleData", "Passing"],
+    ["TestClientGetTitleNews", "Passing"],
+    ["TestClientGetTitlePublicKey", "Failing"],
+    ["TestClientGetTradeStatus", "Failing"],
+    ["TestClientGetUserData", "Passing"],
+    ["TestClientGetUserInventory", "Passing"],
+    ["TestClientGetUserPublisherData", "Passing"],
+    ["TestClientGetUserPublisherReadOnlyData", "Passing"],
+    ["TestClientGetUserReadOnlyData", "Passing"],
+    ["TestClientGrantCharacterToUser", "Failing"],
+    ["TestClientLinkAndroidDeviceID", "Passing"],
+    ["TestClientLinkApple", "Failing"],
+    ["TestClientLinkCustomID", "Passing"],
+    ["TestClientLinkFacebookAccount", "Failing"],
+    ["TestClientLinkFacebookInstantGamesId", "Failing"],
+    ["TestClientLinkGameCenterAccount", "Passing"],
+    ["TestClientLinkGoogleAccount", "Failing"],
+    ["TestClientLinkIOSDeviceID", "Passing"],
+    ["TestClientLinkKongregate", "Failing"],
+    ["TestClientLinkNintendoServiceAccount", "Failing"],
+    ["TestClientLinkNintendoSwitchDeviceId", "Passing"],
+    ["TestClientLinkOpenIdConnect", "Failing"],
+    ["TestClientLinkPSNAccount", "Failing"],
+    ["TestClientLinkSteamAccount", "Failing"],
+    ["TestClientLinkTwitch", "Failing"],
+    ["TestClientLinkXboxAccount", "Failing"],
+    ["TestClientMatchmake", "Failing"],
+    ["TestClientOpenTrade", "Failing"],
+    ["TestClientPayForPurchase", "Failing"],
+    ["TestClientPurchaseItem", "Failing"],
+    ["TestClientRedeemCoupon", "Failing"],
+    ["TestClientRefreshPSNAuthToken", "Failing"],
+    ["TestClientRegisterForIOSPushNotification", "Failing"],
+    ["TestClientRemoveContactEmail", "Passing"],
+    ["TestClientRemoveFriend", "Failing"],
+    ["TestClientRemoveGenericID", "Passing"],
+    ["TestClientRemoveSharedGroupMembers", "Passing"],
+    ["TestClientReportAdActivity", "Failing"],
+    ["TestClientReportDeviceInfo", "Passing"],
+    ["TestClientReportPlayer", "Passing"],
+    ["TestClientRestoreIOSPurchases", "Failing"],
+    ["TestClientRewardAdActivity", "Failing"],
+    ["TestClientSendAccountRecoveryEmail", "Failing"],
+    ["TestClientSetFriendTags", "Failing"],
+    ["TestClientSetPlayerSecret", "Failing"],
+    ["TestClientStartGame", "Failing"],
+    ["TestClientStartPurchase", "Failing"],
+    ["TestClientSubtractUserVirtualCurrency", "Failing"],
+    ["TestClientUnlinkAndroidDeviceID", "Passing"],
+    ["TestClientUnlinkApple", "Failing"],
+    ["TestClientUnlinkCustomID", "Passing"],
+    ["TestClientUnlinkFacebookAccount", "Failing"],
+    ["TestClientUnlinkFacebookInstantGamesId", "Failing"],
+    ["TestClientUnlinkGameCenterAccount", "Passing"],
+    ["TestClientUnlinkGoogleAccount", "Failing"],
+    ["TestClientUnlinkIOSDeviceID", "Passing"],
+    ["TestClientUnlinkKongregate", "Failing"],
+    ["TestClientUnlinkNintendoServiceAccount", "Failing"],
+    ["TestClientUnlinkNintendoSwitchDeviceId", "Passing"],
+    ["TestClientUnlinkOpenIdConnect", "Crashes"],
+    ["TestClientUnlinkPSNAccount", "Failing"],
+    ["TestClientUnlinkSteamAccount", "Failing"],
+    ["TestClientUnlinkTwitch", "Failing"],
+    ["TestClientUnlinkXboxAccount", "Failing"],
+    ["TestClientUnlockContainerInstance", "Failing"],
+    ["TestClientUnlockContainerItem", "Failing"],
+    ["TestClientUpdateAvatarUrl", "Passing"],
+    ["TestClientUpdateCharacterData", "Failing"],
+    ["TestClientUpdateCharacterStatistics", "Failing"],
+    ["TestClientUpdatePlayerStatistics", "Failing"],
+    ["TestClientUpdateSharedGroupData", "Passing"],
+    ["TestClientUpdateUserData", "Passing"],
+    ["TestClientUpdateUserPublisherData", "Passing"],
+    ["TestClientUpdateUserTitleDisplayName", "Passing"],
+    ["TestClientValidateAmazonIAPReceipt", "Crashes"],
+    ["TestClientValidateGooglePlayPurchase", "Crashes"],
+    ["TestClientValidateIOSReceipt", "Failing"],
+    ["TestClientValidateWindowsStoreReceipt", "Crashes"],
+    ["TestClientWriteCharacterEvent", "Failing"],
+    ["TestClientWritePlayerEvent", "Passing"],
+    ["TestClientWriteTitleEvent", "Passing"],
+]);
 
 exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     console.log("Generating Combined api from: " + sourceDir + " to: " + apiOutputDir);
@@ -86,7 +231,8 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         getFormattedDatatypeDescription: getFormattedDatatypeDescription,
         getFormattedCallDescription: getFormattedCallDescription,
         getRequestExample: getRequestExample,
-        getPublicPropertyType: getPublicPropertyType
+        getPublicPropertyType: getPublicPropertyType,
+        testStatusList: testStatusList
     };
 
     var dataModelHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.h.ejs"));
@@ -596,7 +742,7 @@ function getInternalPropertyType(property, prefix) {
     return type;
 }
 
-function getPublicPropertyType(property, prefix) {
+function getPublicPropertyType(property, prefix, addConsts) {
     var type = "";
 
     // If property type is shared, override 'prefix' with the global prefix
@@ -621,28 +767,54 @@ function getPublicPropertyType(property, prefix) {
     // By design class properties are always pointers. Pointers will ultimately point to derived C++ internal Objects which
     // can automatically manage their cleanup & copying via destructors and copy constructors
 
-    // Add type modifications depending on "collection" & "optional" attributes
-    if (!(property.actualtype === "object")) {
-        if (property.collection === "map") {
-            // array of dictionary entries
-            return "struct " + getDictionaryEntryTypeFromValueType(type) + " const*";
-        } else if (property.collection === "array") {
-            if (property.isclass) {
-                // array of pointers
-                return type + " const* const*";
-            } else {
-                return type + " const*";
-            }
-        } else if (property.optional) {
-            // Types which aren't already nullable will be made pointer types
-            if (!(type === "const char*" || type === "PlayFabJsonObject")) {
-                return type + " const*";
+    if (addConsts === false) {
+        if (!(property.actualtype === "object")) {
+            if (property.collection === "map") {
+                // array of dictionary entries
+                return getDictionaryEntryTypeFromValueType(type);
+            } else if (property.collection === "array") {
+                if (property.isclass) {
+                    // array of pointers
+                    return type;
+                } else {
+                    return type;
+                }
+            } else if (property.optional) {
+                // Types which aren't already nullable will be made pointer types
+                if (!(type === "const char*" || type === "PlayFabJsonObject")) {
+                    return type;
+                }
             }
         }
-    }
 
-    if (property.isclass) {
-        return type + " const*";
+        if (property.isclass) {
+            return type;
+        }
+    }
+    else {
+        // Add type modifications depending on "collection" & "optional" attributes
+        if (!(property.actualtype === "object")) {
+            if (property.collection === "map") {
+                // array of dictionary entries
+                return "struct " + getDictionaryEntryTypeFromValueType(type) + " const*";
+            } else if (property.collection === "array") {
+                if (property.isclass) {
+                    // array of pointers
+                    return type + " const* const*";
+                } else {
+                    return type + " const*";
+                }
+            } else if (property.optional) {
+                // Types which aren't already nullable will be made pointer types
+                if (!(type === "const char*" || type === "PlayFabJsonObject")) {
+                    return type + " const*";
+                }
+            }
+        }
+
+        if (property.isclass) {
+            return type + " const*";
+        }
     }
 
     return type;
@@ -698,7 +870,7 @@ function getPropertyDefinition(tabbing, datatype, property, prefix, isInternal) 
     }
 
     if (!isInternal || datatype.isInternalOnly || requiresDynamicStorage(property)) {
-        var type = isInternal ? getInternalPropertyType(property, prefix) : getPublicPropertyType(property, prefix);
+        var type = isInternal ? getInternalPropertyType(property, prefix) : getPublicPropertyType(property, prefix, true);
         var propName = getPropertyName(property, datatype.isInternalOnly ? false : isInternal);
         output += ("\n" + tabbing + type + " " + propName + ";");
 
@@ -831,7 +1003,7 @@ function getCopyConstructorBody(tabbing, datatype, prefix) {
             } else if (property.optional) {
                 output += ("\n" + tabbing + publicPropName + " = " + privatePropName + " ? " + privatePropName + ".operator->() : nullptr;");
             } else if (property.isclass) {
-                output += ("\n" + tabbing + publicPropName + " = (" + getPublicPropertyType(property, prefix) + ")&" + privatePropName + ";");
+                output += ("\n" + tabbing + publicPropName + " = (" + getPublicPropertyType(property, prefix, true) + ")&" + privatePropName + ";");
             } else {
                 throw Error("Unable to copy property of type " + property.actualtype);
             }
@@ -927,14 +1099,16 @@ function doReplace(obj, paramName, newValue) {
 function checkReplacements(api, obj) {
     for (var replaceCategory in propertyReplacements) {
         if (replaceCategory === "generic") {
-            for (var genReplaceName1 in propertyReplacements[replaceCategory])
+            for (var genReplaceName1 in propertyReplacements[replaceCategory]) {
                 doReplace(obj, genReplaceName1, propertyReplacements[replaceCategory][genReplaceName1]);
+            }
         }
         if (replaceCategory === api.name) {
             for (var apiReplaceName in propertyReplacements[replaceCategory]) {
                 if (apiReplaceName === "generic") {
-                    for (var genReplaceName2 in propertyReplacements[replaceCategory][apiReplaceName])
+                    for (var genReplaceName2 in propertyReplacements[replaceCategory][apiReplaceName]) {
                         doReplace(obj, genReplaceName2, propertyReplacements[replaceCategory][apiReplaceName][genReplaceName2]);
+                    }
                 }
                 doReplace(obj, apiReplaceName, propertyReplacements[replaceCategory][apiReplaceName]);
             }
@@ -945,10 +1119,11 @@ function checkReplacements(api, obj) {
 function getRequestExample(api, apiCall) {
     var msg = null;
     if (apiCall.requestExample.length > 0 && apiCall.requestExample.indexOf("{") >= 0) {
-        if (apiCall.requestExample.indexOf("\\\"") === -1) // I can't handle json in a string in json in a string...
+        if (apiCall.requestExample.indexOf("\\\"") === -1) { // I can't handle json in a string in json in a string...
             return getCorrectedRequestExample(api, apiCall);
-        else
+        } else {
             msg = "CANNOT PARSE EXAMPLE BODY: ";
+        }
     }
 
     var props = api.datatypes[apiCall.request].properties;
@@ -957,9 +1132,12 @@ function getRequestExample(api, apiCall) {
         output[props[p].name] = props[p].jsontype;
     }
 
-    if (msg === null)
+    if (msg === null) {
         msg = "AUTO GENERATED BODY FOR: ";
+    }
     console.log(msg + api.name + "." + apiCall.name);
     // console.log("    " + JSON.stringify(output, null, 2));
     return "\"" + jsonEscapeQuotes(jsonEscape(JSON.stringify(output, null, 2))) + "\"";;
 }
+
+

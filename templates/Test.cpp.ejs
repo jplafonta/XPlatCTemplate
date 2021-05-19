@@ -9,97 +9,6 @@
 #include <playfab/PlayFabAuthenticationAuthApi.h>
 #include <playfab/PlayFabClientDataModels.h>
 
-<%
-var skipTestList = [ 
-    "TestClientAcceptTrade", // this test crashes
-    "TestClientConsumeMicrosoftStoreEntitlements", // this test crashes
-    "TestClientUnlinkOpenIdConnect", // this test crashes
-    "TestClientUnlinkWindowsHello", // this test crashes
-    "TestClientValidateAmazonIAPReceipt", // this test crashes
-    "TestClientValidateGooglePlayPurchase", // this test crashes
-    "TestClientValidateWindowsStoreReceipt", // this test crashes
-    "TestClientAddFriend",
-    "TestClientAddSharedGroupMembers",
-    "TestClientAddUserVirtualCurrency",
-    "TestClientAddUsernamePassword",
-    "TestClientAndroidDevicePushNotificationRegistration",
-    "TestClientAttributeInstall",
-    "TestClientCancelTrade",
-    "TestClientConfirmPurchase",
-    "TestClientConsumeItem",
-    "TestClientConsumePS5Entitlements",
-    "TestClientConsumePSNEntitlements",
-    "TestClientConsumeXboxEntitlements",
-    "TestClientCreateSharedGroup",
-    "TestClientGetAccountInfo",
-    "TestClientGetAllUsersCharacters",
-    "TestClientGetCharacterData",
-    "TestClientGetCharacterInventory",
-    "TestClientGetCharacterReadOnlyData",
-    "TestClientGetCharacterStatistics",
-    "TestClientGetGameServerRegions",
-    "TestClientGetLeaderboardAroundCharacter",
-    "TestClientGetPaymentToken",
-    "TestClientGetPhotonAuthenticationToken",
-    "TestClientGetPlayerCombinedInfo",
-    "TestClientGetPlayerProfile",
-    "TestClientGetPlayerStatisticVersions",
-    "TestClientGetPlayerTags",
-    "TestClientGetPurchase",
-    "TestClientGetStoreItems",
-    "TestClientGetTitlePublicKey",
-    "TestClientGetTradeStatus",
-    "TestClientGetWindowsHelloChallenge",
-    "TestClientGrantCharacterToUser",
-    "TestClientLinkApple",
-    "TestClientLinkFacebookAccount",
-    "TestClientLinkFacebookInstantGamesId",
-    "TestClientLinkGoogleAccount",
-    "TestClientLinkKongregate",
-    "TestClientLinkNintendoServiceAccount",
-    "TestClientLinkOpenIdConnect",
-    "TestClientLinkPSNAccount",
-    "TestClientLinkSteamAccount",
-    "TestClientLinkTwitch",
-    "TestClientLinkWindowsHello",
-    "TestClientLinkXboxAccount",
-    "TestClientMatchmake",
-    "TestClientOpenTrade",
-    "TestClientPayForPurchase",
-    "TestClientPurchaseItem",
-    "TestClientRedeemCoupon",
-    "TestClientRefreshPSNAuthToken",
-    "TestClientRegisterForIOSPushNotification",
-    "TestClientRemoveFriend",
-    "TestClientReportAdActivity",
-    "TestClientRestoreIOSPurchases",
-    "TestClientRewardAdActivity",
-    "TestClientSendAccountRecoveryEmail",
-    "TestClientSetFriendTags",
-    "TestClientSetPlayerSecret",
-    "TestClientStartGame",
-    "TestClientStartPurchase",
-    "TestClientSubtractUserVirtualCurrency",
-    "TestClientUnlinkApple",
-    "TestClientUnlinkFacebookAccount",
-    "TestClientUnlinkFacebookInstantGamesId",
-    "TestClientUnlinkGoogleAccount",
-    "TestClientUnlinkKongregate",
-    "TestClientUnlinkNintendoServiceAccount",
-    "TestClientUnlinkPSNAccount",
-    "TestClientUnlinkSteamAccount",
-    "TestClientUnlinkTwitch",
-    "TestClientUnlinkXboxAccount",
-    "TestClientUnlockContainerInstance",
-    "TestClientUnlockContainerItem",
-    "TestClientUpdateCharacterData",
-    "TestClientUpdateCharacterStatistics",
-    "TestClientUpdatePlayerStatistics",
-    "TestClientValidateIOSReceipt",
-    "TestClientWriteCharacterEvent",
-    ];
-%>
-
 namespace PlayFabUnit
 {
 
@@ -111,7 +20,8 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
 {
     var call = categorizedApi.otherCalls[i];
     var testName = "Test" + api.name + call.name;
-    var skipTest = skipTestList.includes(testName);
+    let testStatusListStatus = testStatusList.get(testName);
+    var skipTest = (testStatusListStatus != "Passing");
     if( call.Name )
 %>    <% if( skipTest ) { %>//<% } %>AddTest("<%- testName %>", &AutoGen<%- api.name %>Tests::<%- testName %>);<% if( skipTest ) { %> // TODO: debug failing test<% } %>
 <% } %>}
