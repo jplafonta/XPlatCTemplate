@@ -1,5 +1,6 @@
 #include "TestAppPch.h"
 #include "TestContext.h"
+#include "TestApp.h"
 #include "AutoGen<%- api.name %>Tests.h"
 #include "XAsyncHelper.h"
 #include <playfab/PlayFabClientAuthApi.h>
@@ -17,20 +18,20 @@ function debugLogProp(varName, propName, propCoutName, property, prefix, padding
     var propType = getPublicPropertyType(property, prefix, false);
     var propTypeWithConst = getPublicPropertyType(property, prefix, true);
     if (propType == "PlayFabJsonObject") {%>
-<%- padding %>if( <%- varName %>-><%- propName %>.stringValue ) { std::cout << "  <%- propCoutName %> " << <%- varName %>-><%- propName %>.stringValue << std::endl; } else { std::cout << "  <%- propName %> = nullptr" << std::endl; }<%} else 
+<%- padding %>if( <%- varName %>-><%- propName %>.stringValue ) { ss << "  <%- propCoutName %> " << <%- varName %>-><%- propName %>.stringValue; Log(ss); } else { ss << "  <%- propName %> = nullptr"; Log(ss); }<%} else 
 if (propTypeWithConst == "PlayFabClientRegion const*") {%>
-<%- padding %>if( <%- varName %>-><%- propName %> ) { std::cout << "  <%- propCoutName %> " << (int)*<%- varName %>-><%- propName %> << std::endl; }<%} else 
+<%- padding %>if( <%- varName %>-><%- propName %> ) { ss << "  <%- propCoutName %> " << (int)*<%- varName %>-><%- propName %>; Log(ss); }<%} else 
 if (propType == "PlayFabClientRegion" || propType == "PlayFabClientAdActivity") {%>
-<%- padding %>std::cout << "  <%- propCoutName %> " << (int)<%- varName %>-><%- propName %> << std::endl;<%} else 
+<%- padding %>ss << "  <%- propCoutName %> " << (int)<%- varName %>-><%- propName %>; Log(ss);<%} else 
 if (propType == "bool const*" || propType == "const char*") {%>
-<%- padding %>if( <%- varName %>-><%- propName %> ) { std::cout << "  <%- propCoutName %> " << <%- varName %>-><%- propName %> << std::endl; } else { std::cout << "  <%- propCoutName %> = nullptr" << std::endl; }<%} else {%>
-<%- padding %>std::cout << "  <%- propCoutName %> " << <%- varName %>-><%- propName %> << std::endl;<%} %> // Class: <%-propType%> <%
+<%- padding %>if( <%- varName %>-><%- propName %> ) { ss << "  <%- propCoutName %> " << <%- varName %>-><%- propName %>; Log(ss); } else { ss << "  <%- propCoutName %> = nullptr"; Log(ss); }<%} else {%>
+<%- padding %>ss << "  <%- propCoutName %> " << <%- varName %>-><%- propName %>; Log(ss);<%} %> // Class: <%-propType%> <%
 }
 
 function debugLogCollection(varName, propName, property, prefix) {
         var propType = getPublicPropertyType(property, prefix, false);
 %>    
-    std::cout << "  <%- propName %>Count " << <%- varName %>-><%- propName %>Count << std::endl;
+    ss << "  <%- propName %>Count " << <%- varName %>-><%- propName %>Count; Log(ss);
 
     // <%- propType %>
     for( uint32_t i=0; i<<%- varName %>-><%- propName %>Count; i++ )
@@ -55,7 +56,7 @@ function debugLogCollection(varName, propName, property, prefix) {
     if (!found)
     {
         if( propType == "PlayFabJsonObject" ) {%>
-        std::cout << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i].stringValue << std::endl;
+        ss << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i].stringValue; Log(ss);
         <%} else if( 
             propType == "PlayFabUserDataRecordDictionaryEntry" || 
             propType == "PlayFabVirtualCurrencyRechargeTimeDictionaryEntry" ||
@@ -63,18 +64,16 @@ function debugLogCollection(varName, propName, property, prefix) {
             propType == "PlayFabStringDictionaryEntry" || 
             propType == "PlayFabUint32DictionaryEntry" || 
             propType == "PlayFabInt32DictionaryEntry" ) {%>
-        std::cout << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i].key << "=" << <%- varName + "->" + propName %>[i].value << std::endl;
+        ss << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i].key << "=" << <%- varName + "->" + propName %>[i].value; Log(ss);
         <%}
         else {%>
-        std::cout << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i] << std::endl; // <%- propType %><%  
+        ss << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i]; Log(ss); // <%- propType %><%  
         }
     }
         %>
     } <%
 }
-%>
-
-namespace PlayFabUnit
+%>namespace PlayFabUnit
 {
 
 <% 
@@ -85,15 +84,16 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
     var call = categorizedApi.otherCalls[i];
     var asyncName = "PlayFab" + api.name + call.name + "Async"; 
     var testName = "Test" + api.name + call.name;
-    let testStatusListStatus = testStatusList.get(testName);
+    let testStatusListStatus = testStatusMap[testName];
     var skipTest = (testStatusListStatus != "Passing");
     if( !(call.request in hasFillBeenDefinedMap) && call.request != "void" ) {  // call.name == "AcceptTrade"
         hasFillBeenDefinedMap[call.request] = true;
 %>void AutoGen<%- api.name %>Tests::FillPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request )
 {
-    std::cout << "----------" << std::endl;
-    std::cout << "Test #" << g_testIndex++ << ": <%- api.name + call.request %>" << std::endl;
-    std::cout << "Request:" << std::endl;
+    std::stringstream ss;
+    ss << "----------"; Log(ss);
+    ss << "Test #" << g_testIndex++ << ": <%- api.name + call.request %>"; Log(ss);
+    ss << "Request:"; Log(ss);
 <% 
     var found = false;
     for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
@@ -149,7 +149,8 @@ if( !found ) { throw Error('Not found ' + call.request) } %>
     hasValidateBeenDefinedMap[call.result] = true;
 %>HRESULT AutoGen<%- api.name %>Tests::ValidatePlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result )
 {
-    std::cout << "Response:" << std::endl;
+    std::stringstream ss;
+    ss << "Response:"; Log(ss);
 <% 
     var found = false;
     for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 

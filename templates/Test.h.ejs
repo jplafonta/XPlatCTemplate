@@ -12,6 +12,8 @@ namespace PlayFabUnit
 class AutoGen<%- api.name %>Tests : public PlayFabApiTestCase
 {
 private: 
+    static void Log(std::stringstream& ss);
+    static HRESULT LogHR(HRESULT hr);
 <% for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
 {
     var call = categorizedApi.otherCalls[i];
