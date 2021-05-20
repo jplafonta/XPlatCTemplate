@@ -1,5 +1,6 @@
 #include "TestAppPch.h"
 #include "TestContext.h"
+#include "TestApp.h"
 #include "AutoGen<%- api.name %>Tests.h"
 #include "XAsyncHelper.h"
 #include <playfab/PlayFabClientAuthApi.h>
@@ -12,6 +13,19 @@
 namespace PlayFabUnit
 {
 
+void AutoGen<%- api.name %>Tests::Log(std::stringstream& ss)
+{
+    TestApp::LogPut(ss.str().c_str());
+    ss.str(std::string());
+    ss.clear();
+}
+
+HRESULT AutoGenClientTests::LogHR(HRESULT hr)
+{
+    TestApp::Log("Result: 0x%0.8x", hr);
+    return hr;
+}
+
 void AutoGen<%- api.name %>Tests::AddTests()
 {
     // Generated tests 
@@ -20,7 +34,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
 {
     var call = categorizedApi.otherCalls[i];
     var testName = "Test" + api.name + call.name;
-    let testStatusListStatus = testStatusList.get(testName);
+    let testStatusListStatus = testStatusMap[testName];
     var skipTest = (testStatusListStatus != "Passing");
     if( call.Name )
 %>    <% if( skipTest ) { %>//<% } %>AddTest("<%- testName %>", &AutoGen<%- api.name %>Tests::<%- testName %>);<% if( skipTest ) { %> // TODO: debug failing test<% } %>
@@ -91,17 +105,17 @@ void AutoGen<%- api.name %>Tests::SetUp(TestContext& testContext)
         { <% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { %>
             // style 1
             // No Get Result method needed
-            return XAsyncGetStatus(async, true);<% } else if (isFixedSize(api.datatypes[call.result])) { %>
+            return LogHR(XAsyncGetStatus(async, true));<% } else if (isFixedSize(api.datatypes[call.result])) { %>
             // style 2
-            return PlayFab<%- api.name + call.name %>GetResult(async, &result); <% } else if (isSerializable(api.datatypes[call.result])) { %>
+            return LogHR(PlayFab<%- api.name + call.name %>GetResult(async, &result)); <% } else if (isSerializable(api.datatypes[call.result])) { %>
             // style 3
             size_t requiredBufferSize;
-            RETURN_IF_FAILED(PlayFab<%- api.name %><%- call.name %>GetResultSize(async, &requiredBufferSize));
+            RETURN_IF_FAILED(LogHR(PlayFab<%- api.name %><%- call.name %>GetResultSize(async, &requiredBufferSize)));
 
             resultBuffer.resize(requiredBufferSize);
-            return PlayFab<%- api.name + call.name %>GetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr); <% } else { %>
+            return LogHR(PlayFab<%- api.name + call.name %>GetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr)); <% } else { %>
             // style 4
-            return PlayFab<%- api.name + call.name %>GetResult(async, &resultHandle, &result); <% } // end if %>
+            return LogHR(PlayFab<%- api.name + call.name %>GetResult(async, &resultHandle, &result)); <% } // end if %>
         }
 
         HRESULT Validate()
