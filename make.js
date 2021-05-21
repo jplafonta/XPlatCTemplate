@@ -460,15 +460,30 @@ function populateDictionaryEntryTypes(api) {
 
 // *************************** ejs-exposed methods ***************************
 
-function addAuthHeader(apiCall) {
+function addAuthHeader(apiCall, tabbing) {
     switch (apiCall.auth) {
-        case "EntityToken": return "headers.emplace(\"X-EntityToken\", m_tokens->EntityToken);";
-        case "SessionTicket": return "headers.emplace(\"X-Authorization\", m_tokens->SessionTicket);";
-        case "SecretKey": return "headers.emplace(\"X-SecretKey\", *m_secretKey);";
-        case "None": return "//No auth header required for this API";
+        case "EntityToken": {
+            var output = ("if (m_tokens->EntityToken.empty())\n" + tabbing + "{\n" + tabbing + "    return E_PLAYFAB_NOENTITYTOKEN;\n" + tabbing + "}\n");
+            output += (tabbing + "headers.emplace(\"X-EntityToken\", m_tokens->EntityToken);");
+            return output;
+        }
+        case "SessionTicket": {
+            output = ("if (m_tokens->SessionTicket.empty())\n" + tabbing + "{\n" + tabbing + "    return E_PLAYFAB_NOSESSIONTICKET;\n" + tabbing + "}\n");
+            output += (tabbing + "headers.emplace(\"X-Authorization\", m_tokens->SessionTicket);");
+            return output;
+        }
+        case "SecretKey": {
+            output = ("if (m_secretKey == nullptr || m_secretKey->empty())\n" + tabbing + "{\n" + tabbing + "    return E_PLAYFAB_NOSECRETKEY;\n" + tabbing + "}\n");
+            output += (tabbing + "headers.emplace(\"X-SecretKey\", *m_secretKey);");
+            return output;
+        }
+        case "None": {
+            return "//No auth header required for this API";
+        }
+        default: {
+            throw Error("getAuthParams: Unknown auth type: " + apiCall.auth + " for " + apiCall.name);
+        }
     }
-
-    throw Error("getAuthParams: Unknown auth type: " + apiCall.auth + " for " + apiCall.name);
 }
 
 // Returns whether the C++ model for a datatype is fixed size

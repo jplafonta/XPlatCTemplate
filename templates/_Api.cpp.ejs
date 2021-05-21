@@ -32,7 +32,7 @@ if (categorizedApi.otherCallsRequireSecretKey) {
 )<%- constModifier %>
 {
     UnorderedMap<String, String> headers;
-    <%- addAuthHeader(call) %>
+    <%- addAuthHeader(call, "    ") %>
 
     return <%- httpClient %>->MakePostRequest(
         "<%- call.url %>",
