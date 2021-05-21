@@ -35,9 +35,16 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
     var call = categorizedApi.otherCalls[i];
     var testName = "Test" + api.name + call.name;
     let testStatusListStatus = testStatusMap[testName];
-    var skipTest = (testStatusListStatus != "Passing");
+    let passingWithDataTest = (testStatusListStatus == "PassingWithData");
+    let passingButNoDataTest = (testStatusListStatus == "PassingButNoData");
+    let failingTest = (testStatusListStatus == "Failing");
+    let crashingTest = (testStatusListStatus == "Crashing");
+    if( api.name == "Client" && (!passingWithDataTest && !passingButNoDataTest && !failingTest && !crashingTest) ) {
+        throw Error('Test ' + testName + ' not found in TestStatus.json');
+    }
+
     if( call.Name )
-%>    <% if( skipTest ) { %>//<% } %>AddTest("<%- testName %>", &AutoGen<%- api.name %>Tests::<%- testName %>);<% if( skipTest ) { %> // TODO: debug failing test<% } %>
+%>    <% if( failingTest || crashingTest ) { %>//<% } %>AddTest("<%- testName %>", &AutoGen<%- api.name %>Tests::<%- testName %>);<% if( crashingTest ) { %> // TODO: debug crashing test<% } %><% if( passingButNoDataTest ) { %> // TODO: debug passing test but no data<% } %><% if( failingTest ) { %> // TODO: debug failing test<% } %>
 <% } %>}
 
 void AutoGen<%- api.name %>Tests::ClassSetUp()
@@ -134,8 +141,8 @@ void AutoGen<%- api.name %>Tests::SetUp(TestContext& testContext)
     auto async = std::make_unique<XAsyncHelper<<%- call.name %>Result>>(testContext);
 <% if (call.request != "void") { %>
     PlayFab::<%- api.name %>Models::<%- call.request %> request;
-    FillPlayFab<%- api.name + call.request %>( &request );
-    HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &request, &async->asyncBlock); <% } else { %>    
+    FillPlayFab<%- api.name + call.request %>( &request, "<%- testName %>" );
+    HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &request, &async->asyncBlock); <% } else { %>
     HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &async->asyncBlock); <% } %>
     if (FAILED(hr))
     {

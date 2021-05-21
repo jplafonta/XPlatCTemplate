@@ -32,7 +32,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
     var call = categorizedApi.otherCalls[i];
     if( !(call.request in hasFillBeenDefinedMap) && call.request != "void" ) {
         hasFillBeenDefinedMap[call.request] = true;
-%>    static void FillPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request );
+%>    static void FillPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request, const char* testName );
 <% } if (!(call.result in hasValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") { 
     hasValidateBeenDefinedMap[call.result] = true;
 %>    static HRESULT ValidatePlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result );
