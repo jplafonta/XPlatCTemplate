@@ -88,11 +88,12 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
     var skipTest = (testStatusListStatus != "Passing");
     if( !(call.request in hasFillBeenDefinedMap) && call.request != "void" ) {  // call.name == "AcceptTrade"
         hasFillBeenDefinedMap[call.request] = true;
-%>void AutoGen<%- api.name %>Tests::FillPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request )
-{
+%>void AutoGen<%- api.name %>Tests::FillPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request, const char* testName )
+{<% let testStatusListStatus = testStatusMap[testName]; %>
+
     std::stringstream ss;
     ss << "----------"; Log(ss);
-    ss << "Test #" << g_testIndex++ << ": <%- api.name + call.request %>"; Log(ss);
+    ss << "Test #" << g_testIndex++ << ": " << testName << ".  Last Known Status: <%- testStatusListStatus %>"; Log(ss);
     ss << "Request:"; Log(ss);
 <% 
     var found = false;
