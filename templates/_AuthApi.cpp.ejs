@@ -26,7 +26,7 @@ AsyncOp<SharedPtr<Entity>> <%- api.name %>AuthAPI::<%- call.name %>(
 ) const
 {
     UnorderedMap<String, String> headers;
-    <%- addAuthHeader(call) %>
+    <%- addAuthHeader(call, "    ") %>
 
     return m_httpClient->MakePostRequest(
         "<%- call.url %>",
