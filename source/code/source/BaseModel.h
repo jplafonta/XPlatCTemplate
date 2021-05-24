@@ -453,6 +453,34 @@ inline void PointerArrayModel<char, String>::FromJson(const JsonValue& input)
 }
 
 template <>
+inline AssociativeArrayModel<PlayFabStringDictionaryEntry, String>::AssociativeArrayModel(const AssociativeArrayModel& src) :
+    m_map{ src.m_map }
+{
+    m_entries.reserve(m_map.size());
+    for (const auto& pair : m_map)
+    {
+        m_entries.push_back(PlayFabStringDictionaryEntry{ pair.first.data(), pair.second.data() });
+    }
+}
+
+template <>
+inline void AssociativeArrayModel<PlayFabStringDictionaryEntry, String>::FromJson(const JsonValue& input)
+{
+    Clear();
+    if (input.IsObject())
+    {
+        m_entries.reserve(input.MemberCount());
+
+        for (auto& pair : input.GetObject())
+        {
+            auto mapIter = m_map.emplace(pair.name.GetString(), String{}).first;
+            JsonUtils::FromJson(pair.value, mapIter->second);
+            m_entries.emplace_back(PlayFabStringDictionaryEntry{ mapIter->first.data(), mapIter->second.data() });
+        }
+    }
+}
+
+template <>
 inline void AssociativeArrayModel<PlayFabDateTimeDictionaryEntry, void>::FromJson(const JsonValue& input)
 {
     Clear();
