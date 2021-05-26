@@ -43,8 +43,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
         throw Error('Test ' + testName + ' not found in TestStatus.json');
     }
 
-    //let skipTest = (failingTest || crashingTest);
-    let skipTest = !crashingTest;
+    let skipTest = (failingTest || crashingTest);
 
     if( call.Name )
 %>    <% if( skipTest ) { %>//<% } %>AddTest("<%- testName %>", &AutoGen<%- api.name %>Tests::<%- testName %>);<% if( crashingTest ) { %> // TODO: debug crashing test<% } %><% if( passingButNoDataTest ) { %> // TODO: debug passing test but no data<% } %><% if( failingTest ) { %> // TODO: debug failing test<% } %>
