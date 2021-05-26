@@ -106,8 +106,11 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         var testCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.cpp.ejs"));
         writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "Tests.cpp"), testCppTemplate(locals));
 
+        var testLogCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/TestLog.cpp.ejs"));
+        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "TestLog.cpp"), testLogCppTemplate(locals));
+
         var testDataCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/TestData.cpp.ejs"));
-        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "TestData.cpp"), testDataCppTemplate(locals));
+        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "TestData.cpp.autogen"), testDataCppTemplate(locals));
 
         var testHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.h.ejs"));
         writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "Tests.h"), testHeaderTemplate(locals));

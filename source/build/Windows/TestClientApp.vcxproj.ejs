@@ -142,6 +142,7 @@ for(var apiName in categorizedApis) {
     if (apiName == "Client") {  %>
     <ClInclude Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.h" />
     <ClCompile Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestData.cpp" />
+    <ClCompile Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestLog.cpp" />
     <ClCompile Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.cpp" /> <%
 } } %>
     <ClCompile Include="MainWin32.cpp" />

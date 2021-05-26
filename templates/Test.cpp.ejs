@@ -43,8 +43,11 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
         throw Error('Test ' + testName + ' not found in TestStatus.json');
     }
 
+    //let skipTest = (failingTest || crashingTest);
+    let skipTest = !crashingTest;
+
     if( call.Name )
-%>    <% if( failingTest || crashingTest ) { %>//<% } %>AddTest("<%- testName %>", &AutoGen<%- api.name %>Tests::<%- testName %>);<% if( crashingTest ) { %> // TODO: debug crashing test<% } %><% if( passingButNoDataTest ) { %> // TODO: debug passing test but no data<% } %><% if( failingTest ) { %> // TODO: debug failing test<% } %>
+%>    <% if( skipTest ) { %>//<% } %>AddTest("<%- testName %>", &AutoGen<%- api.name %>Tests::<%- testName %>);<% if( crashingTest ) { %> // TODO: debug crashing test<% } %><% if( passingButNoDataTest ) { %> // TODO: debug passing test but no data<% } %><% if( failingTest ) { %> // TODO: debug failing test<% } %>
 <% } %>}
 
 void AutoGen<%- api.name %>Tests::ClassSetUp()
@@ -130,10 +133,13 @@ void AutoGen<%- api.name %>Tests::SetUp(TestContext& testContext)
 <% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { %>            // style 1
             return S_OK;
 <% } else if (isFixedSize(api.datatypes[call.result])) { %>            // style 2
+            LogPlayFab<%- api.name %><%- call.result %>( &result );
             return ValidatePlayFab<%- api.name %><%- call.result %>( &result );
 <% } else if (isSerializable(api.datatypes[call.result])) { %>            // style 3
+            LogPlayFab<%- api.name %><%- call.result %>( result );
             return ValidatePlayFab<%- api.name %><%- call.result %>( result );
 <% } else { %>            // style 4
+            LogPlayFab<%- api.name %><%- call.result %>( result );
             return ValidatePlayFab<%- api.name %><%- call.result %>( result );
 <% } // end if %>        }
     };
@@ -141,7 +147,8 @@ void AutoGen<%- api.name %>Tests::SetUp(TestContext& testContext)
     auto async = std::make_unique<XAsyncHelper<<%- call.name %>Result>>(testContext);
 <% if (call.request != "void") { %>
     PlayFab::<%- api.name %>Models::<%- call.request %> request;
-    FillPlayFab<%- api.name + call.request %>( &request, "<%- testName %>" );
+    FillPlayFab<%- api.name + call.request %>( &request );
+    LogPlayFab<%- api.name + call.request %>( &request, "<%- testName %>" );
     HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &request, &async->asyncBlock); <% } else { %>
     HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &async->asyncBlock); <% } %>
     if (FAILED(hr))
