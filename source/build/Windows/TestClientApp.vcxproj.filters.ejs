@@ -64,6 +64,9 @@ for(var apiName in categorizedApis) {
     <ClCompile Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestData.cpp">
       <Filter>AutoGen Tests</Filter>
     </ClCompile>
+    <ClCompile Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestLog.cpp">
+      <Filter>AutoGen Tests</Filter>
+    </ClCompile>
     <ClCompile Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.cpp">
       <Filter>AutoGen Tests</Filter>
     </ClCompile> <% } %>
