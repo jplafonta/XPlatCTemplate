@@ -54,19 +54,13 @@ typedef void STDAPIVCALLTYPE PlayFabMemFreeFunction(
 /// <summary>
 /// Optionally sets the memory hook functions to allow callers to control route memory 
 /// allocations to their own memory manager. This must be called before PlayFabInitialize() 
-/// and can not be called again until after calling PlayFabCleanupAsync()
+/// and can not be called again once memory hooks have been set.
 ///
 /// This method allows the application to install custom memory allocation routines in order 
 /// to service all requests for new memory buffers instead of using default allocation routines.
-///
-/// The <paramref name="memAllocFunc" /> and <paramref name="memFreeFunc" /> parameters can be null
-/// pointers to restore the default routines. Both callback pointers must be null or both must 
-/// be non-null. Mixing custom and default routines is not permitted.
 /// </summary>
-/// <param name="memAllocFunc">A pointer to the custom allocation callback to use, or a null 
-/// pointer to restore the default.</param>
-/// <param name="memFreeFunc">A pointer to the custom freeing callback to use, or a null 
-/// pointer to restore the default.</param>
+/// <param name="memAllocFunc">A pointer to the custom allocation callback to use.</param>
+/// <param name="memFreeFunc">A pointer to the custom freeing callback to use.</param>
 /// <returns>HRESULT return code for this API operation.</returns>
 STDAPI PlayFabMemSetFunctions(
     _In_opt_ PlayFabMemAllocFunction* memAllocFunc,
@@ -75,12 +69,12 @@ STDAPI PlayFabMemSetFunctions(
 
 /// <summary>
 /// Gets the memory hook functions to allow callers to control route memory allocations to their 
-/// own memory manager.  This method allows the application get the default memory allocation routines.
+/// own memory manager. This method allows the application get the default memory allocation routines.
 /// This can be used along with PlayFabMemSetFunctions() to monitor all memory allocations.
 /// </summary>
-/// <param name="memAllocFunc">Set to the current allocation callback.  Returns the default routine 
+/// <param name="memAllocFunc">Set to the current allocation callback. Returns the default routine 
 /// if not previously set</param>
-/// <param name="memFreeFunc">Set to the to the current memory free callback.  Returns the default 
+/// <param name="memFreeFunc">Set to the to the current memory free callback. Returns the default 
 /// routine if not previously set</param>
 /// <returns>HRESULT return code for this API operation.</returns>
 STDAPI PlayFabMemGetFunctions(
@@ -99,10 +93,10 @@ typedef struct PlayFabGlobalState* PlayFabStateHandle;
 /// </summary>
 /// <param name="titleId">TitleId for the title. Found in the Game Manager for your title on the PlayFab Website.</param>
 /// <param name="secretKey">Key to be used for Authentication for some APIs.</param>
-/// <param name="stateHandle">Returned pointer to PlayFabStateHandle.</param>
+/// <param name="stateHandle">Pointer to PlayFabStateHandle to write.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabInitialize(
-    _In_z_ const char* titleId, // Could this be a uint64_t?
+    _In_z_ const char* titleId,
     _In_opt_z_ const char* secretKey,
     _Outptr_ PlayFabStateHandle* stateHandle
 ) noexcept;

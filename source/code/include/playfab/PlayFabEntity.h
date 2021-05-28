@@ -21,6 +21,21 @@ extern "C"
 /// </summary>
 typedef struct PlayFabEntity* PlayFabEntityHandle;
 
+typedef struct PlayFabEntityToken
+{
+    /// <summary>
+    /// The token used to set X-EntityToken for all entity based API calls.
+    /// </summary>
+    const char* token;
+
+    /// <summary>
+    /// (Optional) The time the token will expire, if it is an expiring token, in UTC.
+    /// </summary>
+    time_t const* expiration;
+
+} PlayFabEntityToken;
+
+
 /// <summary>
 /// Get the result from a PlayFab authentication API. See PlayFab*AuthApi.h for the various authentication options.
 /// </summary>
@@ -65,7 +80,6 @@ void PlayFabEntityCloseHandle(
 /// will be updated with the returned EntityToken and it will be used in future PlayFab calls.
 /// </summary>
 /// <param name="entityHandle">Existing PlayFabEntityHandle returned from an auth call.</param>
-/// <param name="request">Populated request object.</param>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <returns>Result code for this API operation.</returns>
 /// <remarks>
@@ -73,7 +87,6 @@ void PlayFabEntityCloseHandle(
 /// </remarks>
 HRESULT PlayFabEntityGetEntityTokenAsync(
     _In_ PlayFabEntityHandle entityHandle,
-    _In_ const PlayFabAuthenticationGetEntityTokenRequest* request,
     _Inout_ XAsyncBlock* async
 ) noexcept;
 
@@ -111,6 +124,18 @@ HRESULT PlayFabEntityGetEntityType(
 ) noexcept;
 
 /// <summary>
+/// Get the Entity token.
+/// </summary>
+/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
+/// <param name="entityToken">Returned pointer to the entityToken. The pointer is valid until the Entity object is cleaned up, though
+/// the token may expire before then.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT PlayFabEntityGetCachedEntityToken(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const PlayFabEntityToken** entityToken
+) noexcept;
+
+/// <summary>
 /// Get combined player info. Will be null if combined player info was not requested requested during login (see <see cref="PlayFabClientGetPlayerCombinedInfoRequestParams"/>).
 /// </summary>
 /// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
@@ -122,18 +147,18 @@ HRESULT PlayFabEntityGetEntityType(
 /// </remarks>
 HRESULT PlayFabEntityGetPlayerCombinedInfo(
     _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_ const PlayFabGetPlayerCombinedInfoResultPayload** playerCombinedInfo
+    _Outptr_result_maybenull_ const PlayFabGetPlayerCombinedInfoResultPayload** playerCombinedInfo
 ) noexcept;
 
 /// <summary>
-/// Get last login time. lastLoginTime will be set to null if entity has no previous login.
+/// Get last login time (prior to the login that resulted in this entityHandle). lastLoginTime will be set to null if entity has no previous login.
 /// </summary>
 /// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
 /// <param name="lastLoginTime">Returned pointer to the last login time. Valid until the Entity object is cleaned up.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabEntityGetLastLoginTime(
     _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_ const time_t** lastLoginTime
+    _Outptr_result_maybenull_ const time_t** lastLoginTime
 ) noexcept;
 
 /// <summary>
@@ -144,7 +169,7 @@ HRESULT PlayFabEntityGetLastLoginTime(
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabEntityGetUserSettings(
     _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_ const PlayFabUserSettings** userSettings
+    _Outptr_result_maybenull_ const PlayFabUserSettings** userSettings
 ) noexcept;
 
 /// <summary>
@@ -155,7 +180,7 @@ HRESULT PlayFabEntityGetUserSettings(
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabEntityGetTreatmentAssignment(
     _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_ const PlayFabTreatmentAssignment** treatmentAssignment
+    _Outptr_result_maybenull_ const PlayFabTreatmentAssignment** treatmentAssignment
 ) noexcept;
 
 }

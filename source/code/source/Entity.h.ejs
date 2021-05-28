@@ -1,5 +1,6 @@
 #pragma once
 
+#include <AuthTokens.h>
 #include <Client/ClientDataModels.h>
 #include <Authentication/AuthenticationDataModels.h>
 #include <Events/Manager/EventManagerApi.h>
@@ -13,13 +14,6 @@ for(var apiName in categorizedApis) {
 
 namespace PlayFab
 {
-
-// Auth tokens needed by to make PlayFab service calls
-struct AuthTokens
-{
-    String SessionTicket;
-    String EntityToken;
-};
 
 // An entity authenticated with PlayFab via one of the various login methods. For more detail on PlayFab entities see the service
 // documentation here: https://docs.microsoft.com/en-us/gaming/playfab/features/data/entities/quickstart.
@@ -43,13 +37,14 @@ public:
     // Non-generated implementation for /Authentication/GetEntityToken API call. When GetEntityToken is called by an existing Entity, the service
     // call will be authenticated with either the EntityToken or the ClientSessionTicket. The calling Entity's AuthTokens will be updated with the returned 
     // EntityToken if the call succeeds.
-    AsyncOp<void> GetEntityToken(const PlayFabAuthenticationGetEntityTokenRequest& request, const TaskQueue& queue);
+    AsyncOp<void> GetEntityToken(const TaskQueue& queue);
 
     // Getter methods to retreive Entity properties. All data only guaranteed to be accurate at the time of login. Lifetime of returned data is tied
     // to Entity object.
-    const String& PlayFabId() const;
-    const String& EntityId() const;
-    const String& EntityType() const;
+    String const& PlayFabId() const;
+    String const& EntityId() const;
+    String const& EntityType() const;
+    PlayFab::EntityToken const& EntityToken() const;
     GetPlayerCombinedInfoResultPayload const* PlayerCombinedInfo() const;
     time_t const* LastLoginTime() const;
     UserSettings const* UserSettings() const;

@@ -15,7 +15,7 @@ struct MemoryHooks
 };
 
 MemoryHooks& GetMemoryHooks();
-void SetMemoryHooks(PlayFabMemAllocFunction* memAllocFunc, PlayFabMemFreeFunction* memFreeFunc);
+HRESULT SetMemoryHooks(PlayFabMemAllocFunction* memAllocFunc, PlayFabMemFreeFunction* memFreeFunc);
 
 }
 

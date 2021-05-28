@@ -24,22 +24,27 @@ MemoryHooks& GetMemoryHooks()
     return s_hooks;
 }
 
-void SetMemoryHooks(PlayFabMemAllocFunction* memAllocFunc, PlayFabMemFreeFunction* memFreeFunc)
+HRESULT SetMemoryHooks(PlayFabMemAllocFunction* memAllocFunc, PlayFabMemFreeFunction* memFreeFunc)
 {
-    assert((memAllocFunc && memFreeFunc) || (!memAllocFunc && !memFreeFunc));
+    // Memhooks can't be null
+    RETURN_HR_INVALIDARG_IF_NULL(memAllocFunc);
+    RETURN_HR_INVALIDARG_IF_NULL(memFreeFunc);
 
     auto& hooks = GetMemoryHooks();
-    if (memAllocFunc)
+
+    // Only allow hooks to be set once
+    if (hooks.alloc != DefaultAlloc || hooks.free != DefaultFree)
+    {
+        TRACE_ERROR("Memory Hooks can only be set once!");
+        return E_FAIL;
+    }
+    else
     {
         hooks.alloc = memAllocFunc;
         hooks.free = memFreeFunc;
     }
-    else
-    {
-        // reset to defaults
-        hooks.alloc = DefaultAlloc;
-        hooks.free = DefaultFree;
-    }
+
+    return S_OK;
 }
 
 }

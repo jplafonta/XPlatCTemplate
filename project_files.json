@@ -21,6 +21,8 @@
     "source\\AsyncOp.h": "Source",
     "source\\AsyncProvider.cpp": "Source",
     "source\\AsyncProvider.h": "Source",
+    "source\\AuthTokens.cpp": "Source",
+    "source\\AuthTokens.h": "Source",
     "source\\BaseModel.cpp": "Source",
     "source\\BaseModel.h": "Source",
     "source\\Entity.cpp": "Source",
