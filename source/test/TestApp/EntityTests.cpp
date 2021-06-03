@@ -137,7 +137,7 @@ void EntityTests::AddTests()
 
 void EntityTests::ClassSetUp()
 {
-    HRESULT hr = PlayFabInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), &stateHandle);
+    HRESULT hr = PlayFabServerInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), &stateHandle);
     UNREFERENCED_PARAMETER(hr);
 }
 

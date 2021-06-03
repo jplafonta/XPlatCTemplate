@@ -68,7 +68,7 @@ namespace PlayFabUnit
 
     void PlatformLoginTest::ClassSetUp()
     {
-        HRESULT hr = PlayFabInitialize(testTitleData.titleId.data(), nullptr, &stateHandle);
+        HRESULT hr = PlayFabServerInitialize(testTitleData.titleId.data(), nullptr, &stateHandle);
         assert(SUCCEEDED(hr));
         UNREFERENCED_PARAMETER(hr);
     }

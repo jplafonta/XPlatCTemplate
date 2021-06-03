@@ -35,7 +35,9 @@ public:
     void UpdateEntityToken(const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse);
 
 private:
+    // Most recent entity token. Mutex not required to read.
     std::atomic<PlayFab::EntityToken const*> m_entityToken;
+    // All entity tokens. Storing old entity tokens as well so we don't invalidate pointers returned to titles.
     List<PlayFab::EntityToken> m_entityTokens;
     String m_sessionTicket;
     std::mutex m_mutex;

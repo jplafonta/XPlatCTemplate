@@ -168,7 +168,7 @@ void EventManagerTests::AddTests()
 
 void EventManagerTests::ClassSetUp()
 {
-    PlayFabInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), &stateHandle);
+    PlayFabServerInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), &stateHandle);
 }
 
 void EventManagerTests::ClassTearDown()

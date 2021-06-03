@@ -92,14 +92,28 @@ typedef struct PlayFabGlobalState* PlayFabStateHandle;
 /// Create PlayFab global state.
 /// </summary>
 /// <param name="titleId">TitleId for the title. Found in the Game Manager for your title on the PlayFab Website.</param>
-/// <param name="secretKey">Key to be used for Authentication for some APIs.</param>
 /// <param name="stateHandle">Pointer to PlayFabStateHandle to write.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabInitialize(
     _In_z_ const char* titleId,
+    _Outptr_ PlayFabStateHandle* stateHandle
+) noexcept;
+
+#if defined(ENABLE_PLAYFABSERVER_API) || defined(ENABLE_PLAYFABADMIN_API)
+/// <summary>
+/// Create PlayFab global state. Should be only used when implementing server code.
+/// </summary>
+/// <param name="titleId">TitleId for the title. Found in the Game Manager for your title on the PlayFab Website.</param>
+/// <param name="secretKey">Key to be used for Authentication for some APIs.</param>
+/// <param name="stateHandle">Pointer to PlayFabStateHandle to write.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT PlayFabServerInitialize(
+    _In_z_ const char* titleId,
     _In_opt_z_ const char* secretKey,
     _Outptr_ PlayFabStateHandle* stateHandle
 ) noexcept;
+#endif
+
 
 /// <summary>
 /// Cleanup PlayFab global state.

@@ -21,6 +21,9 @@ extern "C"
 /// </summary>
 typedef struct PlayFabEntity* PlayFabEntityHandle;
 
+/// <summary>
+/// PlayFab EntityToken and its expiration time. Used internally to authenticate PlayFab service calls.
+/// </summary>
 typedef struct PlayFabEntityToken
 {
     /// <summary>
@@ -34,7 +37,6 @@ typedef struct PlayFabEntityToken
     time_t const* expiration;
 
 } PlayFabEntityToken;
-
 
 /// <summary>
 /// Get the result from a PlayFab authentication API. See PlayFab*AuthApi.h for the various authentication options.
