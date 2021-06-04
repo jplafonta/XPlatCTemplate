@@ -91,10 +91,12 @@ AsyncOp<void> Entity::GetEntityToken(
         {
             AuthenticationModels::GetEntityTokenResponse resultModel;
             resultModel.FromJson(serviceResponse.Data);
+
+            // We requested an EntityToken for this entity, so these should never change
+            assert(sharedThis->m_entityId == AS_STRING(resultModel.entity->id));
+            assert(sharedThis->m_entityType == AS_STRING(resultModel.entity->type));
+
             sharedThis->m_authTokens->UpdateEntityToken(resultModel);
-            // TODO Should we update these Id and Type? I don't think they can change and it invalidates previously returned pointers
-            sharedThis->m_entityId = resultModel.entity->id;
-            sharedThis->m_entityType = resultModel.entity->type;
             return S_OK;
         }
         else

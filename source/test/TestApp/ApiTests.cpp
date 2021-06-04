@@ -273,7 +273,7 @@ void ApiTests::AddTests()
 
 void ApiTests::ClassSetUp()
 {
-    HRESULT hr = PlayFabServerInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), &stateHandle);
+    HRESULT hr = PlayFabAdminInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), &stateHandle);
     if (SUCCEEDED(hr))
     {
         PlayFabClientLoginWithCustomIDRequest request{};

@@ -43,7 +43,6 @@ EntityToken::EntityToken(EntityToken&& src) :
 AuthTokens::AuthTokens(const LoginResult& result) :
     m_sessionTicket{ result.sessionTicket }
 {
-    // Can this ever be missing from a LoginResult?
     assert(result.entityToken);
     m_entityTokens.emplace_front(*result.entityToken);
     m_entityToken = &m_entityTokens.front();
@@ -52,7 +51,6 @@ AuthTokens::AuthTokens(const LoginResult& result) :
 AuthTokens::AuthTokens(const ClientModels::RegisterPlayFabUserResult& result) : 
     m_sessionTicket{ result.sessionTicket }
 {
-    // Can this ever be missing from a RegisterPlayFabUserResult?
     assert(result.entityToken);
     m_entityTokens.emplace_front(*result.entityToken);
     m_entityToken = &m_entityTokens.front();

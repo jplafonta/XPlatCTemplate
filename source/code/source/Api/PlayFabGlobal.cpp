@@ -45,7 +45,7 @@ HRESULT PlayFabInitialize(
     return PlayFabGlobalState::Create(titleId, nullptr, stateHandle);
 }
 
-HRESULT PlayFabServerInitialize(
+HRESULT PlayFabAdminInitialize(
     _In_z_ const char* titleId,
     _In_opt_z_ const char* secretKey,
     _Outptr_ PlayFabStateHandle* stateHandle
