@@ -16,7 +16,7 @@ for(var apiName in categorizedApis) {
 
 Entity::Entity(SharedPtr<HttpClient const> httpClient, const LoginResult& result) :
     m_httpClient{ std::move(httpClient) },
-    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, AS_STRING(result.entityToken->entityToken) } },
+    m_authTokens{ MakeShared<AuthTokens>(result) },
     eventManagerAPI{ m_httpClient, m_authTokens },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_playFabId{ result.playFabId },
@@ -31,7 +31,7 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, const LoginResult& result
 
 Entity::Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::RegisterPlayFabUserResult& result) :
     m_httpClient{ std::move(httpClient) },
-    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ result.sessionTicket, AS_STRING(result.entityToken->entityToken) } },
+    m_authTokens{ MakeShared<AuthTokens>(result) },
     eventManagerAPI{ m_httpClient, m_authTokens },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_playFabId{ result.playFabId },
@@ -43,7 +43,7 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::Regis
 
 Entity::Entity(SharedPtr<HttpClient const> httpClient, const AuthenticationModels::GetEntityTokenResponse& result) :
     m_httpClient{ std::move(httpClient) },
-    m_authTokens{ new (Allocator<AuthTokens>{}.allocate(1)) AuthTokens{ "", result.entityToken } },
+    m_authTokens{ MakeShared<AuthTokens>(result) },
     eventManagerAPI{ m_httpClient, m_authTokens },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_entityId{ AS_STRING(result.entity->id) },
@@ -52,18 +52,21 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, const AuthenticationModel
 }
 
 AsyncOp<void> Entity::GetEntityToken(
-    const PlayFabAuthenticationGetEntityTokenRequest& request,
     const TaskQueue& queue
 )
 {
     UnorderedMap<String, String> headers;
-    if (!m_authTokens->EntityToken.empty())
+
+    auto& entityToken{ m_authTokens->EntityToken() };
+    auto sessionTicket{ m_authTokens->SessionTicket() };
+
+    if (entityToken.token)
     {
-        headers.emplace("X-EntityToken", m_authTokens->EntityToken);
+        headers.emplace("X-EntityToken", entityToken.token);
     }
-    else if (!m_authTokens->SessionTicket.empty())
+    else if (!sessionTicket.empty())
     {
-        headers.emplace("X-Authorization", m_authTokens->SessionTicket);
+        headers.emplace("X-Authorization", std::move(sessionTicket));
     }
     else
     {
@@ -71,6 +74,8 @@ AsyncOp<void> Entity::GetEntityToken(
         assert(false);
         return E_UNEXPECTED;
     }
+
+    PlayFabAuthenticationGetEntityTokenRequest request{};
 
     return m_httpClient->MakePostRequest(
         "/Authentication/GetEntityToken",
@@ -86,9 +91,12 @@ AsyncOp<void> Entity::GetEntityToken(
         {
             AuthenticationModels::GetEntityTokenResponse resultModel;
             resultModel.FromJson(serviceResponse.Data);
-            sharedThis->m_authTokens->EntityToken = resultModel.entityToken;
-            sharedThis->m_entityId = resultModel.entity->id;
-            sharedThis->m_entityType = resultModel.entity->type;
+
+            // We requested an EntityToken for this entity, so these should never change
+            assert(sharedThis->m_entityId == AS_STRING(resultModel.entity->id));
+            assert(sharedThis->m_entityType == AS_STRING(resultModel.entity->type));
+
+            sharedThis->m_authTokens->UpdateEntityToken(resultModel);
             return S_OK;
         }
         else
@@ -98,19 +106,24 @@ AsyncOp<void> Entity::GetEntityToken(
     });
 }
 
-const String& Entity::PlayFabId() const
+String const& Entity::PlayFabId() const
 {
     return m_playFabId;
 }
 
-const String& Entity::EntityId() const
+String const& Entity::EntityId() const
 {
     return m_entityId;
 }
 
-const String& Entity::EntityType() const
+String const& Entity::EntityType() const
 {
     return m_entityType;
+}
+
+PlayFab::EntityToken const& Entity::EntityToken() const
+{
+    return m_authTokens->EntityToken();
 }
 
 GetPlayerCombinedInfoResultPayload const* Entity::PlayerCombinedInfo() const

@@ -27,6 +27,9 @@ struct AuthResult : public XAsyncResult
         const char* entityType;
         RETURN_IF_FAILED(PlayFabEntityGetEntityType(entityHandle, &entityType));
 
+        const PlayFabEntityToken* entityToken;
+        RETURN_IF_FAILED(PlayFabEntityGetCachedEntityToken(entityHandle, &entityToken));
+
         PlayFabGetPlayerCombinedInfoResultPayload const* playerCombinedInfo;
         RETURN_IF_FAILED(PlayFabEntityGetPlayerCombinedInfo(entityHandle, &playerCombinedInfo));
 
@@ -69,14 +72,72 @@ void EntityTests::TestClientLogin(TestContext& testContext)
     async.release();
 }
 
+void EntityTests::TestTokenRefresh(TestContext& testContext)
+{
+    PlayFabEntityHandle entityHandle{ nullptr };
+
+    {
+        XAsyncBlock async{};
+
+        PlayFabClientLoginWithCustomIDRequest request{};
+        request.customId = "CustomId";
+        bool createAccount = true;
+        request.createAccount = &createAccount;
+        request.titleId = testTitleData.titleId.data();
+
+        HRESULT hr = PlayFabClientLoginWithCustomIDAsync(stateHandle, &request, &async);
+        if (FAILED(hr))
+        {
+            testContext.Fail("PlayFabClientLoginWithCustomIDAsync", hr);
+            return;
+        }
+
+        XAsyncGetStatus(&async, true);
+        hr = PlayFabGetAuthResult(&async, &entityHandle);
+
+        if (FAILED(hr) || !entityHandle)
+        {
+            testContext.Fail("PlayFabGetAuthResult", hr);
+            return;
+        }
+
+        const PlayFabEntityToken* entityToken;
+        PlayFabEntityGetCachedEntityToken(entityHandle, &entityToken);
+    }
+
+    {
+        XAsyncBlock async{};
+
+        HRESULT hr = PlayFabEntityGetEntityTokenAsync(entityHandle, &async);
+        if (FAILED(hr))
+        {
+            testContext.Fail("PlayFabEntityGetEntityTokenAsync", hr);
+            return;
+        }
+
+        hr = XAsyncGetStatus(&async, true);
+        if (FAILED(hr))
+        {
+            testContext.Fail("PlayFabEntityGetEntityTokenAsync", hr);
+            return;
+        }
+
+        const PlayFabEntityToken* entityToken;
+        PlayFabEntityGetCachedEntityToken(entityHandle, &entityToken);
+    }
+
+    testContext.Pass();
+}
+
 void EntityTests::AddTests()
 {
     AddTest("TestClientLogin", &EntityTests::TestClientLogin);
+    AddTest("TestTokenRefresh", &EntityTests::TestTokenRefresh);
 }
 
 void EntityTests::ClassSetUp()
 {
-    HRESULT hr = PlayFabInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), &stateHandle);
+    HRESULT hr = PlayFabInitialize(testTitleData.titleId.data(), &stateHandle);
     UNREFERENCED_PARAMETER(hr);
 }
 

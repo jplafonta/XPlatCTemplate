@@ -10,13 +10,7 @@ STDAPI PlayFabMemSetFunctions(
     _In_opt_ PlayFabMemFreeFunction* memFreeFunc
 ) noexcept
 {
-    // Require that the hooks be set together
-    if ((!memAllocFunc && memFreeFunc) || (memAllocFunc && !memFreeFunc))
-    {
-        return E_INVALIDARG;
-    }
-
-    PlayFab::Detail::SetMemoryHooks(memAllocFunc, memFreeFunc);
+    RETURN_IF_FAILED(PlayFab::Detail::SetMemoryHooks(memAllocFunc, memFreeFunc));
 
     // Try to set the memory hooks for libHttpClient as well. If it has already be initialized, there is nothing we can do
     HRESULT hr = HCMemSetFunctions(memAllocFunc, memFreeFunc);
@@ -44,6 +38,14 @@ STDAPI PlayFabMemGetFunctions(
 }
 
 HRESULT PlayFabInitialize(
+    _In_z_ const char* titleId,
+    _Outptr_ PlayFabStateHandle* stateHandle
+) noexcept
+{
+    return PlayFabGlobalState::Create(titleId, nullptr, stateHandle);
+}
+
+HRESULT PlayFabAdminInitialize(
     _In_z_ const char* titleId,
     _In_opt_z_ const char* secretKey,
     _Outptr_ PlayFabStateHandle* stateHandle

@@ -34,14 +34,12 @@ void PlayFabEntityCloseHandle(
 
 HRESULT PlayFabEntityGetEntityTokenAsync(
     _In_ PlayFabEntityHandle entityHandle,
-    _In_ const PlayFabAuthenticationGetEntityTokenRequest* request,
     _Inout_ XAsyncBlock* async
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(request);
 
-    auto provider = MakeProvider(async, __FUNCTION__, std::bind(&Entity::GetEntityToken, entityHandle->entity.get(), *request, std::placeholders::_1));
+    auto provider = MakeProvider(async, __FUNCTION__, std::bind(&Entity::GetEntityToken, entityHandle->entity.get(), std::placeholders::_1));
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
 
@@ -82,9 +80,21 @@ HRESULT PlayFabEntityGetEntityType(
     return S_OK;
 }
 
+HRESULT PlayFabEntityGetCachedEntityToken(
+    _In_ PlayFabEntityHandle entityHandle,
+    _Outptr_ const PlayFabEntityToken** entityToken
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(entityToken);
+
+    *entityToken = &entityHandle->entity->EntityToken();
+    return S_OK;
+}
+
 HRESULT PlayFabEntityGetPlayerCombinedInfo(
     _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_ const PlayFabGetPlayerCombinedInfoResultPayload** playerCombinedInfo
+    _Outptr_result_maybenull_ const PlayFabGetPlayerCombinedInfoResultPayload** playerCombinedInfo
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
@@ -96,7 +106,7 @@ HRESULT PlayFabEntityGetPlayerCombinedInfo(
 
 HRESULT PlayFabEntityGetLastLoginTime(
     _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_ const time_t** lastLoginTime
+    _Outptr_result_maybenull_ const time_t** lastLoginTime
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
@@ -108,7 +118,7 @@ HRESULT PlayFabEntityGetLastLoginTime(
 
 HRESULT PlayFabEntityGetUserSettings(
     _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_ const PlayFabUserSettings** userSettings
+    _Outptr_result_maybenull_ const PlayFabUserSettings** userSettings
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
@@ -120,7 +130,7 @@ HRESULT PlayFabEntityGetUserSettings(
 
 HRESULT PlayFabEntityGetTreatmentAssignment(
     _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_ const PlayFabTreatmentAssignment** treatmentAssignment
+    _Outptr_result_maybenull_ const PlayFabTreatmentAssignment** treatmentAssignment
 ) noexcept 
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);

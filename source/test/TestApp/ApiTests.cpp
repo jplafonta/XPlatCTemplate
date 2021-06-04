@@ -196,8 +196,7 @@ void ApiTests::TestGetEntityTokenWithAuthContext(TestContext& testContext)
 {
     auto async = std::make_unique<XAsyncHelper<XAsyncResult>>(testContext);
 
-    PlayFabAuthenticationGetEntityTokenRequest request{};
-    HRESULT hr = PlayFabEntityGetEntityTokenAsync(entityHandle, &request, &async->asyncBlock);
+    HRESULT hr = PlayFabEntityGetEntityTokenAsync(entityHandle, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabEntityGetEntityTokenAsync", hr);
@@ -274,7 +273,7 @@ void ApiTests::AddTests()
 
 void ApiTests::ClassSetUp()
 {
-    HRESULT hr = PlayFabInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), &stateHandle);
+    HRESULT hr = PlayFabAdminInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), &stateHandle);
     if (SUCCEEDED(hr))
     {
         PlayFabClientLoginWithCustomIDRequest request{};

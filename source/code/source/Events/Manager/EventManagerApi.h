@@ -7,7 +7,7 @@
 
 namespace PlayFab
 {
-struct AuthTokens;
+class AuthTokens;
 
 namespace EventManager
 {

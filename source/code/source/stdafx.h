@@ -15,6 +15,9 @@
 #include <assert.h>
 #include <atomic>
 
+#define ENABLE_PLAYFABSERVER_API
+#define ENABLE_PLAYFABADMIN_API
+
 // libHttpClient headers
 #include <httpClient/pal.h>
 #include <httpClient/async.h>

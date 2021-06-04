@@ -466,13 +466,13 @@ function populateDictionaryEntryTypes(api) {
 function addAuthHeader(apiCall, tabbing) {
     switch (apiCall.auth) {
         case "EntityToken": {
-            var output = ("if (m_tokens->EntityToken.empty())\n" + tabbing + "{\n" + tabbing + "    return E_PLAYFAB_NOENTITYTOKEN;\n" + tabbing + "}\n");
-            output += (tabbing + "headers.emplace(\"X-EntityToken\", m_tokens->EntityToken);");
+            var output = ("auto& entityToken{ m_tokens->EntityToken() };\n" + tabbing + "if (!entityToken.token)\n" + tabbing + "{\n" + tabbing + "    return E_PLAYFAB_NOENTITYTOKEN;\n" + tabbing + "}\n");
+            output += (tabbing + "headers.emplace(\"X-EntityToken\", entityToken.token);");
             return output;
         }
         case "SessionTicket": {
-            output = ("if (m_tokens->SessionTicket.empty())\n" + tabbing + "{\n" + tabbing + "    return E_PLAYFAB_NOSESSIONTICKET;\n" + tabbing + "}\n");
-            output += (tabbing + "headers.emplace(\"X-Authorization\", m_tokens->SessionTicket);");
+            output = ("auto sessionTicket{ m_tokens->SessionTicket() };\n" + tabbing + "if (sessionTicket.empty())\n" + tabbing + "{\n" + tabbing + "    return E_PLAYFAB_NOSESSIONTICKET;\n" + tabbing + "}\n");
+            output += (tabbing + "headers.emplace(\"X-Authorization\", std::move(sessionTicket));");
             return output;
         }
         case "SecretKey": {
@@ -481,7 +481,7 @@ function addAuthHeader(apiCall, tabbing) {
             return output;
         }
         case "None": {
-            return "//No auth header required for this API";
+            return "// No auth header required for this API";
         }
         default: {
             throw Error("getAuthParams: Unknown auth type: " + apiCall.auth + " for " + apiCall.name);
