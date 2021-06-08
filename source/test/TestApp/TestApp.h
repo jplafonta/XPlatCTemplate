@@ -21,6 +21,16 @@ namespace PlayFab
     }
 }
 
+enum class PFTestTraceLevel : uint32_t
+{
+    Off = 0,
+    Error = 1,
+    Warning = 2,
+    Important = 3,
+    Information = 4,
+    Verbose = 5,
+};
+
 namespace PlayFabUnit
 {
     class TestApp
@@ -29,8 +39,12 @@ namespace PlayFabUnit
         int Main();
         static void Log(const char* format, ...);
         static void LogPut(const char* message);
+        static void SetTraceLevel(PFTestTraceLevel level);
+        static bool ShouldTrace(PFTestTraceLevel level);
 
     private:
+        static PFTestTraceLevel traceLevel;
+
 #if !defined(DISABLE_PLAYFABCLIENT_API)
         // Cloud Report
         std::string cloudResponse = "";

@@ -1,7 +1,7 @@
 $folderSrc = "C:\git\pf\sdks\XPlatCSdk\"
 $folderDest = "C:\git\pf\sdks\XPlatCSdkWorkingCopy\"
 
-Get-ChildItem -Path "C:\git\pf\sdks\XPlatCSdk" -Recurse -ErrorAction SilentlyContinue -Include *.h,*.cpp,*.autogen,*.vcxproj*,*.props -Force -Name | % { 
+Get-ChildItem -Path "C:\git\pf\sdks\XPlatCSdk" -Recurse -ErrorAction SilentlyContinue -Include *.h,*.cpp,*.autogen,*.vcxproj*,*.csv,*.props -Force -Name | % { 
 	# Write-Output ($_) 
 	Write-Host -NoNewLine .
 

@@ -43,6 +43,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
 public:
     PlayFabStateHandle stateHandle{ nullptr };
     PlayFabEntityHandle entityHandle{ nullptr };
+    PlayFabGetPlayerCombinedInfoResultPayload const* playerCombinedInfo{ nullptr };
 
     void ClassSetUp() override;
     void ClassTearDown() override;
