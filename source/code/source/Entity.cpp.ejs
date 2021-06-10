@@ -194,7 +194,9 @@ void Entity::ScheduleReauthentication()
         return;
     }
 
-    time_t delayInSeconds = (*entityToken.expiration) - time(nullptr);
+    // Schedule refresh for a minute prior to expiration TODO is there a better way to schedule this?
+    auto delayInSeconds = std::min<int64_t>(static_cast<int64_t>((*entityToken.expiration) - time(nullptr) - 60), 0);
+
     m_backgroundQueue.RunWork([ weakThis = WeakPtr<Entity>{ shared_from_this() }, this ]
     {
         auto sharedThis{ weakThis.lock() };
@@ -249,7 +251,7 @@ void Entity::ScheduleReauthentication()
                 }
             });
         }
-    }, delayInSeconds * 1000);
+    }, static_cast<uint32_t>(delayInSeconds * 1000));
 }
 
 }
