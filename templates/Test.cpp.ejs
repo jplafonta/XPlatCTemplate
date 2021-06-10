@@ -51,7 +51,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
 
 void AutoGen<%- api.name %>Tests::ClassSetUp()
 {
-    HRESULT hr = PlayFabAdminInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), &stateHandle);
+    HRESULT hr = PlayFabAdminInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), nullptr, &stateHandle);
     if (SUCCEEDED(hr))
     {
         PlayFabClientLoginWithCustomIDRequest request{};

@@ -11,7 +11,7 @@ class EntityTests : public PlayFabApiTestCase
 {
 private:
     void TestClientLogin(TestContext& testContext);
-    void TestTokenRefresh(TestContext& testContext);
+    void TestManualTokenRefresh(TestContext& testContext);
 
 protected:
     void AddTests() override;

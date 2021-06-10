@@ -25,6 +25,7 @@
     "source\\AuthTokens.h": "Source",
     "source\\BaseModel.cpp": "Source",
     "source\\BaseModel.h": "Source",
+    "source\\CallbackManager.h": "Source",
     "source\\Entity.cpp": "Source",
     "source\\Entity.h": "Source",
     "source\\EnumTraits.h": "Source",

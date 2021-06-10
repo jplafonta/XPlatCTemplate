@@ -18,14 +18,14 @@ namespace PlayFab
 class GlobalState
 {
 public:
-    GlobalState(String&& titleId, _In_opt_z_ const char* secretKey);
+    GlobalState(String&& titleId, _In_opt_z_ const char* secretKey, _In_opt_ XTaskQueueHandle backgroundQueue);
     virtual ~GlobalState() = default;
 
 private:
-    // The order of members is important here - HttpClient and secretKey are needed by the APIs so make sure
-    // they get initialized first
+    // The order of members is important here. These fields are needed to initialize APIs so make sure they get initialized first.
     SharedPtr<HttpClient> m_httpClient;
     SharedPtr<String> m_secretKey;
+    TaskQueue m_backgroundQueue;
 
 public:
     SharedPtr<HttpClient const> HttpClient() const;
@@ -57,11 +57,12 @@ struct PlayFabGlobalState
     static HRESULT Create(
         _In_z_ const char* titleId,
         _In_opt_z_ const char* secretKey,
+        _In_opt_ XTaskQueueHandle backgroundQueue,
         _Outptr_ PlayFabStateHandle* stateHandle
     );
 
     HRESULT CleanupAsync(XAsyncBlock* async);
 
 private:
-    PlayFabGlobalState(_In_z_ const char* titleId, _In_opt_z_ const char* secretKey);
+    PlayFabGlobalState(_In_z_ const char* titleId, _In_opt_z_ const char* secretKey, _In_opt_ XTaskQueueHandle backgroundQueue);
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AuthTokens.h>
+#include <CallbackManager.h>
 #include <Client/ClientDataModels.h>
 #include <Authentication/AuthenticationDataModels.h>
 #include <Events/Manager/EventManagerApi.h>
@@ -15,29 +16,66 @@ for(var apiName in categorizedApis) {
 namespace PlayFab
 {
 
+// Context needed to re-authenticate an Entity with PlayFab prior to token-expiration
+struct LoginContext
+{
+    String path;
+    JsonValue requestBody;
+    SharedPtr<String const> secretKey;
+};
+
 // An entity authenticated with PlayFab via one of the various login methods. For more detail on PlayFab entities see the service
 // documentation here: https://docs.microsoft.com/en-us/gaming/playfab/features/data/entities/quickstart.
 class Entity : public std::enable_shared_from_this<Entity>
 {
 public:
-    Entity(SharedPtr<HttpClient const> httpClient, const LoginResult& loginResult);
-    Entity(SharedPtr<HttpClient const> httpClient, const ClientModels::RegisterPlayFabUserResult& registerUserResult);
-    Entity(SharedPtr<HttpClient const> httpClient, const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse);
+    static SharedPtr<Entity> Make(
+        SharedPtr<HttpClient const> httpClient,
+        const TaskQueue& backgroundQueue,
+        LoginContext&& loginContext,
+        const LoginResult& loginResult
+    );
+
+    static SharedPtr<Entity> Make(
+        SharedPtr<HttpClient const> httpClient,
+        const TaskQueue& backgroundQueue,
+        LoginContext&& loginContext,
+        const ClientModels::RegisterPlayFabUserResult& registerUserResult
+    );
+
+    static SharedPtr<Entity> Make(
+        SharedPtr<HttpClient const> httpClient,
+        const TaskQueue& backgroundQueue,
+        LoginContext&& loginContext,
+        const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse
+    );
 
     Entity(const Entity&) = delete;
     Entity& operator=(const Entity&) = delete;
-    ~Entity() = default;
+    ~Entity();
 
 private:
-    // The order of members is important here - HttpClient and AuthTokens are needed to initialize the APIs, so make sure that they get initialized first
+    // The order of members is important here. These fields are needed to initialize APIs so make sure they get initialized first.
     SharedPtr<HttpClient const> m_httpClient;
     SharedPtr<AuthTokens> m_authTokens;
+    TaskQueue m_backgroundQueue;
 
 public:
     // Non-generated implementation for /Authentication/GetEntityToken API call. When GetEntityToken is called by an existing Entity, the service
-    // call will be authenticated with either the EntityToken or the ClientSessionTicket. The calling Entity's AuthTokens will be updated with the returned 
-    // EntityToken if the call succeeds.
-    AsyncOp<void> GetEntityToken(const TaskQueue& queue);
+    // call will be authenticated with either the EntityToken or the ClientSessionTicket. If the Entity Token requested if for the calling Entity
+    // (aka just refreshing our token), the AuthTokens will be updated and a SharedPtr to 'this' will be returned. If the token requested is for another
+    // entity, a new Entity object will be created and returned.
+    AsyncOp<SharedPtr<Entity>> GetEntityToken(const PlayFabAuthenticationGetEntityTokenRequest& request, const TaskQueue& queue);
+
+    // Callbacks related to token refresh logic. TokenRefreshedCallbacks exist to support PlayFab Party & PlayFab Lobby interfaces which
+    // require titles to provide and manually update a raw entity token. AuthFailedCallbacks will be invoked when we are unabled to automatically
+    // relogin the entity with the cached LoginContext. In that case, the Entity object becomes unusable and the title will need to manually go through
+    // the login flow again.
+    using TokenRefreshedCallback = std::function<void(const EntityToken&)>;
+    using AuthFailedCallback = std::function<void(HRESULT)>;
+
+    CallbackManager<TokenRefreshedCallback> TokenRefreshedCallbacks;
+    CallbackManager<AuthFailedCallback> AuthFailedCallbacks;
 
     // Getter methods to retreive Entity properties. All data only guaranteed to be accurate at the time of login. Lifetime of returned data is tied
     // to Entity object.
@@ -62,6 +100,15 @@ public:
 } %>
 
 private:
+    Entity(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgroundQueue, LoginContext&& loginContext, const LoginResult& loginResult);
+    Entity(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgroundQueue, LoginContext&& loginContext, const ClientModels::RegisterPlayFabUserResult& registerUserResult);
+    Entity(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgroundQueue, LoginContext&& loginContext, const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse);
+
+    void ScheduleReauthentication();
+
+    LoginContext const m_loginContext;
+
+    // Entity attributes
     String const m_playFabId; // Master_Player_Entity Id for the Player that logged in
     String m_entityId; // Entity Id for the entity
     String m_entityType; // Entity Type for the entity

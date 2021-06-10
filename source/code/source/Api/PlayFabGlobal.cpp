@@ -39,19 +39,22 @@ STDAPI PlayFabMemGetFunctions(
 
 HRESULT PlayFabInitialize(
     _In_z_ const char* titleId,
+    _In_opt_ XTaskQueueHandle backgroundQueue,
     _Outptr_ PlayFabStateHandle* stateHandle
 ) noexcept
 {
-    return PlayFabGlobalState::Create(titleId, nullptr, stateHandle);
+    return PlayFabGlobalState::Create(titleId, nullptr, backgroundQueue, stateHandle);
 }
 
 HRESULT PlayFabAdminInitialize(
     _In_z_ const char* titleId,
-    _In_opt_z_ const char* secretKey,
+    _In_z_ const char* secretKey,
+    _In_opt_ XTaskQueueHandle backgroundQueue,
     _Outptr_ PlayFabStateHandle* stateHandle
 ) noexcept
 {
-    return PlayFabGlobalState::Create(titleId, secretKey, stateHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(secretKey);
+    return PlayFabGlobalState::Create(titleId, secretKey, backgroundQueue, stateHandle);
 }
 
 HRESULT PlayFabCleanupAsync(

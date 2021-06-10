@@ -11,7 +11,7 @@ class Entity;
 class <%- api.name %>AuthAPI
 {
 public:
-    <%- api.name %>AuthAPI(SharedPtr<HttpClient const> httpClient<%
+    <%- api.name %>AuthAPI(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgroundQueue<%
 if (categorizedApi.loginCallsRequireSecretKey) { 
 %>, SharedPtr<String const> secretKey<%
 } %>);
@@ -26,7 +26,8 @@ for (var i = 0; i < categorizedApi.loginCalls.length; i++) {
 } %>
 
 private:
-    SharedPtr<HttpClient const> m_httpClient;<%
+    SharedPtr<HttpClient const> m_httpClient;
+    TaskQueue m_backgroundQueue;<%
 if (categorizedApi.loginCallsRequireSecretKey) { %>
     SharedPtr<String const> m_secretKey;<%
 } %>

@@ -48,7 +48,7 @@ AuthTokens::AuthTokens(const LoginResult& result) :
     m_entityToken = &m_entityTokens.front();
 }
 
-AuthTokens::AuthTokens(const ClientModels::RegisterPlayFabUserResult& result) : 
+AuthTokens::AuthTokens(const ClientModels::RegisterPlayFabUserResult& result) :
     m_sessionTicket{ result.sessionTicket }
 {
     assert(result.entityToken);
@@ -73,12 +73,26 @@ String const& AuthTokens::SessionTicket() const
     return m_sessionTicket;
 }
 
-void AuthTokens::UpdateEntityToken(const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse)
+void AuthTokens::Refresh(const LoginResult& result)
 {
-    // Very unlikely that multiple threads will be updating token at once, but could theoretically happen
-    // if title calls GetEntityToken multiple times simultatneously
     std::lock_guard<std::mutex> lock{ m_mutex };
-    m_entityTokens.emplace_front(getEntityTokenResponse);
+    assert(result.entityToken);
+    m_entityTokens.emplace_front(*result.entityToken);
+    m_entityToken = &m_entityTokens.front();
+}
+
+void AuthTokens::Refresh(const ClientModels::RegisterPlayFabUserResult& result)
+{
+    std::lock_guard<std::mutex> lock{ m_mutex };
+    assert(result.entityToken);
+    m_entityTokens.emplace_front(*result.entityToken);
+    m_entityToken = &m_entityTokens.front();
+}
+
+void AuthTokens::Refresh(const AuthenticationModels::GetEntityTokenResponse& result)
+{
+    std::lock_guard<std::mutex> lock{ m_mutex };
+    m_entityTokens.emplace_front(result);
     m_entityToken = &m_entityTokens.front();
 }
 
