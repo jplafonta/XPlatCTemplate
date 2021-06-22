@@ -14,7 +14,7 @@ for(var apiName in categorizedApis) {
     if (api.loginCalls.length > 0) { 
         var authApiMemberName = apiName.charAt(0).toLowerCase() + apiName.slice(1) + "AuthAPI";
         var secretKeyParam = api.loginCallsRequireSecretKey ? ", m_secretKey" : ""; %>,
-    <%- authApiMemberName %>{ m_httpClient, m_backgroundQueue<%- secretKeyParam %> }<%
+    <%- authApiMemberName %>{ m_httpClient<%- secretKeyParam %> }<%
     }
 }
 for(var apiName in categorizedApis) {

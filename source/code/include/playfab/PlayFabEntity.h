@@ -113,42 +113,6 @@ HRESULT PlayFabEntityUnregisterTokenRefreshedCallback(
 ) noexcept;
 
 /// <summary>
-/// A callback invoked when we are unable to automatically reauthenticated an entity using the original Login context (typically due
-/// to a token expiring). When this happens the Entity object becomes unusable and the title will have to manually reauthenticate
-/// using one of the Login APIs.
-/// </summary>
-typedef void CALLBACK PlayFabEntityAuthFailedCallback(
-    _In_ HRESULT authError,
-    _In_opt_ void* context
-);
-
-/// <summary>
-/// Registers an PlayFabEntityAuthFailedCallback for an Entity.
-/// </summary>
-/// <param name="entityHandle">Entity handle for the entity.</param>
-/// <param name="callback">The callback, <see cref="PlayFabEntityAuthFailedCallback"/>.</param>
-/// <param name="context">Optional pointer to data used by the event handler.</param>
-/// <param name="token">The token for unregistering the callback.</param>
-/// <returns>Result code for this API operation.</returns>
-HRESULT PlayFabEntityRegisterAuthFailedCallback(
-    _In_ PlayFabEntityHandle entityHandle,
-    _In_ PlayFabEntityAuthFailedCallback* callback,
-    _In_opt_ void* context,
-    _Out_ PlayFabRegistrationToken* token
-) noexcept;
-
-/// <summary>
-/// Unregisters a previously registered PlayFabEntityAuthFailedCallback.
-/// </summary>
-/// <param name="entityHandle">Entity handle for the entity.</param>
-/// <param name="token">Registration token from PlayFabEntityRegisterTokenRefreshedCallback.</param>
-/// <returns>Result code for this API operation.</returns>
-HRESULT PlayFabEntityUnregisterAuthFailedCallback(
-    _In_ PlayFabEntityHandle entityHandle,
-    _In_ PlayFabRegistrationToken token
-) noexcept;
-
-/// <summary>
 /// Method to get an EntityToken for an owned Entity. The token requested can either be for the calling entity (i.e. refreshing
 /// the existing valid token) or for an entity owned by the calling entity. If the a token refresh is requested, the internal auth
 /// tokens will be updated and used for future calls. Note that the previous EntityToken remains valid until expiration, even though

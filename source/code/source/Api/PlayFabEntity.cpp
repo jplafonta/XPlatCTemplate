@@ -62,36 +62,6 @@ HRESULT PlayFabEntityUnregisterTokenRefreshedCallback(
     return S_OK;
 }
 
-HRESULT PlayFabEntityRegisterAuthFailedCallback(
-    _In_ PlayFabEntityHandle entityHandle,
-    _In_ PlayFabEntityAuthFailedCallback* callback,
-    _In_opt_ void* context,
-    _Out_ PlayFabRegistrationToken* token
-) noexcept
-{
-    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(callback);
-    RETURN_HR_INVALIDARG_IF_NULL(token);
-
-    *token = entityHandle->entity->AuthFailedCallbacks.Register([callback, context](HRESULT errorCode)
-        {
-            callback(errorCode, context);
-        });
-
-    return S_OK;
-}
-
-HRESULT PlayFabEntityUnregisterAuthFailedCallback(
-    _In_ PlayFabEntityHandle entityHandle,
-    _In_ PlayFabRegistrationToken token
-) noexcept
-{
-    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
-
-    entityHandle->entity->AuthFailedCallbacks.Unregister(token);
-    return S_OK;
-}
-
 HRESULT PlayFabEntityGetEntityTokenAsync(
     _In_ PlayFabEntityHandle entityHandle,
     _In_ const PlayFabAuthenticationGetEntityTokenRequest* request,

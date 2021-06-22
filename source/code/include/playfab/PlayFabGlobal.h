@@ -92,8 +92,7 @@ typedef struct PlayFabGlobalState* PlayFabStateHandle;
 /// Create PlayFab global state.
 /// </summary>
 /// <param name="titleId">TitleId for the title. Found in the Game Manager for your title on the PlayFab Website.</param>
-/// <param name="queue">An XTaskQueue that should be used for background work (ex. refreshing EntityTokens). If no queue is
-/// a default (threadpool) queue will be used.</param>
+/// <param name="backgroundQueue">An XTaskQueue that should be used for background work. If no queue is a default (threadpool) queue will be used.</param>
 /// <param name="stateHandle">Pointer to PlayFabStateHandle to write.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabInitialize(
@@ -108,8 +107,7 @@ HRESULT PlayFabInitialize(
 /// </summary>
 /// <param name="titleId">TitleId for the title. Found in the Game Manager for your title on the PlayFab Website.</param>
 /// <param name="secretKey">Key to be used for Authentication for Server and Admin APIs.</param>
-/// <param name="backgroundQueue">An XTaskQueue that should be used for background work (ex. refreshing EntityTokens). If no queue is
-/// a default (threadpool) queue will be used.</param>
+/// <param name="backgroundQueue">An XTaskQueue that should be used for background work. If no queue is a default (threadpool) queue will be used.</param>
 /// <param name="stateHandle">Pointer to PlayFabStateHandle to write.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabAdminInitialize(

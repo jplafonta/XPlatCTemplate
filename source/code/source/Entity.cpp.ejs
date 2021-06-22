@@ -14,32 +14,9 @@ for(var apiName in categorizedApis) {
     }
 } %>
 
-SharedPtr<Entity> Entity::Make(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgroundQueue, LoginContext&& loginContext, const LoginResult& result)
-{
-    SharedPtr<Entity> entity{ new (Allocator<Entity>{}.allocate(1)) Entity{ std::move(httpClient), backgroundQueue, std::move(loginContext), result } };
-
-    // Since this Entity is being created as a result of a title Login, schedule reauthentication
-    entity->ScheduleReauthentication();
-
-    return entity;
-}
-
-SharedPtr<Entity> Entity::Make(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgroundQueue, LoginContext&& loginContext, const ClientModels::RegisterPlayFabUserResult& result)
-{
-    SharedPtr<Entity> entity{ new (Allocator<Entity>{}.allocate(1)) Entity{ std::move(httpClient), backgroundQueue, std::move(loginContext), result } };
-    return entity;
-}
-
-SharedPtr<Entity> Entity::Make(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgroundQueue, LoginContext&& loginContext, const AuthenticationModels::GetEntityTokenResponse& result)
-{
-    SharedPtr<Entity> entity{ new (Allocator<Entity>{}.allocate(1)) Entity{ std::move(httpClient), backgroundQueue, std::move(loginContext), result } };
-    return entity;
-}
-
-Entity::Entity(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgroundQueue, LoginContext&& loginContext, const LoginResult& result) :
+Entity::Entity(SharedPtr<HttpClient const> httpClient, LoginContext&& loginContext, const LoginResult& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ MakeShared<AuthTokens>(result) },
-    m_backgroundQueue{ backgroundQueue.DeriveWorkerQueue() },
     eventManagerAPI{ m_httpClient, m_authTokens },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_loginContext{ std::move(loginContext) },
@@ -53,10 +30,9 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgrou
 {
 }
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgroundQueue, LoginContext&& loginContext, const ClientModels::RegisterPlayFabUserResult& result) :
+Entity::Entity(SharedPtr<HttpClient const> httpClient, LoginContext&& loginContext, const ClientModels::RegisterPlayFabUserResult& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ MakeShared<AuthTokens>(result) },
-    m_backgroundQueue{ backgroundQueue.DeriveWorkerQueue() },
     eventManagerAPI{ m_httpClient, m_authTokens },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_loginContext{ std::move(loginContext) },
@@ -67,22 +43,15 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgrou
 {
 }
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgroundQueue, LoginContext&& loginContext, const AuthenticationModels::GetEntityTokenResponse& result) :
+Entity::Entity(SharedPtr<HttpClient const> httpClient, LoginContext&& loginContext, const AuthenticationModels::GetEntityTokenResponse& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ MakeShared<AuthTokens>(result) },
-    m_backgroundQueue{ backgroundQueue.DeriveWorkerQueue() },
     eventManagerAPI{ m_httpClient, m_authTokens },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_loginContext{ std::move(loginContext) },
     m_entityId{ AS_STRING(result.entity->id) },
     m_entityType{ AS_STRING(result.entity->type) }
 {
-}
-
-Entity::~Entity()
-{
-    // Queue is not shared (no one else will schedule work to this queue) so we can safely terminate here
-    m_backgroundQueue.Terminate(true);
 }
 
 AsyncOp<SharedPtr<Entity>> Entity::GetEntityToken(
@@ -135,7 +104,7 @@ AsyncOp<SharedPtr<Entity>> Entity::GetEntityToken(
             else
             {
                 // Otherwise create and return a new Entity object
-                return Entity::Make(sharedThis->m_httpClient, TaskQueue{ sharedThis->m_backgroundQueue }, LoginContext{} /* TODO */, std::move(resultModel));
+                return MakeShared<Entity>(sharedThis->m_httpClient, LoginContext{} /* TODO */, std::move(resultModel));
             }
         }
         else
@@ -185,73 +154,36 @@ TreatmentAssignment const* Entity::TreatmentAssignment() const
     return m_treatmentAssignment.get();
 }
 
-void Entity::ScheduleReauthentication()
+AsyncOp<void> Entity::RefreshLogin(const TaskQueue& queue)
 {
-    auto& entityToken{ m_authTokens->EntityToken() };
-    if (!entityToken.expiration)
+    UnorderedMap<String, String> headers;
+    if (m_loginContext.secretKey)
     {
-        // If the entity token doesn't expire there is nothing to do.
-        return;
+        headers.emplace("X-SecretKey", *m_loginContext.secretKey);
     }
 
-    // Schedule refresh for a minute prior to expiration TODO is there a better way to schedule this?
-    auto delayInSeconds = std::min<int64_t>(static_cast<int64_t>((*entityToken.expiration) - time(nullptr) - 60), 0);
-
-    m_backgroundQueue.RunWork([ weakThis = WeakPtr<Entity>{ shared_from_this() }, this ]
+    return m_httpClient->MakePostRequest(
+        m_loginContext.path.data(),
+        headers,
+        m_loginContext.requestBody,
+        queue
+    ).Then([sharedThis = shared_from_this(), this](Result<ServiceResponse> result)->Result<void>
     {
-        auto sharedThis{ weakThis.lock() };
-        if (sharedThis)
+        RETURN_IF_FAILED(result.hr);
+
+        auto serviceResponse = result.ExtractPayload();
+        if (serviceResponse.HttpCode == 200)
         {
-            UnorderedMap<String, String> headers;
-            if (m_loginContext.secretKey)
-            {
-                headers.emplace("X-SecretKey", *m_loginContext.secretKey);
-            }
-
-            m_httpClient->MakePostRequest(
-                m_loginContext.path.data(),
-                headers,
-                m_loginContext.requestBody,
-                m_backgroundQueue
-            ).Then([ weakThis, this ](Result<ServiceResponse> result)->Result<void>
-            {
-                auto sharedThis{ weakThis.lock() };
-
-                RETURN_HR_IF(S_OK, !sharedThis); // Nothing to do if Title has cleaned up Entity
-                RETURN_IF_FAILED(result.hr);
-
-                auto serviceResponse = result.ExtractPayload();
-                if (serviceResponse.HttpCode == 200)
-                {
-                    LoginResult resultModel;
-                    resultModel.FromJson(serviceResponse.Data);
-                    m_authTokens->Refresh(resultModel);
-                }
-                else
-                {
-                    return Result<void>{ ServiceErrorToHR(serviceResponse.ErrorCode), std::move(serviceResponse.ErrorMessage) };
-                }
-                return S_OK;
-
-            }).Finally([ weakThis, this ](Result<void> result)
-            {
-                auto sharedThis{ weakThis.lock() };
-                if (sharedThis)
-                {
-                    if (Succeeded(result))
-                    {
-                        // Schedule the next token refresh
-                        ScheduleReauthentication();
-                    }
-                    else
-                    {
-                        // If Login call failed for any reason notify title. Entity object no unusable and title must re-login manually
-                        AuthFailedCallbacks.Invoke(result.hr);
-                    }
-                }
-            });
+            LoginResult resultModel;
+            resultModel.FromJson(serviceResponse.Data);
+            m_authTokens->Refresh(resultModel);
         }
-    }, static_cast<uint32_t>(delayInSeconds * 1000));
+        else
+        {
+            return Result<void>{ ServiceErrorToHR(serviceResponse.ErrorCode), std::move(serviceResponse.ErrorMessage) };
+        }
+        return S_OK;
+    });
 }
 
 }

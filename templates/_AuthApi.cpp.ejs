@@ -7,16 +7,14 @@ namespace PlayFab
 
 using namespace <%- api.name %>Models;
 
-<%- api.name %>AuthAPI::<%- api.name %>AuthAPI(SharedPtr<HttpClient const> httpClient, const TaskQueue& backgroundQueue<%
+<%- api.name %>AuthAPI::<%- api.name %>AuthAPI(SharedPtr<HttpClient const> httpClient<%
 if (categorizedApi.loginCallsRequireSecretKey) {
 %>, SharedPtr<String const> secretKey) :
     m_httpClient{ std::move(httpClient) },
-    m_backgroundQueue{ backgroundQueue },
     m_secretKey{ std::move(secretKey) }<%
 } else {
 %>) :
-    m_httpClient{ std::move(httpClient) },
-    m_backgroundQueue{ backgroundQueue }<%
+    m_httpClient{ std::move(httpClient) }<%
 } %>
 {
 }
@@ -41,13 +39,7 @@ AsyncOp<SharedPtr<Entity>> <%- api.name %>AuthAPI::<%- call.name %>(
         queue
     );
 
-    return requestOp.Then(
-        [
-            httpClient{ m_httpClient },
-            backgroundQueue{ m_backgroundQueue },
-            loginContext{ std::move(loginContext) }
-        ]
-    (Result<ServiceResponse> result) mutable -> Result<SharedPtr<Entity>>
+    return requestOp.Then([ httpClient{ m_httpClient }, loginContext{ std::move(loginContext) }](Result<ServiceResponse> result) mutable -> Result<SharedPtr<Entity>>
     {
         RETURN_IF_FAILED(result.hr);
 
@@ -56,7 +48,7 @@ AsyncOp<SharedPtr<Entity>> <%- api.name %>AuthAPI::<%- call.name %>(
         {
             <%- call.result %> resultModel;
             resultModel.FromJson(serviceResponse.Data);
-            return Entity::Make(httpClient, std::move(backgroundQueue), std::move(loginContext), std::move(resultModel));
+            return MakeShared<Entity>(httpClient, std::move(loginContext), std::move(resultModel));
         }
         else
         {

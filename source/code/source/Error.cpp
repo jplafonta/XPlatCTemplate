@@ -80,6 +80,10 @@ HRESULT ServiceErrorToHR(ServiceErrorCode errorCode)
     {
         return E_PLAYFAB_TITLEDELETED;
     }
+    case ServiceErrorCode::ExpiredAuthToken:
+    {
+        return E_PLAYFAB_INTERNAL_EXPIREDAUTHTOKEN;
+    }
     default:
     {
         // Generic service error
