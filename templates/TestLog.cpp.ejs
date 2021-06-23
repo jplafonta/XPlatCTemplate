@@ -91,6 +91,10 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
         hasFillBeenDefinedMap[call.request] = true;
 %>void AutoGen<%- api.name %>Tests::LogPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request, const char* testName )
 {<% let testStatusListStatus = testStatusMap[testName]; %>
+    if( !TestApp::ShouldTrace(PFTestTraceLevel::Information) )
+    {
+        return;
+    }
 
     std::stringstream ss;
     ss << "----------"; Log(ss);
@@ -146,6 +150,11 @@ if( !found ) { throw Error('Not found ' + call.request) } %>
     hasValidateBeenDefinedMap[call.result] = true;
 %>HRESULT AutoGen<%- api.name %>Tests::LogPlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result )
 {
+    if( !TestApp::ShouldTrace(PFTestTraceLevel::Information) )
+    {
+        return S_OK;
+    }
+
     std::stringstream ss;
     ss << "Response:"; Log(ss);
 <% 

@@ -29,6 +29,8 @@ using namespace PlayFab;
 
 namespace PlayFabUnit
 {
+PFTestTraceLevel TestApp::traceLevel = PFTestTraceLevel::Important;
+
 #if !defined(DISABLE_PLAYFABCLIENT_API)
     // Time out if waiting for the final cloudscript submission longer than this
     constexpr int CLOUDSCRIPT_TIMEOUT_MS = 30000;

@@ -9,6 +9,7 @@ var xmlRefDocs = {};
 var propertyReplacements = {};
 var globalPrefix = "PlayFab"; // Global prefix for all public types
 var testStatusMap = {};
+var apiGrouping = {};
 
 // Shared API. Structured the same as other api objects so it can be used the same in template files. Used to generate shared DataModels
 var sharedApi = {
@@ -35,6 +36,7 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
 
     xmlRefDocs = parseDataFile("XMLRefDocs.json");
     testStatusMap = parseDataFile("TestStatus.json");
+    apiGrouping = parseDataFile("APIGrouping.json");
 
     var locals = {
         apis: apis,
@@ -70,6 +72,7 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         api: api,
         prefix: prefix,
         categorizedApi: categorizedApis[api.name],
+        categorizedApis: categorizedApis,
         enumtypes: getEnumTypes(api.datatypes),
         sortedClasses: getSortedClasses(api),
         getBaseTypes: getBaseTypes,
@@ -88,7 +91,8 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         getFormattedCallDescription: getFormattedCallDescription,
         getRequestExample: getRequestExample,
         getPublicPropertyType: getPublicPropertyType,
-        testStatusMap: testStatusMap
+        testStatusMap: testStatusMap,
+        apiGrouping: apiGrouping
     };
 
     var dataModelHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.h.ejs"));
@@ -114,6 +118,9 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
 
         var testHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.h.ejs"));
         writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "Tests.h"), testHeaderTemplate(locals));
+
+        var testCsvTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/API-List.csv.ejs"));
+        writeFile(path.resolve(apiOutputDir, "test/", "API-List.csv"), testCsvTemplate(locals));
 
         var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.h.ejs"));
         writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "Api.h"), iapihTemplate(locals));

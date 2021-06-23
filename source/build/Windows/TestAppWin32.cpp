@@ -52,6 +52,16 @@ namespace PlayFabUnit
         return true;
     }
 
+    void TestApp::SetTraceLevel(PFTestTraceLevel level)
+    {
+        traceLevel = level;
+    }
+
+    bool TestApp::ShouldTrace(PFTestTraceLevel level)
+    {
+        return (traceLevel > level);
+    }
+
     void TestApp::LogPut(const char* message)
     {
         // Write to STDOUT.

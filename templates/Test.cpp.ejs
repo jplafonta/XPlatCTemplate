@@ -22,7 +22,11 @@ void AutoGen<%- api.name %>Tests::Log(std::stringstream& ss)
 
 HRESULT AutoGenClientTests::LogHR(HRESULT hr)
 {
-    TestApp::Log("Result: 0x%0.8x", hr);
+    if( TestApp::ShouldTrace(PFTestTraceLevel::Information) )
+    {
+        TestApp::Log("Result: 0x%0.8x", hr);
+    }
+
     return hr;
 }
 
@@ -52,6 +56,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
 void AutoGen<%- api.name %>Tests::ClassSetUp()
 {
     HRESULT hr = PlayFabAdminInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), nullptr, &stateHandle);
+    assert(SUCCEEDED(hr));
     if (SUCCEEDED(hr))
     {
         PlayFabClientLoginWithCustomIDRequest request{};
@@ -60,15 +65,34 @@ void AutoGen<%- api.name %>Tests::ClassSetUp()
         request.createAccount = &createAccount;
         request.titleId = testTitleData.titleId.data();
 
+        PlayFabClientGetPlayerCombinedInfoRequestParams combinedInfoRequestParams{};
+        combinedInfoRequestParams.getCharacterInventories = true;
+        combinedInfoRequestParams.getCharacterList = true;
+        combinedInfoRequestParams.getPlayerProfile = true;
+        combinedInfoRequestParams.getPlayerStatistics = true;
+        combinedInfoRequestParams.getTitleData = true;
+        combinedInfoRequestParams.getUserAccountInfo = true;
+        combinedInfoRequestParams.getUserData = true;
+        combinedInfoRequestParams.getUserInventory = true;
+        combinedInfoRequestParams.getUserReadOnlyData = true;
+        combinedInfoRequestParams.getUserVirtualCurrency = true;
+        request.infoRequestParameters = &combinedInfoRequestParams;
+
         XAsyncBlock async{};
         hr = PlayFabClientLoginWithCustomIDAsync(stateHandle, &request, &async);
+        assert(SUCCEEDED(hr));
         if (SUCCEEDED(hr))
         {
             // Synchronously what for login to complete
             hr = XAsyncGetStatus(&async, true);
+            assert(SUCCEEDED(hr));
             if (SUCCEEDED(hr))
             {
-                PlayFabGetAuthResult(&async, &entityHandle);
+                hr = PlayFabGetAuthResult(&async, &entityHandle);
+                assert(SUCCEEDED(hr) && entityHandle != nullptr);
+
+                hr = PlayFabEntityGetPlayerCombinedInfo(entityHandle, &playerCombinedInfo);
+                assert(SUCCEEDED(hr));
             }
         }
     }
@@ -106,39 +130,35 @@ void AutoGen<%- api.name %>Tests::SetUp(TestContext& testContext)
 {
     struct <%- call.name %>Result : public XAsyncResult
     {
-<% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { %>
-<% } else if (isFixedSize(api.datatypes[call.result])) { %>        PlayFab<%- api.name %><%- call.result %> result{};
+<% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") {
+   } else if (isFixedSize(api.datatypes[call.result])) { %>        PlayFab<%- api.name %><%- call.result %> result{};
 <% } else if (isSerializable(api.datatypes[call.result])) { %>        PlayFab<%- api.name %><%- call.result %>* result = nullptr;
 <% } else { %>        PlayFab<%- api.name %><%- call.result %>* result = nullptr;
 <% } // end if %>        HRESULT Get(XAsyncBlock* async) override
         { <% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { %>
-            // style 1
             // No Get Result method needed
             return LogHR(XAsyncGetStatus(async, true));<% } else if (isFixedSize(api.datatypes[call.result])) { %>
-            // style 2
             return LogHR(PlayFab<%- api.name + call.name %>GetResult(async, &result)); <% } else if (isSerializable(api.datatypes[call.result])) { %>
-            // style 3
             size_t requiredBufferSize;
             RETURN_IF_FAILED(LogHR(PlayFab<%- api.name %><%- call.name %>GetResultSize(async, &requiredBufferSize)));
 
             resultBuffer.resize(requiredBufferSize);
             return LogHR(PlayFab<%- api.name + call.name %>GetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr)); <% } else { %>
-            // style 4
             return LogHR(PlayFab<%- api.name + call.name %>GetResult(async, &resultHandle, &result)); <% } // end if %>
         }
 
         HRESULT Validate()
         {
-<% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { %>            // style 1
-            return S_OK;
-<% } else if (isFixedSize(api.datatypes[call.result])) { %>            // style 2
-            LogPlayFab<%- api.name %><%- call.result %>( &result );
+<% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { 
+%>            return S_OK;
+<% } else if (isFixedSize(api.datatypes[call.result])) { 
+%>            LogPlayFab<%- api.name %><%- call.result %>( &result );
             return ValidatePlayFab<%- api.name %><%- call.result %>( &result );
-<% } else if (isSerializable(api.datatypes[call.result])) { %>            // style 3
-            LogPlayFab<%- api.name %><%- call.result %>( result );
+<% } else if (isSerializable(api.datatypes[call.result])) { 
+%>            LogPlayFab<%- api.name %><%- call.result %>( result );
             return ValidatePlayFab<%- api.name %><%- call.result %>( result );
-<% } else { %>            // style 4
-            LogPlayFab<%- api.name %><%- call.result %>( result );
+<% } else { 
+%>            LogPlayFab<%- api.name %><%- call.result %>( result );
             return ValidatePlayFab<%- api.name %><%- call.result %>( result );
 <% } // end if %>        }
     };

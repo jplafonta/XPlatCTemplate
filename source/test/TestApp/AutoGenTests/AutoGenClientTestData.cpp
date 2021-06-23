@@ -1709,17 +1709,16 @@ HRESULT AutoGenClientTests::ValidatePlayFabClientUpdateCharacterDataResult( Play
 
 void AutoGenClientTests::FillPlayFabClientUpdateCharacterStatisticsRequest( PlayFab::ClientModels::UpdateCharacterStatisticsRequest* request )
 {
-    // TODO: debug Failing test
+    // TODO: bad char id
     PlayFab::JsonDocument inputJson;
-    inputJson.Parse( "{ \"CharacterId\": \"{{CharacterId}}\", \"CharacterStatistics\": { \"Headshots\": 18, \"Kills\": 47 }}" );
+    inputJson.Parse("{ \"CharacterId\" : \"1234\", \"CharacterStatistics\" : { \"Points\" : 600, \"Wins\" : 32 } }");
     request->FromJson(inputJson);
 }
 
 void AutoGenClientTests::FillPlayFabClientUpdatePlayerStatisticsRequest( PlayFab::ClientModels::UpdatePlayerStatisticsRequest* request )
 {
-    // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
-    inputJson.Parse( "{ \"Statistics\": [ {  \"StatisticName\": \"Points\",  \"Version\": 1,  \"Value\": 600 }, {  \"StatisticName\": \"Wins\",  \"Version\": 0,  \"Value\": 16 }, {  \"StatisticName\": \"Stars\",  \"Value\": 7 } ]}" );
+    inputJson.Parse("{ \"Statistics\": [ {  \"StatisticName\": \"Points\", \"Value\": 600 }, {  \"StatisticName\": \"Wins\", \"Value\": 16 } ]}");
     request->FromJson(inputJson);
 }
 
