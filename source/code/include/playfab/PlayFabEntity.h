@@ -78,17 +78,57 @@ void PlayFabEntityCloseHandle(
 ) noexcept;
 
 /// <summary>
-/// Method to exchange a legacy AuthenticationTicket for an EntityToken or to refresh a still valid Entity Token. The entityHandle
-/// will be updated with the returned EntityToken and it will be used in future PlayFab calls.
+/// A callback invoked every time an Entity is automatically reauthenticated, thus obtaining a new EntityToken. An entity
+/// will be automatically reauthenticated prior to its EntityToken expiring.
+/// </summary>
+typedef void CALLBACK PlayFabEntityTokenRefreshedCallback(
+    _In_ const PlayFabEntityToken* newToken,
+    _In_opt_ void* context
+);
+
+/// <summary>
+/// Registers a PlayFabEntityTokenRefreshedCallback for an Entity.
+/// </summary>
+/// <param name="entityHandle">Entity handle for the entity.</param>
+/// <param name="callback">The callback, <see cref="PlayFabEntityTokenRefreshedCallback"/>.</param>
+/// <param name="context">Optional pointer to data used by the event handler.</param>
+/// <param name="token">The token for unregistering the callback.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT PlayFabEntityRegisterTokenRefreshedCallback(
+    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PlayFabEntityTokenRefreshedCallback* callback,
+    _In_opt_ void* context,
+    _Out_ PlayFabRegistrationToken* token
+) noexcept;
+
+/// <summary>
+/// Unregisters a previously registered PlayFabEntityTokenRefreshedCallback.
+/// </summary>
+/// <param name="entityHandle">Entity handle for the entity.</param>
+/// <param name="token">Registration token from PlayFabEntityRegisterTokenRefreshedCallback.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT PlayFabEntityUnregisterTokenRefreshedCallback(
+    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PlayFabRegistrationToken token
+) noexcept;
+
+/// <summary>
+/// Method to get an EntityToken for an owned Entity. The token requested can either be for the calling entity (i.e. refreshing
+/// the existing valid token) or for an entity owned by the calling entity. If the a token refresh is requested, the internal auth
+/// tokens will be updated and used for future calls. Note that the previous EntityToken remains valid until expiration, even though
+/// it will no longer be used internally. If the requested token was for a different Entity, a new Entity object is created.
 /// </summary>
 /// <param name="entityHandle">Existing PlayFabEntityHandle returned from an auth call.</param>
+/// <param name="request">Populated request object.</param>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <returns>Result code for this API operation.</returns>
 /// <remarks>
-/// Call <see cref="XAsyncGetStatus"/> to get the status of the operation.
+/// If successful, call <see cref="PlayFabGetAuthResult"/> to get the result. If the requested token was the calling Entity, the resulting handle
+/// will be a new handle to the same Entity object (it still must be closed by the caller when no longer needed). 
 /// </remarks>
 HRESULT PlayFabEntityGetEntityTokenAsync(
     _In_ PlayFabEntityHandle entityHandle,
+    _In_ const PlayFabAuthenticationGetEntityTokenRequest* request,
     _Inout_ XAsyncBlock* async
 ) noexcept;
 

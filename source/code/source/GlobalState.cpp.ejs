@@ -5,9 +5,10 @@
 
 using namespace PlayFab;
 
-GlobalState::GlobalState(String&& titleId, _In_opt_z_ const char* secretKey) :
+GlobalState::GlobalState(String&& titleId, _In_opt_z_ const char* secretKey, _In_opt_ XTaskQueueHandle backgroundQueue) :
     m_httpClient{ MakeShared<PlayFab::HttpClient>(std::move(titleId)) },
-    m_secretKey{ secretKey ? MakeShared<String>(secretKey) : nullptr }<%
+    m_secretKey{ secretKey ? MakeShared<String>(secretKey) : nullptr },
+    m_backgroundQueue{ backgroundQueue }<%
 for(var apiName in categorizedApis) {
     var api = categorizedApis[apiName];
     if (api.loginCalls.length > 0) { 
@@ -31,14 +32,15 @@ SharedPtr<HttpClient const> GlobalState::HttpClient() const
     return m_httpClient;
 }
 
-PlayFabGlobalState::PlayFabGlobalState(_In_z_ const char* titleId, _In_opt_z_ const char* secretKey) :
-    state{ MakeShared<GlobalState>(titleId, secretKey) }
+PlayFabGlobalState::PlayFabGlobalState(_In_z_ const char* titleId, _In_opt_z_ const char* secretKey, _In_opt_ XTaskQueueHandle backgroundQueue) :
+    state{ MakeShared<GlobalState>(titleId, secretKey, backgroundQueue) }
 {
 }
 
 HRESULT PlayFabGlobalState::Create(
     _In_z_ const char* titleId,
     _In_opt_z_ const char* secretKey,
+    _In_opt_ XTaskQueueHandle backgroundQueue,
     _Outptr_ PlayFabStateHandle* stateHandle
 )
 {
@@ -46,7 +48,7 @@ HRESULT PlayFabGlobalState::Create(
     RETURN_IF_FAILED(HCInitialize(nullptr));
 
     Allocator<PlayFabGlobalState> a{};
-    *stateHandle = UniquePtr<PlayFabGlobalState>(new (a.allocate(1)) PlayFabGlobalState(titleId, secretKey)).release();
+    *stateHandle = UniquePtr<PlayFabGlobalState>(new (a.allocate(1)) PlayFabGlobalState(titleId, secretKey, backgroundQueue)).release();
     return S_OK;
 }
 

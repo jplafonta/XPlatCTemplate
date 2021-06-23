@@ -136,24 +136,11 @@ void HCHttpCall::HCPerformComplete(XAsyncBlock* async)
 
     try
     {
-        // Get Http code and response string
-        uint32_t httpCode{ 0 };
-        HRESULT hr = HCHttpCallResponseGetStatusCode(call->m_callHandle, &httpCode);
-        if (FAILED(hr))
-        {
-            asyncOpContext->Complete(hr);
-            return;
-        }
-
-        hr = HttpStatusToHR(httpCode);
-        if (FAILED(hr))
-        {
-            asyncOpContext->Complete(hr);
-            return;
-        }
-
+        // Try to parse the response body no matter what. PlayFab often returns a response body even
+        // on failure and they can provide more details about what went wrong. If we are unable to parse the response
+        // body correctly, fall back to returning the Http status code.
         const char* responseString{ nullptr };
-        hr = HCHttpCallResponseGetResponseString(call->m_callHandle, &responseString);
+        HRESULT hr = HCHttpCallResponseGetResponseString(call->m_callHandle, &responseString);
         if (FAILED(hr))
         {
             asyncOpContext->Complete(hr);
@@ -164,6 +151,24 @@ void HCHttpCall::HCPerformComplete(XAsyncBlock* async)
         responseJson.Parse(responseString);
         if (responseJson.HasParseError())
         {
+            // Couldn't parse response body, fall back to Http status code
+            uint32_t httpCode{ 0 };
+            hr = HCHttpCallResponseGetStatusCode(call->m_callHandle, &httpCode);
+            if (FAILED(hr))
+            {
+                asyncOpContext->Complete(hr);
+                return;
+            }
+
+            hr = HttpStatusToHR(httpCode);
+            if (FAILED(hr))
+            {
+                asyncOpContext->Complete(hr);
+                return;
+            }
+            
+            // This is an unusal case. We weren't able to parse the response body, but the Http status code indicates that the
+            // call was successful. Return the Json parse error in this case.
             Stringstream errorMessage;
             errorMessage << "Failed to parse PlayFab service response: " << rapidjson::GetParseError_En(responseJson.GetParseError());
             TRACE_ERROR(errorMessage.str().data());
@@ -171,7 +176,7 @@ void HCHttpCall::HCPerformComplete(XAsyncBlock* async)
             return;
         }
 
-        // Successful response
+        // Successful response from service (doesn't always indicate the call was successful, just that the service responded successfully)
         ServiceResponse response{};
         response.FromJson(responseJson);
 

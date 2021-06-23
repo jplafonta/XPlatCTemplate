@@ -15,9 +15,12 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++) {
     var contextHandleParam = categorizedApi.otherCallsRequireSecretKey || call.auth === "None" ? "PlayFabStateHandle contextHandle" : "PlayFabEntityHandle contextHandle";
     var apiContext = categorizedApi.otherCallsRequireSecretKey || call.auth === "None" ? "contextHandle->state" : "contextHandle->entity";
     var requestParam = call.request === "void" ? "" : "_In_ const PlayFab" + api.name + call.request + "* request,\n    ";
+    var entityAuth = call.auth === "EntityToken" || call.auth === "SessionTicket" ? true : false;
+    var makeProviderMethod = entityAuth ? "MakeEntityProvider" : "MakeProvider";
+    var entityParam = entityAuth ? "contextHandle->entity, " : "";
     var apiInstanceBinder = call.auth === "None" ? "" : "&" + apiContext + "->" + apiMemberName + ", ";
     var httpClientBinder = call.auth === "None" ? "contextHandle->state->HttpClient(), " : "";
-    var requestBinder = call.request === "void" ? "" : "*request, "; %>
+    var requestBinder = call.request === "void" ? "" : (entityAuth ? call.request + "{ *request }, " : "*request, "); %>
 HRESULT PlayFab<%- api.name %><%- call.name %>Async(
     _In_ <%- contextHandleParam %>,
     <%- requestParam %>_In_ XAsyncBlock* async
@@ -25,10 +28,10 @@ HRESULT PlayFab<%- api.name %><%- call.name %>Async(
 {
     RETURN_HR_INVALIDARG_IF_NULL(contextHandle);<%
     if (!(call.request === "void")) { %>
-    RETURN_HR_INVALIDARG_IF_NULL(request); <%
+    RETURN_HR_INVALIDARG_IF_NULL(request);<%
     } %>
 
-    auto provider = MakeProvider(async, __FUNCTION__, std::bind(&<%- api.name %>API::<%- call.name %>, <%- apiInstanceBinder %><%- requestBinder%><%- httpClientBinder %>std::placeholders::_1));
+    auto provider = <%- makeProviderMethod %>(async, __FUNCTION__, <%- entityParam %>std::bind(&<%- api.name %>API::<%- call.name %>, <%- apiInstanceBinder %><%- requestBinder%><%- httpClientBinder %>std::placeholders::_1));
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
 <%  if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { 

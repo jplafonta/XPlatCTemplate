@@ -32,14 +32,45 @@ void PlayFabEntityCloseHandle(
     UniquePtr<PlayFabEntity>{ entityHandle };
 }
 
+HRESULT PlayFabEntityRegisterTokenRefreshedCallback(
+    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PlayFabEntityTokenRefreshedCallback* callback,
+    _In_opt_ void* context,
+    _Out_ PlayFabRegistrationToken* token
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(callback);
+    RETURN_HR_INVALIDARG_IF_NULL(token);
+
+    *token = entityHandle->entity->TokenRefreshedCallbacks.Register([callback, context](const EntityToken& newToken)
+        {
+            callback(&newToken, context);
+        });
+
+    return S_OK;
+}
+
+HRESULT PlayFabEntityUnregisterTokenRefreshedCallback(
+    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PlayFabRegistrationToken token
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+
+    entityHandle->entity->TokenRefreshedCallbacks.Unregister(token);
+    return S_OK;
+}
+
 HRESULT PlayFabEntityGetEntityTokenAsync(
     _In_ PlayFabEntityHandle entityHandle,
+    _In_ const PlayFabAuthenticationGetEntityTokenRequest* request,
     _Inout_ XAsyncBlock* async
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
 
-    auto provider = MakeProvider(async, __FUNCTION__, std::bind(&Entity::GetEntityToken, entityHandle->entity.get(), std::placeholders::_1));
+    auto provider = MakeAuthProvider(async, __FUNCTION__, std::bind(&Entity::GetEntityToken, entityHandle->entity.get(), *request, std::placeholders::_1));
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
 

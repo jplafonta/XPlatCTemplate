@@ -329,7 +329,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, StdExtra::op
     if (jsonObject.IsObject())
     {
         auto iter = jsonObject.FindMember(name);
-        if (iter != jsonObject.MemberEnd())
+        if (iter != jsonObject.MemberEnd() && !iter->value.IsNull())
         {
             output.emplace();
             FromJson(iter->value, *output);
@@ -376,7 +376,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, PointerArray
     if (jsonObject.IsObject())
     {
         auto iter = jsonObject.FindMember(name);
-        if (iter != jsonObject.MemberEnd())
+        if (iter != jsonObject.MemberEnd() && !iter->value.IsNull())
         {
             output.FromJson(iter->value);
         }
@@ -393,7 +393,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, AssociativeA
     if (jsonObject.IsObject())
     {
         auto iter = jsonObject.FindMember(name);
-        if (iter != jsonObject.MemberEnd())
+        if (iter != jsonObject.MemberEnd() && !iter->value.IsNull())
         {
             output.FromJson(iter->value);
         }

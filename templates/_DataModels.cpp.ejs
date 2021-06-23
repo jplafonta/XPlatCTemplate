@@ -22,6 +22,15 @@ namespace <%- api.name %>Models
 <%- datatype.name %>::<%- datatype.name %>(<%- datatype.name %>&& src)<%- getMoveConstructorInitializationList("    ", datatype, prefix) %>
 {<%- getCopyConstructorBody("    ", datatype, prefix) %>
 }<%
+} // end if
+
+if (!datatype.isInternalOnly) {
+// TODO this could be made more efficient. Shouldn't have to go to Json and back, can just make deep copy directly %>
+
+<%- datatype.name %>::<%- datatype.name %>(const <%- prefix %><%- datatype.name %>& src)
+{
+    FromJson(JsonUtils::ToJson(src));
+}<%
 } // end if %>
 
 void <%- datatype.name %>::FromJson(const JsonValue& input)

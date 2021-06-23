@@ -32,7 +32,9 @@ public:
     PlayFab::EntityToken const& EntityToken() const;
     String const& SessionTicket() const;
 
-    void UpdateEntityToken(const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse);
+    void Refresh(const LoginResult& loginResult);
+    void Refresh(const ClientModels::RegisterPlayFabUserResult& registerUserResult); // Needed? is Registering a User twice valid?
+    void Refresh(const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse);
 
 private:
     // Most recent entity token. Mutex not required to read.

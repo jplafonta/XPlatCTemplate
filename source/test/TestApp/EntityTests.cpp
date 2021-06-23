@@ -72,7 +72,7 @@ void EntityTests::TestClientLogin(TestContext& testContext)
     async.release();
 }
 
-void EntityTests::TestTokenRefresh(TestContext& testContext)
+void EntityTests::TestManualTokenRefresh(TestContext& testContext)
 {
     PlayFabEntityHandle entityHandle{ nullptr };
 
@@ -108,7 +108,8 @@ void EntityTests::TestTokenRefresh(TestContext& testContext)
     {
         XAsyncBlock async{};
 
-        HRESULT hr = PlayFabEntityGetEntityTokenAsync(entityHandle, &async);
+        PlayFabAuthenticationGetEntityTokenRequest request{};
+        HRESULT hr = PlayFabEntityGetEntityTokenAsync(entityHandle, &request, &async);
         if (FAILED(hr))
         {
             testContext.Fail("PlayFabEntityGetEntityTokenAsync", hr);
@@ -132,12 +133,12 @@ void EntityTests::TestTokenRefresh(TestContext& testContext)
 void EntityTests::AddTests()
 {
     AddTest("TestClientLogin", &EntityTests::TestClientLogin);
-    AddTest("TestTokenRefresh", &EntityTests::TestTokenRefresh);
+    AddTest("TestManualTokenRefresh", &EntityTests::TestManualTokenRefresh);
 }
 
 void EntityTests::ClassSetUp()
 {
-    HRESULT hr = PlayFabInitialize(testTitleData.titleId.data(), &stateHandle);
+    HRESULT hr = PlayFabInitialize(testTitleData.titleId.data(), nullptr, &stateHandle);
     UNREFERENCED_PARAMETER(hr);
 }
 

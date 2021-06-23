@@ -19,21 +19,27 @@ if (categorizedApi.loginCallsRequireSecretKey) {
 {
 }
 <%for (var i = 0; i < categorizedApi.loginCalls.length; i++) {
-    var call = categorizedApi.loginCalls[i]; %>
+    var call = categorizedApi.loginCalls[i];
+    var secretKeyArg = categorizedApi.loginCallsRequireSecretKey ? "m_secretKey" : "nullptr"; %>
 AsyncOp<SharedPtr<Entity>> <%- api.name %>AuthAPI::<%- call.name %>(
     const PlayFab<%- api.name %><%- call.request %>& request,
     const TaskQueue& queue
 ) const
 {
+    // Remember LoginContext so we can refresh tokens
+    LoginContext loginContext{ "<%- call.url %>", JsonUtils::ToJson(request), <%- secretKeyArg %> };
+
     UnorderedMap<String, String> headers;
     <%- addAuthHeader(call, "    ") %>
 
-    return m_httpClient->MakePostRequest(
-        "<%- call.url %>",
+    auto requestOp = m_httpClient->MakePostRequest(
+        loginContext.path.data(),
         headers,
-        JsonUtils::ToJson(request),
+        loginContext.requestBody,
         queue
-    ).Then([ httpClient{ m_httpClient } ](Result<ServiceResponse> result) -> Result<SharedPtr<Entity>>
+    );
+
+    return requestOp.Then([ httpClient{ m_httpClient }, loginContext{ std::move(loginContext) }](Result<ServiceResponse> result) mutable -> Result<SharedPtr<Entity>>
     {
         RETURN_IF_FAILED(result.hr);
 
@@ -42,7 +48,7 @@ AsyncOp<SharedPtr<Entity>> <%- api.name %>AuthAPI::<%- call.name %>(
         {
             <%- call.result %> resultModel;
             resultModel.FromJson(serviceResponse.Data);
-            return MakeShared<Entity>(httpClient, std::move(resultModel));
+            return MakeShared<Entity>(httpClient, std::move(loginContext), std::move(resultModel));
         }
         else
         {
