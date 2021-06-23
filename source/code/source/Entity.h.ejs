@@ -132,11 +132,12 @@ auto Entity::MakePlayFabCallWithAuthRetry(const TaskQueue& queue, CallT call) ->
             UniquePtr<Operation> operation{ new (Allocator<Operation>{}.allocate(1)) Operation(std::move(entity), queue, std::move(call)) };
 
             operation->m_call(operation->m_queue).Finally(std::bind(&Operation::HandleCallResult, operation.get(), std::placeholders::_1));
+            auto asyncContext{ operation->m_asyncContext };
 
             // Release operation and reclaim upon completion
             operation.release();
 
-            return operation->m_asyncContext;
+            return asyncContext;
         }
 
     private:
@@ -144,38 +145,45 @@ auto Entity::MakePlayFabCallWithAuthRetry(const TaskQueue& queue, CallT call) ->
             m_entity{ std::move(entity) },
             m_queue{ queue.DeriveWorkerQueue() },
             m_call{ std::move(call) },
-            m_asyncContext{ MakeShared<AsyncOpContext<ResultT>>() }
+            m_asyncContext{ MakeShared<AsyncOpContext<ResultT>>() },
+            m_attemptRefreshLogin{ true }
         {
         }
 
         void HandleCallResult(Result<ResultT>&& result)
         {
-            // TODO figure out what is actually returned when an EntityToken or SessionTicket has expired
-            // TODO ensure we don't loop multiple times here (i.e. only reauthenticate once)
-            if (result.hr == E_PLAYFAB_INTERNAL_EXPIREDAUTHTOKEN || result.hr == HTTP_E_STATUS_DENIED)
+            if (m_attemptRefreshLogin)
             {
-                m_entity->RefreshLogin(m_queue).Finally([this](Result<void> result)
+                // Only try to refresh login once. If the call still fails after that, bail with returned error
+                m_attemptRefreshLogin = false;
+
+                if (result.hr == HTTP_E_STATUS_DENIED || /* REST error code (401) */
+                    result.hr == E_PLAYFAB_INTERNAL_EXPIREDAUTHTOKEN || /* PlayFab error code for EntityToken expired */
+                    result.hr == E_PLAYFAB_NOTAUTHENTICATED /* PlayFab error code for SessionTicket expired */)
                 {
-                    if (Failed(result))
+                    m_entity->RefreshLogin(m_queue).Finally([this](Result<void> result)
                     {
-                        this->Complete(Result<ResultT>{ result.hr });
-                    }
-                    else
-                    {
-                        // retry call
-                        m_call(m_queue).Finally(std::bind(&Operation::HandleCallResult, this, std::placeholders::_1));
-                    }
-                });
+                        if (Failed(result))
+                        {
+                            this->Complete(Result<ResultT>{ result.hr });
+                        }
+                        else
+                        {
+                            m_call(m_queue).Finally(std::bind(&Operation::HandleCallResult, this, std::placeholders::_1));
+                        }
+                    });
+
+                    return;
+                }
             }
-            else
-            {
-                this->Complete(std::move(result));
-            }
+
+            // Conditions for retry not met, pass along result
+            this->Complete(std::move(result));
         }
 
         void Complete(Result<ResultT>&& result)
         {
-            // Reclaim operation, it will be released after completing AsyncOpContext
+            // Reclaim operation, it will be release after completing AsyncOpContext
             UniquePtr<Operation> reclaim{ this };
             m_asyncContext->Complete(std::move(result));
         }
@@ -184,6 +192,7 @@ auto Entity::MakePlayFabCallWithAuthRetry(const TaskQueue& queue, CallT call) ->
         TaskQueue m_queue;
         CallT m_call;
         SharedPtr<AsyncOpContext<ResultT>> m_asyncContext;
+        bool m_attemptRefreshLogin;
     };
 
     return Operation::Begin(shared_from_this(), queue, std::move(call));

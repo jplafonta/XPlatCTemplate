@@ -80,7 +80,8 @@ HRESULT ServiceErrorToHR(ServiceErrorCode errorCode)
     {
         return E_PLAYFAB_TITLEDELETED;
     }
-    case ServiceErrorCode::ExpiredAuthToken:
+    case ServiceErrorCode::EntityTokenExpired:
+    case ServiceErrorCode::EntityTokenRevoked:
     {
         return E_PLAYFAB_INTERNAL_EXPIREDAUTHTOKEN;
     }
