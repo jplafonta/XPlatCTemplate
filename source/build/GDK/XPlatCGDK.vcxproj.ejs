@@ -16,11 +16,13 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <RootNamespace>XPlatCGDK</RootNamespace>
-    <ProjectGuid>{e51da6b6-ed3b-400d-8bbf-43effe822916}</ProjectGuid>
+    <ProjectGuid>{92F6EC5F-B66C-4572-A74D-79329AFF3129}</ProjectGuid>
     <DefaultLanguage>en-US</DefaultLanguage>
     <Keyword>Win32Proj</Keyword>
     <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
     <TargetRuntime>Native</TargetRuntime>
+    <OutputSubDir>XPlatCWindows</OutputSubDir>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\$(OutputSubDir)\</OutDir>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'" Label="Configuration">
@@ -56,7 +58,7 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Gaming.Desktop.x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), PlayFabXPlatC.props))\PlayFabXPlatC.props" />
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), StaticLib.props))\StaticLib.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">
     <LibraryPath>$(Console_SdkLibPath);$(LibraryPath)</LibraryPath>
     <IncludePath>$(Console_SdkIncludeRoot);$(IncludePath)</IncludePath>
@@ -131,37 +133,37 @@
   </ItemDefinitionGroup>
   <ItemGroup><%
 for (var file in projectFiles.includeFiles) { %>
-    <ClInclude Include="$(SdkSourceDir)\<%- file %>" /><% 
+    <ClInclude Include="$(PlayFabSourceDir)\<%- file %>" /><% 
 } 
 for (var file in projectFiles.sourceFiles) { 
     var header = file.endsWith(".h"); 
     if (header) { %>
-    <ClInclude Include="$(SdkSourceDir)\<%- file %>" /><%
+    <ClInclude Include="$(PlayFabSourceDir)\<%- file %>" /><%
     } else { %>
-    <ClCompile Include="$(SdkSourceDir)\<%- file %>" /><%
+    <ClCompile Include="$(PlayFabSourceDir)\<%- file %>" /><%
     }
 } 
 for(var apiName in categorizedApis) { 
     var api = categorizedApis[apiName];%>
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>DataModels.h" />
-    <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.h" />
-    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.cpp" /><%
+    <ClInclude Include="$(PlayFabSourceDir)\include\playfab\PlayFab<%- apiName %>DataModels.h" />
+    <ClInclude Include="$(PlayFabSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.h" />
+    <ClCompile Include="$(PlayFabSourceDir)\source\<%- apiName %>\<%- apiName %>DataModels.cpp" /><%
     if (!(apiName === "Shared"))
     {
         if (api.loginCalls.length > 0) { %>
-    <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>AuthApi.h" />
-    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>AuthApi.cpp" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>AuthApi.h" />
-    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\PlayFab<%- apiName %>AuthApi.cpp" /><%
+    <ClInclude Include="$(PlayFabSourceDir)\source\<%- apiName %>\<%- apiName %>AuthApi.h" />
+    <ClCompile Include="$(PlayFabSourceDir)\source\<%- apiName %>\<%- apiName %>AuthApi.cpp" />
+    <ClInclude Include="$(PlayFabSourceDir)\include\playfab\PlayFab<%- apiName %>AuthApi.h" />
+    <ClCompile Include="$(PlayFabSourceDir)\source\<%- apiName %>\PlayFab<%- apiName %>AuthApi.cpp" /><%
         } %>
-    <ClInclude Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>Api.h" />
-    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\<%- apiName %>Api.cpp" />
-    <ClInclude Include="$(SdkSourceDir)\include\playfab\PlayFab<%- apiName %>Api.h" />
-    <ClCompile Include="$(SdkSourceDir)\source\<%- apiName %>\PlayFab<%- apiName %>Api.cpp" /><%
+    <ClInclude Include="$(PlayFabSourceDir)\source\<%- apiName %>\<%- apiName %>Api.h" />
+    <ClCompile Include="$(PlayFabSourceDir)\source\<%- apiName %>\<%- apiName %>Api.cpp" />
+    <ClInclude Include="$(PlayFabSourceDir)\include\playfab\PlayFab<%- apiName %>Api.h" />
+    <ClCompile Include="$(PlayFabSourceDir)\source\<%- apiName %>\PlayFab<%- apiName %>Api.cpp" /><%
     }
 } %>
-    <ClInclude Include="$(SdkSourceDir)\source\stdafx.h" />
-    <ClCompile Include="$(SdkSourceDir)\source\stdafx.cpp">
+    <ClInclude Include="$(PlayFabSourceDir)\source\stdafx.h" />
+    <ClCompile Include="$(PlayFabSourceDir)\source\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
