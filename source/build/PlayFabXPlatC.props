@@ -19,6 +19,7 @@
 
   <ItemDefinitionGroup>
     <ClCompile>
+      <!--Remove internal dirs from here-->
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(PlayFabSourceDir);$(PlayFabSourceDir)/include;$(PlayFabSourceDir)/source/playfab;$(PlayFabSourceDir)/source</AdditionalIncludeDirectories>
     </ClCompile>
     <Lib>

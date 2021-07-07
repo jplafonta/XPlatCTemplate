@@ -83,12 +83,6 @@ PFTestTraceLevel TestApp::traceLevel = PFTestTraceLevel::Important;
         // Initialize the test runner/test data.
         TestRunner testRunner;
 
-        JsonParsingTests jsonTests;
-        testRunner.Add(jsonTests);
-
-        ModelTests modelTests;
-        testRunner.Add(modelTests);
-
         EntityTests entityTests;
         entityTests.SetTitleInfo(testTitleData);
         testRunner.Add(entityTests);
