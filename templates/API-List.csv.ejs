@@ -35,7 +35,7 @@ function countCallName(inputCallName)
     return count;
 }
 
-%>Feature Area,Call,Example API, Client, Server, Admin, Entity Group
+%>Feature Area,Call,Example API, Classic Client, Classic Server, Classic Admin, Entity Group, SubGroup
 <%
 
 seenCallName = [];
@@ -50,7 +50,7 @@ for(var apiName in categorizedApis)
             seenCallName.push(call.name);
             var asyncName = "PlayFab" + apiName + call.name + "Async"; 
             let clientYN = doesApiGroupHaveCall("Client", call.name) ? "Y" : "N";
-            if( clientYN )
+            if( clientYN == "Y" )
             {
                 asyncName = "PlayFabClient" + call.name + "Async"; // Prefer Client example
             }
@@ -63,12 +63,12 @@ for(var apiName in categorizedApis)
             if( clientYN == "N" && serverYN == "N" && adminYN == "N" )
             {
                 group = apiName;
-%><%- group + "," + call.name + "," + asyncName + "," + clientYN + "," + serverYN + "," + adminYN + "," + apiName %> 
+%><%- group + "," + call.name + "," + asyncName + "," + clientYN + "," + serverYN + "," + adminYN + "," + apiName + "," + call.subgroup %> 
 <%
             }
             else
             {
-%><%- group + "," + call.name + "," + asyncName + "," + clientYN + "," + serverYN + "," + adminYN + ",n/a" %> 
+%><%- group + "," + call.name + "," + asyncName + "," + clientYN + "," + serverYN + "," + adminYN + ",n/a," + call.subgroup  %> 
 <%
             }
         }
@@ -79,7 +79,7 @@ for(var apiName in apiGrouping.NotAutogenAPIs)
 { 
     // these APIs aren't auto-gen'd so manually included
     var api = apiGrouping.NotAutogenAPIs[apiName]; 
-%><%- api.Group + ",n/a," + api.Name + ",N,N,N,n/a" %> 
+%><%- api.Group + ",n/a," + api.Name + ",N,N,N,n/a," + api.Group %> 
 <%
 }
 
