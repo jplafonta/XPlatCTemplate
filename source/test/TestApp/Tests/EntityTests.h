@@ -12,6 +12,9 @@ class EntityTests : public PlayFabApiTestCase
 private:
     void TestClientLogin(TestContext& testContext);
     void TestManualTokenRefresh(TestContext& testContext);
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    void TestLoginWithXUser(TestContext& testContext);
+#endif
 
 protected:
     void AddTests() override;

@@ -39,7 +39,7 @@
     <RapidJsonSdkRoot>$(PlayFabRoot)External\rapidjson\</RapidJsonSdkRoot>
     <RapidJsonSdkInclude>$(RapidJsonSdkRoot)include\</RapidJsonSdkInclude>
   </PropertyGroup>
-  
+
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(RapidJsonSdkInclude)</AdditionalIncludeDirectories>

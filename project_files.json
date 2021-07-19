@@ -39,6 +39,8 @@
     "source\\InternalMemory.h": "Source",
     "source\\JsonUtils.cpp": "Source",
     "source\\JsonUtils.h": "Source",
+    "source\\PlatformUser.cpp": "Source",
+    "source\\PlatformUser.h": "Source",
     "source\\PlatformUtils.h": "Source",
     "source\\Result.h": "Source",
     "source\\ResultMacros.h": "Source",
