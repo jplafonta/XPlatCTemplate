@@ -122,7 +122,7 @@ for (var file in projectFiles.TestClientAppFiles) {
     </ClCompile><%
 for(var apiName in categorizedApis) { 
     var api = categorizedApis[apiName]; 
-    if (apiName == "Client") {  %>
+    if (apiName == "Client" || apiName == "Groups") {  %>
     <ClInclude Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.h" />
     <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestData.cpp" />
     <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestLog.cpp" />

@@ -18,7 +18,7 @@
 <% for(var apiName in categorizedApis) 
 { 
     var api = categorizedApis[apiName]; 
-    if (apiName == "Client") { %>
+    if (apiName != "Shared") { %>
 #include "AutoGenTests/AutoGen<%- apiName %>Tests.h" <%
 } } %>
 
@@ -99,7 +99,7 @@ for(var apiName in categorizedApis)
 {     
     verNum++;
     var api = categorizedApis[apiName]; 
-    if (apiName == "Client") { %>
+    if (apiName == "Client" || apiName == "Groups") { %>
         AutoGen<%- apiName %>Tests apiTests<%- verNum %>;
         apiTests<%- verNum %>.SetTitleInfo(testTitleData);
         testRunner.Add(apiTests<%- verNum %>);
