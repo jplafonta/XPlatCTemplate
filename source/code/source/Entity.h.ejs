@@ -16,12 +16,24 @@ for(var apiName in categorizedApis) {
 namespace PlayFab
 {
 
-// Context needed to re-authenticate an Entity with PlayFab prior to token-expiration
-struct LoginContext
+// Context needed to re-authenticate an Entity with PlayFab prior to token-expiration.
+// By default, the original login request will just replayed without modification. For behavior specific to a login API, derive
+// from this class and override methods as necessary.
+class LoginContext
 {
-    String path;
-    JsonValue requestBody;
-    SharedPtr<String const> secretKey;
+public:
+    LoginContext(const char* requestPath);
+    LoginContext(const char* requestPath, JsonValue&& requestBody);
+    LoginContext(const char* requestPath, JsonValue&& requestBody, UnorderedMap<String, String> requestHeaders);
+
+    virtual const char* RequestPath() const;
+    virtual AsyncOp<JsonValue> GetRequestBody(const TaskQueue& queue) const;
+    virtual const UnorderedMap<String, String>& RequestHeaders() const;
+
+private:
+    String m_path;
+    JsonValue m_requestBody;
+    UnorderedMap<String, String> m_requestHeaders;
 };
 
 // An entity authenticated with PlayFab via one of the various login methods. For more detail on PlayFab entities see the service
@@ -29,9 +41,9 @@ struct LoginContext
 class Entity : public std::enable_shared_from_this<Entity>
 {
 public:
-    Entity(SharedPtr<HttpClient const> httpClient, LoginContext&& loginContext, const LoginResult& loginResult);
-    Entity(SharedPtr<HttpClient const> httpClient, LoginContext&& loginContext, const ClientModels::RegisterPlayFabUserResult& registerUserResult);
-    Entity(SharedPtr<HttpClient const> httpClient, LoginContext&& loginContext, const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse);
+    Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const LoginResult& loginResult);
+    Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const ClientModels::RegisterPlayFabUserResult& registerUserResult);
+    Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse);
 
     Entity(const Entity&) = delete;
     Entity& operator=(const Entity&) = delete;
@@ -87,7 +99,7 @@ public:
 private:
     AsyncOp<void> RefreshLogin(const TaskQueue& queue);
 
-    LoginContext const m_loginContext;
+    SharedPtr<LoginContext const> m_loginContext;
 
     // Entity attributes
     String const m_playFabId; // Master_Player_Entity Id for the Player that logged in

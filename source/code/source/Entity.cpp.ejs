@@ -14,7 +14,7 @@ for(var apiName in categorizedApis) {
     }
 } %>
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, LoginContext&& loginContext, const LoginResult& result) :
+Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const LoginResult& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ MakeShared<AuthTokens>(result) },
     eventManagerAPI{ m_httpClient, m_authTokens },
@@ -30,7 +30,7 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, LoginContext&& loginConte
 {
 }
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, LoginContext&& loginContext, const ClientModels::RegisterPlayFabUserResult& result) :
+Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const ClientModels::RegisterPlayFabUserResult& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ MakeShared<AuthTokens>(result) },
     eventManagerAPI{ m_httpClient, m_authTokens },
@@ -43,7 +43,7 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, LoginContext&& loginConte
 {
 }
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, LoginContext&& loginContext, const AuthenticationModels::GetEntityTokenResponse& result) :
+Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::GetEntityTokenResponse& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ MakeShared<AuthTokens>(result) },
     eventManagerAPI{ m_httpClient, m_authTokens },
@@ -104,7 +104,7 @@ AsyncOp<SharedPtr<Entity>> Entity::GetEntityToken(
             else
             {
                 // Otherwise create and return a new Entity object
-                return MakeShared<Entity>(sharedThis->m_httpClient, LoginContext{} /* TODO */, std::move(resultModel));
+                return MakeShared<Entity>(sharedThis->m_httpClient, MakeShared<LoginContext>("/Authentication/GetEntityToken"), std::move(resultModel));
             }
         }
         else
@@ -156,18 +156,20 @@ TreatmentAssignment const* Entity::TreatmentAssignment() const
 
 AsyncOp<void> Entity::RefreshLogin(const TaskQueue& queue)
 {
-    UnorderedMap<String, String> headers;
-    if (m_loginContext.secretKey)
-    {
-        headers.emplace("X-SecretKey", *m_loginContext.secretKey);
-    }
+    SharedPtr<Entity> sharedThis{ shared_from_this() };
 
-    return m_httpClient->MakePostRequest(
-        m_loginContext.path.data(),
-        headers,
-        m_loginContext.requestBody,
-        queue
-    ).Then([sharedThis = shared_from_this(), this](Result<ServiceResponse> result)->Result<void>
+    return m_loginContext->GetRequestBody(queue.DeriveWorkerQueue()).Then([sharedThis, this, queue = TaskQueue{ queue }](Result<JsonValue> requestBodyResult) -> AsyncOp<ServiceResponse>
+    {
+        RETURN_IF_FAILED(requestBodyResult.hr);
+
+        return m_httpClient->MakePostRequest(
+            m_loginContext->RequestPath(),
+            m_loginContext->RequestHeaders(),
+            requestBodyResult.Payload(),
+            queue
+        );
+
+    }).Then([sharedThis, this](Result<ServiceResponse> result)->Result<void>
     {
         RETURN_IF_FAILED(result.hr);
 
@@ -184,6 +186,42 @@ AsyncOp<void> Entity::RefreshLogin(const TaskQueue& queue)
         }
         return S_OK;
     });
+}
+
+LoginContext::LoginContext(const char* requestPath)
+    : m_path{ requestPath }
+{
+}
+
+LoginContext::LoginContext(const char* requestPath, JsonValue&& requestBody)
+    : m_path{ requestPath },
+    m_requestBody{ std::move(requestBody) }
+{
+}
+
+LoginContext::LoginContext(const char* requestPath, JsonValue&& requestBody, UnorderedMap<String, String> requestHeaders)
+    : m_path{ requestPath },
+    m_requestBody{ std::move(requestBody) },
+    m_requestHeaders{ std::move(requestHeaders) }
+{
+}
+
+const char* LoginContext::RequestPath() const
+{
+    return m_path.data();
+}
+
+AsyncOp<JsonValue> LoginContext::GetRequestBody(const TaskQueue& queue) const
+{
+    UNREFERENCED_PARAMETER(queue); // No async work to be done in base LoginContext
+    JsonValue requestBodyCopy;
+    JsonUtils::FromJson(m_requestBody, requestBodyCopy);
+    return Result<JsonValue>{ std::move(requestBodyCopy) };
+}
+
+const UnorderedMap<String, String>& LoginContext::RequestHeaders() const
+{
+    return m_requestHeaders;
 }
 
 }

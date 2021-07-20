@@ -74,7 +74,7 @@ void EntityTests::TestClientLogin(TestContext& testContext)
 
 void EntityTests::TestManualTokenRefresh(TestContext& testContext)
 {
-    PlayFabEntityHandle entityHandle{ nullptr };
+    AuthResult authResult;
 
     {
         XAsyncBlock async{};
@@ -93,23 +93,23 @@ void EntityTests::TestManualTokenRefresh(TestContext& testContext)
         }
 
         XAsyncGetStatus(&async, true);
-        hr = PlayFabGetAuthResult(&async, &entityHandle);
+        hr = PlayFabGetAuthResult(&async, &authResult.entityHandle);
 
-        if (FAILED(hr) || !entityHandle)
+        if (FAILED(hr) || !&authResult.entityHandle)
         {
             testContext.Fail("PlayFabGetAuthResult", hr);
             return;
         }
 
         const PlayFabEntityToken* entityToken;
-        PlayFabEntityGetCachedEntityToken(entityHandle, &entityToken);
+        PlayFabEntityGetCachedEntityToken(authResult.entityHandle, &entityToken);
     }
 
     {
         XAsyncBlock async{};
 
         PlayFabAuthenticationGetEntityTokenRequest request{};
-        HRESULT hr = PlayFabEntityGetEntityTokenAsync(entityHandle, &request, &async);
+        HRESULT hr = PlayFabEntityGetEntityTokenAsync(authResult.entityHandle, &request, &async);
         if (FAILED(hr))
         {
             testContext.Fail("PlayFabEntityGetEntityTokenAsync", hr);
@@ -124,16 +124,82 @@ void EntityTests::TestManualTokenRefresh(TestContext& testContext)
         }
 
         const PlayFabEntityToken* entityToken;
-        PlayFabEntityGetCachedEntityToken(entityHandle, &entityToken);
+        PlayFabEntityGetCachedEntityToken(authResult.entityHandle, &entityToken);
     }
 
     testContext.Pass();
 }
 
+#if HC_PLATFORM == HC_PLATFORM_GDK
+
+// RAII wrapper of XUserHandle
+struct XUserHolder
+{
+    XUserHolder() = default;
+    XUserHolder(const XUserHolder&) = delete;
+    ~XUserHolder()
+    {
+        if (this->handle)
+        {
+            XUserCloseHandle(this->handle);
+        }
+    }
+
+    XUserHandle handle{ nullptr };
+};
+
+HRESULT AddXUser(XUserHolder& user)
+{
+    // Synchronously add Platform user
+    XAsyncBlock async{};
+    RETURN_IF_FAILED(XUserAddAsync(XUserAddOptions::AddDefaultUserAllowingUI, &async));
+    RETURN_IF_FAILED(XAsyncGetStatus(&async, true));
+    RETURN_IF_FAILED(XUserAddResult(&async, &user.handle));
+
+    // Sanity check
+    XUserLocalId localId{};
+    RETURN_IF_FAILED(XUserGetLocalId(user.handle, &localId));
+
+    return S_OK;
+}
+
+void EntityTests::TestLoginWithXUser(TestContext& testContext)
+{
+    XUserHolder xUser;
+    AuthResult playFabAuthResult;
+
+    HRESULT hr = AddXUser(xUser);
+    if (FAILED(hr))
+    {
+        testContext.Fail();
+    }
+    else
+    {
+        auto async = std::make_unique<XAsyncHelper<AuthResult>>(testContext);
+
+        PlayFabClientLoginWithXUserRequest request{};
+        bool createAccount = true;
+        request.createAccount = &createAccount;
+        request.titleId = testTitleData.titleId.data();
+        request.userHandle = xUser.handle;
+
+        hr = PlayFabClientLoginWithXUserAsync(stateHandle, &request, &async->asyncBlock);
+        if (FAILED(hr))
+        {
+            testContext.Fail("PlayFabClientLoginWithXUserAsync", hr);
+        }
+        async.release();
+    }
+}
+#endif
+
 void EntityTests::AddTests()
 {
     AddTest("TestClientLogin", &EntityTests::TestClientLogin);
     AddTest("TestManualTokenRefresh", &EntityTests::TestManualTokenRefresh);
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    AddTest("TestLoginWithXUser", &EntityTests::TestLoginWithXUser);
+#endif
 }
 
 void EntityTests::ClassSetUp()
