@@ -61,3 +61,7 @@ namespace DX
 #define WIN32_LEAN_AND_MEAN
 
 #endif
+
+#if HC_PLATFORM == HC_PLATFORM_GDK
+#include "GDK/GDKPch.h"
+#endif

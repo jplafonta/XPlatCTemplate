@@ -25,6 +25,7 @@
     "source\\AuthTokens.h": "Source",
     "source\\BaseModel.cpp": "Source",
     "source\\BaseModel.h": "Source",
+    "source\\CallbackManager.h": "Source",
     "source\\Entity.cpp": "Source",
     "source\\Entity.h": "Source",
     "source\\EnumTraits.h": "Source",
@@ -38,6 +39,8 @@
     "source\\InternalMemory.h": "Source",
     "source\\JsonUtils.cpp": "Source",
     "source\\JsonUtils.h": "Source",
+    "source\\PlatformUser.cpp": "Source",
+    "source\\PlatformUser.h": "Source",
     "source\\PlatformUtils.h": "Source",
     "source\\Result.h": "Source",
     "source\\ResultMacros.h": "Source",
@@ -70,5 +73,26 @@
     "source\\QoS\\QoSDataModels.h": "Source\\QoS",
     "source\\QoS\\QoSSocket.cpp": "Source\\QoS",
     "source\\QoS\\QoSSocket.h": "Source\\QoS"
+  },
+  "TestClientAppFiles": {
+    "TestApp\\Tests\\ApiTests.cpp": "Source\\Tests",
+    "TestApp\\Tests\\ApiTests.h": "Source\\Tests",
+    "TestApp\\Tests\\EntityTests.cpp": "Source\\Tests",
+    "TestApp\\Tests\\EntityTests.h": "Source\\Tests",
+    "TestApp\\Tests\\EventManagerTests.cpp": "Source\\Tests",
+    "TestApp\\Tests\\EventManagerTests.h": "Source\\Tests",
+    "TestApp\\TestApp.cpp": "Source",
+    "TestApp\\TestApp.h": "Source",
+    "TestApp\\TestCase.h": "Source",
+    "TestApp\\TestContext.cpp": "Source",
+    "TestApp\\TestContext.h": "Source",
+    "TestApp\\TestDataTypes.h": "Source",
+    "TestApp\\TestReport.cpp": "Source",
+    "TestApp\\TestReport.h": "Source",
+    "TestApp\\TestRunner.cpp": "Source",
+    "TestApp\\TestRunner.h": "Source",
+    "TestApp\\TestUtils.cpp": "Source",
+    "TestApp\\TestUtils.h": "Source",
+    "TestApp\\XAsyncHelper.h": "Source"
   }
 }

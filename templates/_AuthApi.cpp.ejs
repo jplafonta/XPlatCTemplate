@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "<%- api.name %>AuthApi.h"
+#include "PlatformUser.h"
 #include "Entity.h"
 
 namespace PlayFab
@@ -25,15 +26,22 @@ AsyncOp<SharedPtr<Entity>> <%- api.name %>AuthAPI::<%- call.name %>(
     const TaskQueue& queue
 ) const
 {
+    const char* path{ "<%- call.url %>" };
+    JsonValue requestBody{ JsonUtils::ToJson(request) };
     UnorderedMap<String, String> headers;
     <%- addAuthHeader(call, "    ") %>
 
-    return m_httpClient->MakePostRequest(
-        "<%- call.url %>",
+    auto requestOp = m_httpClient->MakePostRequest(
+        path,
         headers,
-        JsonUtils::ToJson(request),
+        requestBody,
         queue
-    ).Then([ httpClient{ m_httpClient } ](Result<ServiceResponse> result) -> Result<SharedPtr<Entity>>
+    );
+
+    // Remember LoginContext so we can refresh tokens
+    auto loginContext = MakeShared<LoginContext>(path, std::move(requestBody), std::move(headers));
+
+    return requestOp.Then([ httpClient{ m_httpClient }, loginContext ](Result<ServiceResponse> result) -> Result<SharedPtr<Entity>>
     {
         RETURN_IF_FAILED(result.hr);
 
@@ -42,7 +50,7 @@ AsyncOp<SharedPtr<Entity>> <%- api.name %>AuthAPI::<%- call.name %>(
         {
             <%- call.result %> resultModel;
             resultModel.FromJson(serviceResponse.Data);
-            return MakeShared<Entity>(httpClient, std::move(resultModel));
+            return MakeShared<Entity>(httpClient, loginContext, std::move(resultModel));
         }
         else
         {
@@ -50,6 +58,99 @@ AsyncOp<SharedPtr<Entity>> <%- api.name %>AuthAPI::<%- call.name %>(
         }
     });
 }
-<% } %>
+<%
+// Explicitly add LoginWithXUser implementation alongside LoginWithXbox
+if (api.name === "Client" && call.name === "LoginWithXbox") { %>
+#if HC_PLATFORM == HC_PLATFORM_GDK
+
+class XUserLoginContext : public LoginContext
+{
+public:
+    XUserLoginContext(XUser&& platformUser, const PlayFabClientLoginWithXUserRequest& request);
+
+    AsyncOp<JsonValue> GetRequestBody(const TaskQueue& queue) const override;
+
+private:
+    XUser m_platformUser;
+    LoginWithXboxRequest m_request;
+};
+
+XUserLoginContext::XUserLoginContext(XUser&& platformUser, const PlayFabClientLoginWithXUserRequest& request)
+    : LoginContext{ "/Client/LoginWithXbox" },
+    m_platformUser{ std::move(platformUser) },
+    m_request{ PlayFabClientLoginWithXboxRequest
+    {
+        request.createAccount,
+        request.customTags,
+        request.customTagsCount,
+        nullptr, // encryptedRequest
+        request.infoRequestParameters,
+        request.playerSecret,
+        request.titleId,
+        nullptr // XboxToken, will be populated later
+    }
+    }
+{
+}
+
+AsyncOp<JsonValue> XUserLoginContext::GetRequestBody(const TaskQueue& queue) const
+{
+    return m_platformUser.GetTokenAndSignature(
+        XUserGetTokenAndSignatureOptions::None,
+        "POST",
+        "https://playfabapi.com/",
+        UnorderedMap<String, String>{},
+        0,
+        nullptr,
+        queue
+    ).Then([request{ this->m_request }](Result<TokenAndSignature> getTokenResult) mutable -> Result<JsonValue>
+    {
+        RETURN_IF_FAILED(getTokenResult.hr);
+        request.xboxToken = getTokenResult.Payload().token.data();
+        return request.ToJson();
+    });
+}
+
+AsyncOp<SharedPtr<Entity>> ClientAuthAPI::LoginWithXUser(
+    const PlayFabClientLoginWithXUserRequest& request,
+    const TaskQueue& queue
+) const
+{
+    auto wrapUserHandleResult = XUser::WrapHandle(request.userHandle);
+    RETURN_IF_FAILED(wrapUserHandleResult.hr);
+
+    auto loginContext = MakeShared<XUserLoginContext>(wrapUserHandleResult.ExtractPayload(), request);
+
+    return loginContext->GetRequestBody(queue.DeriveWorkerQueue()).Then([httpClient{ m_httpClient }, queue = TaskQueue{ queue }, loginContext](Result<JsonValue> requestBodyResult) -> AsyncOp<ServiceResponse>
+    {
+        RETURN_IF_FAILED(requestBodyResult.hr);
+
+        return httpClient->MakePostRequest(
+            loginContext->RequestPath(),
+            UnorderedMap<String, String>{},
+            requestBodyResult.Payload(),
+            queue
+        );
+
+    }).Then([httpClient{ m_httpClient }, loginContext ](Result<ServiceResponse> result) -> Result<SharedPtr<Entity>>
+    {
+        RETURN_IF_FAILED(result.hr);
+
+        auto serviceResponse = result.ExtractPayload();
+        if (serviceResponse.HttpCode == 200)
+        {
+            LoginResult resultModel;
+            resultModel.FromJson(serviceResponse.Data);
+            return MakeShared<Entity>(httpClient, loginContext, std::move(resultModel));
+        }
+        else
+        {
+            return Result<SharedPtr<Entity>>{ ServiceErrorToHR(serviceResponse.ErrorCode), std::move(serviceResponse.ErrorMessage) };
+        }
+    });
+}
+#endif
+<% } // end if
+} // end for  %>
 
 }

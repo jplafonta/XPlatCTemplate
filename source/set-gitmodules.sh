@@ -16,6 +16,11 @@ else
     then
         exit $?
     fi
+    git submodule add https://github.com/microsoft/DirectXTK12 ./external/DirectXTK12
+    if [ $? != 0 ]
+    then
+        exit $?
+    fi
 fi
 
 pushd "external/rapidjson"
@@ -30,6 +35,15 @@ popd
 pushd "external/libHttpClient"
 git checkout 0b86f1e2b01ebe3f6e8e60ed6d7a41da3645b5bf
 git reset --hard 0b86f1e2b01ebe3f6e8e60ed6d7a41da3645b5bf
+if [ $? != 0 ]
+then
+    exit $?
+fi
+popd
+
+pushd "external/DirectXTK12"
+git checkout 99e1d88e49dcdb07bdc2c4122a6b60784f927033
+git reset --hard 99e1d88e49dcdb07bdc2c4122a6b60784f927033
 if [ $? != 0 ]
 then
     exit $?

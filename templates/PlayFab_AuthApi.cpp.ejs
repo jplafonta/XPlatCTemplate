@@ -21,4 +21,22 @@ HRESULT PlayFab<%- api.name %><%- call.name %>Async(
     auto provider = MakeAuthProvider(async, __FUNCTION__, std::bind(&<%- api.name %>AuthAPI::<%- call.name %>, &stateHandle->state-><%- authApiMemberName %>, *request, std::placeholders::_1));
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
-<% } %>
+<%
+// Explicitly add PlayFabLoginWithXUserAsync implementation alongside LoginWithXbox
+if (api.name === "Client" && call.name === "LoginWithXbox") { %>
+#if HC_PLATFORM == HC_PLATFORM_GDK
+HRESULT PlayFabClientLoginWithXUserAsync(
+    _In_ PlayFabStateHandle stateHandle,
+    _In_ const PlayFabClientLoginWithXUserRequest* request,
+    _Inout_ XAsyncBlock* async
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(stateHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(request);
+
+    auto provider = MakeAuthProvider(async, __FUNCTION__, std::bind(&ClientAuthAPI::LoginWithXUser, &stateHandle->state->clientAuthAPI, *request, std::placeholders::_1));
+    return Provider::Run(UniquePtr<Provider>(provider.release()));
+}
+#endif
+<% } // end if
+} // end for %>

@@ -12,9 +12,6 @@
 #include "TestUtils.h"
 
 #include <httpClient/httpClient.h>
-#include "PlatformLoginTest.h"
-#include "JsonParsingTests.h"
-#include "ModelTests.h"
 #include "ApiTests.h" 
 #include "EventManagerTests.h"
 #include "EntityTests.h"
@@ -36,6 +33,7 @@ PFTestTraceLevel TestApp::traceLevel = PFTestTraceLevel::Important;
     constexpr int CLOUDSCRIPT_TIMEOUT_MS = 30000;
 #endif // !defined(DISABLE_PLAYFABCLIENT_API)
 
+#if HC_PLATFORM != HC_PLATFORM_GDK
     void TestApp::Log(const char* format, ...)
     {
         static char message[1024*64];
@@ -54,6 +52,7 @@ PFTestTraceLevel TestApp::traceLevel = PFTestTraceLevel::Important;
         // Output the message in a platform-dependent way.
         LogPut(message);
     }
+#endif
 
     int TestApp::Main()
     {
@@ -81,21 +80,6 @@ PFTestTraceLevel TestApp::traceLevel = PFTestTraceLevel::Important;
 
         // Initialize the test runner/test data.
         TestRunner testRunner;
-
-#if !defined(DISABLE_PLAYFABCLIENT_API)
-        // Set this up for use when the tests finish
-        //this->clientApi = std::make_shared<PlayFab::PlayFabClientInstanceAPI>(PlayFab::PlayFabSettings::staticPlayer);
-
-        PlatformLoginTest loginTest;
-        loginTest.SetTitleInfo(testTitleData);
-        testRunner.Add(loginTest);
-#endif // !defined(DISABLE_PLAYFABCLIENT_API)
-
-        JsonParsingTests jsonTests;
-        testRunner.Add(jsonTests);
-
-        ModelTests modelTests;
-        testRunner.Add(modelTests);
 
         EntityTests entityTests;
         entityTests.SetTitleInfo(testTitleData);

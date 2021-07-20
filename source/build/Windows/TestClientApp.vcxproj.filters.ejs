@@ -1,115 +1,49 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="AutoGen Tests">
-        <UniqueIdentifier>{ce760dcd-66dd-4179-a4c9-dd3cd787d8fe}</UniqueIdentifier>
-    </Filter>
+    <Filter Include="Source" />
+    <Filter Include="Source\AutoGen Tests" />
+    <Filter Include="Source\Tests" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="$(TestSourceDir)\TestApp\TestAppPch.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\PlatformLoginTest.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\TestCase.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\TestContext.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\TestDataTypes.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\TestReport.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\TestRunner.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\TestUtils.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\TestApp.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\JsonParsingTests.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\ModelTests.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\ApiTests.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\EventManagerTests.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\EntityTests.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="$(TestSourceDir)\TestApp\XAsyncHelper.h">
-    <Filter>Source</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup> <%
+  <ItemGroup><%
+for (var file in projectFiles.TestClientAppFiles) { 
+    var filter = projectFiles.TestClientAppFiles[file];
+    var header = file.endsWith(".h"); 
+    if (header) { %>
+    <ClInclude Include="$(PlayFabTestDir)\<%- file %>" >
+      <Filter><%- filter %></Filter>
+    </ClInclude><%
+    } else { %>
+    <ClCompile Include="$(PlayFabTestDir)\<%- file %>" >
+      <Filter><%- filter %></Filter>
+    </ClCompile><%
+    }
+}
 for(var apiName in categorizedApis) { 
     var api = categorizedApis[apiName]; %>
-    <ClInclude Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.h">
-      <Filter>AutoGen Tests</Filter>
+    <ClInclude Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.h">
+      <Filter>Source\AutoGen Tests</Filter>
     </ClInclude>
-    <ClCompile Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestData.cpp">
-      <Filter>AutoGen Tests</Filter>
+    <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestData.cpp">
+      <Filter>Source\AutoGen Tests</Filter>
     </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestLog.cpp">
-      <Filter>AutoGen Tests</Filter>
+    <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestLog.cpp">
+      <Filter>Source\AutoGen Tests</Filter>
     </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.cpp">
-      <Filter>AutoGen Tests</Filter>
-    </ClCompile> <% } %>
-    <ClCompile Include="$(TestSourceDir)\TestApp\TestApp.cpp">
+    <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.cpp">
+      <Filter>Source\AutoGen Tests</Filter>
+    </ClCompile><%
+} %>
+    <ClInclude Include="$(PlayFabTestDir)\TestApp\TestAppPch.h" >
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClCompile Include="$(PlayFabTestDir)\TestApp\TestAppPch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\TestAppPch.cpp">
+    <ClCompile Include="$(PlayFabTestDir)\TestApp\Win32\MainWin32.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\PlatformLoginTest_default.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\TestContext.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\TestReport.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\TestRunner.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\TestUtils.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="MainWin32.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="TestAppWin32.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\JsonParsingTests.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\ModelTests.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\ApiTests.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\EventManagerTests.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="$(TestSourceDir)\TestApp\EntityTests.cpp">
+    <ClCompile Include="$(PlayFabTestDir)\TestApp\Win32\TestAppWin32.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

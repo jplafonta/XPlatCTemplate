@@ -8,6 +8,11 @@
 #pragma once
 <% if (api.name !== "Shared") { %>
 #include <playfab/PlayFabSharedDataModels.h>
+<% } 
+if (api.name === "Client") { %>
+#if HC_PLATFORM == HC_PLATFORM_GDK
+#include <XUser.h>
+#endif
 <% } %>
 extern "C"
 {
@@ -48,7 +53,61 @@ typedef struct <%- prefix %><%- datatype.name %>
 for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { var property = datatype.properties[propIdx];
 %><%- getPropertyDefinition("    ", datatype, property, prefix, false) %><% } %>
 } <%- prefix %><%- datatype.name %>;
-<% } // end for
+<% 
+// Explicitly add LoginWithXUserRequest type alongside LoginWithXboxRequest
+if (api.name === "Client" && datatype.name === "LoginWithXboxRequest") { %>
+#if HC_PLATFORM == HC_PLATFORM_GDK
+/// <summary>
+/// PlayFabClientLoginWithXUserRequest data model. If this is the first time a user has signed in with
+/// the Xbox Live account and CreateAccount is set to true, a new PlayFab account will be created and
+/// linked to the Xbox Live account. In this case, no email or username will be associated with the PlayFab
+/// account. Otherwise, if no PlayFab account is linked to the Xbox Live account, an error indicating
+/// this will be returned, so that the title can guide the user through creation of a PlayFab account.
+/// Request object for PlayFabClientLoginWithXUserAsync.
+/// </summary>
+typedef struct PlayFabClientLoginWithXUserRequest
+{
+    /// <summary>
+    /// (Optional) Automatically create a PlayFab account if one is not currently linked to this ID.
+    /// </summary>
+    bool const* createAccount;
+
+    /// <summary>
+    /// (Optional) The optional custom tags associated with the request (e.g. build number, external
+    /// trace identifiers, etc.).
+    /// </summary>
+    struct PlayFabStringDictionaryEntry const* customTags;
+
+    /// <summary>
+    /// Count of customTags
+    /// </summary>
+    uint32_t customTagsCount;
+
+    /// <summary>
+    /// (Optional) Flags for which pieces of info to return for the user.
+    /// </summary>
+    PlayFabClientGetPlayerCombinedInfoRequestParams const* infoRequestParameters;
+
+    /// <summary>
+    /// (Optional) Player secret that is used to verify API request signatures (Enterprise Only).
+    /// </summary>
+    const char* playerSecret;
+
+    /// <summary>
+    /// Unique identifier for the title, found in the Settings > Game Properties section of the PlayFab
+    /// developer site when a title has been selected.
+    /// </summary>
+    const char* titleId;
+
+    /// <summary>
+    /// XUserHandle returned from XUserAddAsync or XUserAddByIdWithUiAsync.
+    /// </summary>
+    XUserHandle userHandle;
+
+} PlayFabClientLoginWithXUserRequest;
+#endif
+<% } // end if
+} // end for
 
 if (api.name === "Shared") { %>
 /// <summary>
