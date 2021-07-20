@@ -10,7 +10,7 @@
 #include <playfab/PlayFabAuthenticationAuthApi.h>
 #include <playfab/PlayFabClientDataModels.h>
 
-uint32_t g_testIndex = 1;
+uint32_t g_<%- api.name %>TestIndex = 1;
 
 <%
 function debugLogProp(varName, propName, propCoutName, property, prefix, padding) 
@@ -98,7 +98,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
 
     std::stringstream ss;
     ss << "----------"; Log(ss);
-    ss << "Test #" << g_testIndex++ << ": " << testName << ".  Last Known Status: <%- testStatusListStatus %>"; Log(ss);
+    ss << "Test #" << g_<%- api.name %>TestIndex++ << ": " << testName << ".  Last Known Status: <%- testStatusListStatus %>"; Log(ss);
     ss << "Request:"; Log(ss);
 <% 
     var found = false;

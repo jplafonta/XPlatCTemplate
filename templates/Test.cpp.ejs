@@ -20,7 +20,7 @@ void AutoGen<%- api.name %>Tests::Log(std::stringstream& ss)
     ss.clear();
 }
 
-HRESULT AutoGenClientTests::LogHR(HRESULT hr)
+HRESULT AutoGen<%- api.name %>Tests::LogHR(HRESULT hr)
 {
     if( TestApp::ShouldTrace(PFTestTraceLevel::Information) )
     {
@@ -43,7 +43,7 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
     let passingButNoDataTest = (testStatusListStatus == "PassingButNoData");
     let failingTest = (testStatusListStatus == "Failing");
     let crashingTest = (testStatusListStatus == "Crashing");
-    if( api.name == "Client" && (!passingWithDataTest && !passingButNoDataTest && !failingTest && !crashingTest) ) {
+    if( (api.name == "Client" || api.name == "Groups") && (!passingWithDataTest && !passingButNoDataTest && !failingTest && !crashingTest) ) {
         throw Error('Test ' + testName + ' not found in TestStatus.json');
     }
 
