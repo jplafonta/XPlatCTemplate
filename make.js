@@ -46,6 +46,8 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
         sdkVersion: sdkGlobals.sdkVersion,
         sdkDate: sdkGlobals.sdkVersion.split(".")[2],
         sdkYear: sdkGlobals.sdkVersion.split(".")[2].substr(0, 2),
+        getFormattedCallDescription: getFormattedCallDescription,
+        getCallDoc: getCallDoc,
         vsVer: "v141", // As C++ versions change, we may need to update this
         vsYear: "2017", // As VS versions change, we may need to update this
         winSdkVersion: "10.0.17763.0" // Which version of the Windows SDK (A VS installation option) to use
@@ -55,6 +57,10 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     for (var a = 0; a < apis.length; a++) {
         makeApiFiles(apis[a], sourceDir, apiOutputDir);
     }
+
+    var testXMLRefDocsJsonTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/XMLRefDocs.json.ejs"));
+    writeFile(path.resolve(apiOutputDir, "test/", "XMLRefDocs.json.autogen"), testXMLRefDocsJsonTemplate(locals));
+
 };
 
 function makeApiFiles(api, sourceDir, apiOutputDir) {
@@ -89,6 +95,7 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         isFixedSize: isFixedSize,
         getFormattedDatatypeDescription: getFormattedDatatypeDescription,
         getFormattedCallDescription: getFormattedCallDescription,
+        getFormattedCallRemarks: getFormattedCallRemarks,
         getRequestExample: getRequestExample,
         getPublicPropertyType: getPublicPropertyType,
         testStatusMap: testStatusMap,
@@ -949,14 +956,35 @@ function getFormattedDatatypeDescription(prefix, datatype) {
     return output;
 }
 
-function getFormattedCallDescription(apiName, call) {
-    if (apiName in xmlRefDocs) {
-        var apiRefDocs = xmlRefDocs[apiName];
-        if (call.name in apiRefDocs.calls) {
-            return appendToXmlDocComment("///", apiRefDocs.calls[call.name].summary);
-        }
+function getCallDoc(apiName, call) {
+    var asyncName = "PlayFab" + apiName + call.name + "Async";
+    if (asyncName in xmlRefDocs) {
+        var docForCall = xmlRefDocs[asyncName];
+        return docForCall;
     }
-    return "/// " + call.name + " documentation not found in XmlRefDocs."
+    var doc = {};
+    doc.summary = "TODO: ERROR: " + asyncName + " documentation not found in XmlRefDocs.";
+    return doc;
+}
+
+function getFormattedCallDescription(apiName, call) {
+    return appendToXmlDocComment("///", getCallDoc(apiName, call).summary);
+}
+
+function getFormattedCallRemarks(apiName, call) {
+    var callDoc = getCallDoc(apiName, call);
+    if (callDoc.remarks !== undefined) {
+        return appendToXmlDocComment("///", callDoc.remarks);
+    }
+    else if (call.result === "void" || call.url === "/Authentication/GetEntityToken")
+    {
+        return "/// Call <see cref=\"XAsyncGetStatus\"/> to get the status of the operation."
+    }
+    else
+    {
+        var getResultName = "PlayFab" + apiName + call.name + "GetResult";
+        return "/// If successful, call <see cref=\"" + getResultName + "\"/> to get the result."
+    }
 }
 
 function jsonEscapeQuotes(input) {
