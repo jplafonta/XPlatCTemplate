@@ -1,0 +1,21 @@
+{
+<% 
+for (var i = 0; i < apis.length; i++) 
+{
+    var api = apis[i];
+    var categorizedApi = categorizedApis[api.name];
+    for (var j = 0; j < categorizedApi.otherCalls.length; j++) 
+    {
+        var call = categorizedApi.otherCalls[j];
+        var asyncName = globalPrefix + api.name + call.name + "Async"; 
+        var docForCall = getCallDoc(api.name, call);
+        var remarks = docForCall.remarks;
+%>  "<%- asyncName %>" : { 
+    "summary": "<%- docForCall.summary %>"<% if (remarks !== undefined) { %>,
+    "remarks": "<%- remarks %>"<% } %>
+  },
+<%
+    }
+}
+%> 
+}
