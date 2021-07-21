@@ -11,7 +11,11 @@ Get-ChildItem -Path "C:\git\pf\sdks\XPlatCSdk" -Recurse -ErrorAction SilentlyCon
 	{
 		Write-Output ("")
 		Write-Output ($fileA + " is new. copying")		
-		Copy-Item $fileA -Destination $fileB
+		
+		If (-not (Test-Path $fileB)) {
+			New-Item -ItemType File -Path $fileB -Force
+		} 		
+		Copy-Item $fileA -Destination $fileB 
 	}
 	else 
 	{

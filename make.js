@@ -46,6 +46,8 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
         sdkVersion: sdkGlobals.sdkVersion,
         sdkDate: sdkGlobals.sdkVersion.split(".")[2],
         sdkYear: sdkGlobals.sdkVersion.split(".")[2].substr(0, 2),
+        getFormattedCallDescription: getFormattedCallDescription,
+        getCallDoc: getCallDoc,
         vsVer: "v141", // As C++ versions change, we may need to update this
         vsYear: "2017", // As VS versions change, we may need to update this
         winSdkVersion: "10.0.17763.0" // Which version of the Windows SDK (A VS installation option) to use
@@ -55,6 +57,10 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     for (var a = 0; a < apis.length; a++) {
         makeApiFiles(apis[a], sourceDir, apiOutputDir);
     }
+
+    var testXMLRefDocsJsonTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/XMLRefDocs.json.ejs"));
+    writeFile(path.resolve(apiOutputDir, "test/", "XMLRefDocs.json.autogen"), testXMLRefDocsJsonTemplate(locals));
+
 };
 
 function makeApiFiles(api, sourceDir, apiOutputDir) {
@@ -89,6 +95,7 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         isFixedSize: isFixedSize,
         getFormattedDatatypeDescription: getFormattedDatatypeDescription,
         getFormattedCallDescription: getFormattedCallDescription,
+        getFormattedCallRemarks: getFormattedCallRemarks,
         getRequestExample: getRequestExample,
         getPublicPropertyType: getPublicPropertyType,
         testStatusMap: testStatusMap,
@@ -949,14 +956,70 @@ function getFormattedDatatypeDescription(prefix, datatype) {
     return output;
 }
 
-function getFormattedCallDescription(apiName, call) {
-    if (apiName in xmlRefDocs) {
-        var apiRefDocs = xmlRefDocs[apiName];
-        if (call.name in apiRefDocs.calls) {
-            return appendToXmlDocComment("///", apiRefDocs.calls[call.name].summary);
+function getSeeAlso(call) {
+    if (call.seeAlso == undefined || call.seeAlso.length == 0) {
+        return "";
+    }
+
+    var result = "See also ";
+    for (var i in call.seeAlso) {
+        result += "PlayFab" + call.seeAlso[i].replace(/"/g, "'").replace("/", "") + "Async";
+        if (i != call.seeAlso.length - 1) {
+            result += ", ";
         }
     }
-    return "/// " + call.name + " documentation not found in XmlRefDocs."
+
+    return result;
+}
+
+function getCallDoc(apiName, call) {
+    var asyncName = "PlayFab" + apiName + call.name + "Async";
+    if (asyncName in xmlRefDocs) {
+        var docForCall = xmlRefDocs[asyncName];
+        return docForCall;
+    }
+
+    if (asyncName == "PlayFabAdminGetCloudScriptTaskInstanceAsync") {
+        asyncName = "PlayFabAdminGetCloudScriptTaskInstanceAsync";
+    }
+    var doc = {};
+    if (call.summary === undefined || call.summary.length == 0) {
+        doc.summary = "TODO";
+    }
+    else {
+        doc.summary = "TODO REVIEW: " + call.summary.replace(/"/g, "'");
+    }
+
+    var remarks = (call.requestDetails !== undefined) ? call.requestDetails.replace(/"/g, "'") : "";
+    var seeAlso = getSeeAlso(call);
+    if (remarks.length > 0 && seeAlso.length > 0) {
+        remarks += " ";
+    }
+    remarks += seeAlso;
+    if (remarks.length > 0) {
+        doc.remarks = remarks;
+    }
+    return doc;
+}
+
+function getFormattedCallDescription(apiName, call) {
+    return appendToXmlDocComment("///", getCallDoc(apiName, call).summary);
+}
+
+function getFormattedCallRemarks(apiName, call) {
+    var callDoc = getCallDoc(apiName, call);
+    if (callDoc.remarks !== undefined) {
+        return appendToXmlDocComment("///", callDoc.remarks);
+    }
+    else if (call.result === "void" || call.url === "/Authentication/GetEntityToken")
+    {
+        return "/// Call <see cref=\"XAsyncGetStatus\"/> to get the status of the operation."
+    }
+    else
+    {
+        var getResultName = "PlayFab" + apiName + call.name + "GetResult";
+        return "/// If successful, call <see cref=\"" + getResultName + "\"/> to get the result."
+    }
 }
 
 function jsonEscapeQuotes(input) {

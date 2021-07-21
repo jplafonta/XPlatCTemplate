@@ -33,12 +33,8 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++) {
     } %>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <returns>Result code for this API operation.</returns>
-/// <remarks><%
-    if (call.result === "void"|| call.url === "/Authentication/GetEntityToken") { %>
-/// Call <see cref="XAsyncGetStatus"/> to get the status of the operation.<%
-    } else { %>
-/// If successful, call <see cref="PlayFab<%- api.name %><%- call.name %>GetResult"/> to get the result.<%
-    } %>
+/// <remarks>
+<%- getFormattedCallRemarks(api.name, call) %>
 /// </remarks>
 HRESULT PlayFab<%- api.name %><%- call.name %>Async(
     _In_ <%- contextHandleParam %>,
