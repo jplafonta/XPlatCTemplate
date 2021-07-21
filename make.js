@@ -47,6 +47,7 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
         sdkDate: sdkGlobals.sdkVersion.split(".")[2],
         sdkYear: sdkGlobals.sdkVersion.split(".")[2].substr(0, 2),
         getFormattedCallDescription: getFormattedCallDescription,
+        globalPrefix: globalPrefix,
         getCallDoc: getCallDoc,
         vsVer: "v141", // As C++ versions change, we may need to update this
         vsYear: "2017", // As VS versions change, we may need to update this
@@ -963,7 +964,7 @@ function getSeeAlso(call) {
 
     var result = "See also ";
     for (var i in call.seeAlso) {
-        result += "PlayFab" + call.seeAlso[i].replace(/"/g, "'").replace("/", "") + "Async";
+        result += globalPrefix + call.seeAlso[i].replace(/"/g, "'").replace("/", "") + "Async";
         if (i != call.seeAlso.length - 1) {
             result += ", ";
         }
@@ -973,21 +974,18 @@ function getSeeAlso(call) {
 }
 
 function getCallDoc(apiName, call) {
-    var asyncName = "PlayFab" + apiName + call.name + "Async";
+    var asyncName = globalPrefix + apiName + call.name + "Async";
     if (asyncName in xmlRefDocs) {
         var docForCall = xmlRefDocs[asyncName];
         return docForCall;
     }
 
-    if (asyncName == "PlayFabAdminGetCloudScriptTaskInstanceAsync") {
-        asyncName = "PlayFabAdminGetCloudScriptTaskInstanceAsync";
-    }
     var doc = {};
     if (call.summary === undefined || call.summary.length == 0) {
         doc.summary = "TODO";
     }
     else {
-        doc.summary = "TODO REVIEW: " + call.summary.replace(/"/g, "'");
+        doc.summary = call.summary.replace(/"/g, "'");
     }
 
     var remarks = (call.requestDetails !== undefined) ? call.requestDetails.replace(/"/g, "'") : "";
@@ -1017,7 +1015,7 @@ function getFormattedCallRemarks(apiName, call) {
     }
     else
     {
-        var getResultName = "PlayFab" + apiName + call.name + "GetResult";
+        var getResultName = globalPrefix + apiName + call.name + "GetResult";
         return "/// If successful, call <see cref=\"" + getResultName + "\"/> to get the result."
     }
 }

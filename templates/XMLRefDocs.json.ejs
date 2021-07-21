@@ -7,7 +7,7 @@ for (var i = 0; i < apis.length; i++)
     for (var j = 0; j < categorizedApi.otherCalls.length; j++) 
     {
         var call = categorizedApi.otherCalls[j];
-        var asyncName = "PlayFab" + api.name + call.name + "Async"; 
+        var asyncName = globalPrefix + api.name + call.name + "Async"; 
         var docForCall = getCallDoc(api.name, call);
         var remarks = docForCall.remarks;
 %>  "<%- asyncName %>" : { 
