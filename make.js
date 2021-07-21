@@ -956,14 +956,49 @@ function getFormattedDatatypeDescription(prefix, datatype) {
     return output;
 }
 
+function getSeeAlso(call) {
+    if (call.seeAlso == undefined || call.seeAlso.length == 0) {
+        return "";
+    }
+
+    var result = "See also ";
+    for (var i in call.seeAlso) {
+        result += "PlayFab" + call.seeAlso[i].replace(/"/g, "'").replace("/", "") + "Async";
+        if (i != call.seeAlso.length - 1) {
+            result += ", ";
+        }
+    }
+
+    return result;
+}
+
 function getCallDoc(apiName, call) {
     var asyncName = "PlayFab" + apiName + call.name + "Async";
     if (asyncName in xmlRefDocs) {
         var docForCall = xmlRefDocs[asyncName];
         return docForCall;
     }
+
+    if (asyncName == "PlayFabAdminGetCloudScriptTaskInstanceAsync") {
+        asyncName = "PlayFabAdminGetCloudScriptTaskInstanceAsync";
+    }
     var doc = {};
-    doc.summary = "TODO: ERROR: " + asyncName + " documentation not found in XmlRefDocs.";
+    if (call.summary === undefined || call.summary.length == 0) {
+        doc.summary = "TODO";
+    }
+    else {
+        doc.summary = "TODO REVIEW: " + call.summary.replace(/"/g, "'");
+    }
+
+    var remarks = (call.requestDetails !== undefined) ? call.requestDetails.replace(/"/g, "'") : "";
+    var seeAlso = getSeeAlso(call);
+    if (remarks.length > 0 && seeAlso.length > 0) {
+        remarks += " ";
+    }
+    remarks += seeAlso;
+    if (remarks.length > 0) {
+        doc.remarks = remarks;
+    }
     return doc;
 }
 
