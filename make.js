@@ -5,6 +5,7 @@ if (typeof getCompiledTemplate === "undefined") getCompiledTemplate = function (
 if (typeof templatizeTree === "undefined") templatizeTree = function () { };
 
 var categorizedApis = {};
+var prerequisiteApis = {};
 var xmlRefDocs = {};
 var propertyReplacements = {};
 var globalPrefix = "PlayFab"; // Global prefix for all public types
@@ -33,7 +34,8 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     apis.push(sharedApi);
 
     categorizeCalls(apis);
-
+    setPrerequisiteCalls(apis);
+    
     xmlRefDocs = parseDataFile("XMLRefDocs.json");
     testStatusMap = parseDataFile("TestStatus.json");
     apiGrouping = parseDataFile("APIGrouping.json");
@@ -41,6 +43,7 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     var locals = {
         apis: apis,
         categorizedApis: categorizedApis,
+        prerequisiteApis: prerequisiteApis,
         projectFiles: parseProjectFiles("project_files.json"),
         buildIdentifier: sdkGlobals.buildIdentifier,
         sdkVersion: sdkGlobals.sdkVersion,
@@ -80,6 +83,7 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         prefix: prefix,
         categorizedApi: categorizedApis[api.name],
         categorizedApis: categorizedApis,
+        prerequisiteApis: prerequisiteApis[api.name],
         enumtypes: getEnumTypes(api.datatypes),
         sortedClasses: getSortedClasses(api),
         getBaseTypes: getBaseTypes,
@@ -391,6 +395,20 @@ function categorizeCalls(apis) {
         }
 
         categorizedApis[api.name] = categorizedApi;
+    }
+}
+
+function setPrerequisiteCalls(apis) {
+    for (var i = 0; i < apis.length; i++) {
+        var api = apis[i];
+        prereqs = [];
+
+        if (api.name == "Groups") {
+            prereqs.push(api.calls.find(elem => elem.name === "CreateGroup"))
+            var name = prereqs[0].name;
+        }
+
+        prerequisiteApis[api.name] = prereqs;
     }
 }
 

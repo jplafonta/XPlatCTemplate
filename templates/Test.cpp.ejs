@@ -32,6 +32,16 @@ HRESULT AutoGen<%- api.name %>Tests::LogHR(HRESULT hr)
 
 void AutoGen<%- api.name %>Tests::AddTests()
 {
+    // Generated prerequisites
+<%
+for (var i = 0; i < prerequisiteApis.length; i++) 
+{
+    var call = prerequisiteApis[i];
+    var prereqName = "Prerequisite" + api.name + call.name;
+
+    if( call.Name )
+%>    AddTest("<%- prereqName %>", &AutoGen<%- api.name %>Tests::<%- prereqName %>);
+<% } %>
     // Generated tests 
 <%
 for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
@@ -118,8 +128,68 @@ void AutoGen<%- api.name %>Tests::SetUp(TestContext& testContext)
     {
         testContext.Skip("Skipping test because login failed");
     }
+
+
 }
 
+<% for (var i = 0; i < prerequisiteApis.length; i++)
+{
+    var call = prerequisiteApis[i];
+    var contextHandleParam = categorizedApi.otherCallsRequireSecretKey || call.auth === "None" ? "stateHandle" : "entityHandle";
+    var asyncName = "PlayFab" + api.name + call.name + "Async"; 
+    var prereqName =  "Prerequisite" + api.name + call.name;
+%>void AutoGen<%- api.name %>Tests::<%- prereqName %>(TestContext& prereqContext)
+{
+    struct <%- call.name %>Result : public XAsyncResult
+    {
+<% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") {
+   } else if (isFixedSize(api.datatypes[call.result])) { %>        PlayFab<%- api.name %><%- call.result %> result{};
+<% } else if (isSerializable(api.datatypes[call.result])) { %>        PlayFab<%- api.name %><%- call.result %>* result = nullptr;
+<% } else { %>        PlayFab<%- api.name %><%- call.result %>* result = nullptr;
+<% } // end if %>        HRESULT Get(XAsyncBlock* async) override
+        { <% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { %>
+            // No Get Result method needed
+            return LogHR(XAsyncGetStatus(async, true));<% } else if (isFixedSize(api.datatypes[call.result])) { %>
+            return LogHR(PlayFab<%- api.name + call.name %>GetResult(async, &result)); <% } else if (isSerializable(api.datatypes[call.result])) { %>
+            size_t requiredBufferSize;
+            RETURN_IF_FAILED(LogHR(PlayFab<%- api.name %><%- call.name %>GetResultSize(async, &requiredBufferSize)));
+
+            resultBuffer.resize(requiredBufferSize);
+            return LogHR(PlayFab<%- api.name + call.name %>GetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr)); <% } else { %>
+            return LogHR(PlayFab<%- api.name + call.name %>GetResult(async, &resultHandle, &result)); <% } // end if %>
+        }
+
+        HRESULT Validate()
+        {
+<% if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { 
+%>            return S_OK;
+<% } else if (isFixedSize(api.datatypes[call.result])) { 
+%>            LogPlayFabPrerequisite<%- api.name %><%- call.result %>( &result );
+            return StorePlayFabPrerequisite<%- api.name %><%- call.result %>( &result );
+<% } else if (isSerializable(api.datatypes[call.result])) { 
+%>            LogPlayFabPrerequisite<%- api.name %><%- call.result %>( result );
+            return StorePlayFabPrerequisite<%- api.name %><%- call.result %>( result );
+<% } else { 
+%>            LogPlayFabPrerequisite<%- api.name %><%- call.result %>( result );
+            return StorePlayFabPrerequisite<%- api.name %><%- call.result %>( result );
+<% } // end if %>        }
+    };
+
+    auto async = std::make_unique<XAsyncHelper<<%- call.name %>Result>>(prereqContext);
+<% if (call.request != "void") { %>
+    PlayFab::<%- api.name %>Models::<%- call.request %> request;
+    FillPlayFabPrerequisite<%- api.name + call.request %>( &request );
+    LogPlayFabPrerequisite<%- api.name + call.request %>( &request, "<%- prereqName %>" );
+    HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &request, &async->asyncBlock); <% } else { %>
+    HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &async->asyncBlock); <% } %>
+    if (FAILED(hr))
+    {
+        prereqContext.Fail("PlayFab<%- api.name + call.name %>Async", hr);
+        return;
+    }
+    async.release(); 
+} 
+<% } %>
 <% for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
 {
     var call = categorizedApi.otherCalls[i];
@@ -177,6 +247,5 @@ void AutoGen<%- api.name %>Tests::SetUp(TestContext& testContext)
     }
     async.release(); 
 } 
-
 <% } %>
 }

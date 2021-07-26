@@ -78,6 +78,113 @@ function debugLogCollection(varName, propName, property, prefix, apiName) {
 {
 
 <% 
+var hasPrereqFillBeenDefinedMap = {};
+var hasPrereqValidateBeenDefinedMap = {};
+for (var i = 0; i < prerequisiteApis.length; i++) 
+{
+    var call = prerequisiteApis[i];
+    var asyncName = "PlayFab" + api.name + call.name + "Async"; 
+    var prereqName = "Prerequisite" + api.name + call.name;
+    if( !(call.request in hasPrereqFillBeenDefinedMap) && call.request != "void" ) {  // call.name == "AcceptTrade"
+        hasPrereqFillBeenDefinedMap[call.request] = true;
+%>void AutoGen<%- api.name %>Tests::LogPlayFabPrerequisite<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request, const char* prereqName )
+{
+    if( !TestApp::ShouldTrace(PFTestTraceLevel::Information) )
+    {
+        return;
+    }
+    
+    std::stringstream ss;
+    ss << "----------"; Log(ss);
+    ss << "Prerequisite: " << prereqName; Log(ss);
+    ss << "Request:"; Log(ss);
+<% 
+    var found = false;
+    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
+    {
+        var datatype = sortedClasses[classIdx];
+        if( datatype.name == call.request )
+        {
+            found = true; 
+%>
+
+    // PlayFab<%- api.name + call.request %> struct:<% 
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
+    {
+        var property = datatype.properties[propIdx];
+        var isInternal = false;
+        var type = getPublicPropertyType(property, prefix, true);
+        var propName = getPropertyName(property, isInternal);
+%>
+    // <%- "request->" + propName + ": " + type %><%
+        // For public collection properties add an additional "count" property
+        if (property.collection && !(type === "PlayFabJsonObject")) 
+        {
+%>
+    // <%- "request->" + propName + "Count: " + "uint32_t" %><%}
+
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
+    {
+        var property = datatype.properties[propIdx];
+        var isInternal = false;
+        var type = getPublicPropertyType(property, prefix, true);
+        var propName = getPropertyName(property, isInternal);
+
+        // For public collection properties add an additional "count" property
+        if (property.collection && !(type === "PlayFabJsonObject")) { 
+            debugLogCollection("request", propName, property, prefix, api.name) 
+        } else {
+            debugLogProp("request", propName, propName, property, prefix, "    ")
+        }
+    } 
+
+    } 
+ } }
+if( !found ) { throw Error('Not found ' + call.request) } %>
+
+}
+
+<% } if (!(call.result in hasPrereqValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") {
+    hasPrereqValidateBeenDefinedMap[call.result] = true;
+%>HRESULT AutoGen<%- api.name %>Tests::LogPlayFabPrerequisite<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result )
+{
+    if( !TestApp::ShouldTrace(PFTestTraceLevel::Information) )
+    {
+        return S_OK;
+    }
+
+    std::stringstream ss;
+    ss << "Response:"; Log(ss);
+<% 
+    var found = false;
+    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
+    {
+        var datatype = sortedClasses[classIdx];
+        if( datatype.name == call.result )
+        {
+            found = true; 
+%>
+    // Found PlayFab<%- api.name %><%- datatype.name %><% 
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
+    {
+        var property = datatype.properties[propIdx];
+        var isInternal = false;
+        var type = getPublicPropertyType(property, prefix, true);
+        var propName = getPropertyName(property, isInternal);
+%><%    // For public collection properties add an additional "count" property
+        if (property.collection && !(type === "PlayFabJsonObject")) { 
+            debugLogCollection("result", propName, property, prefix, api.name) } 
+        else {
+            debugLogProp("result", propName, propName, property, prefix, "    ")
+        }
+    } 
+ } }
+if( !found ) { %>    // Not found <%- datatype.name %><%} %>
+    return S_OK;
+}
+<% } } %> 
+
+<% 
 var hasFillBeenDefinedMap = {};
 var hasValidateBeenDefinedMap = {};
 for (var i = 0; i < categorizedApi.otherCalls.length; i++) 

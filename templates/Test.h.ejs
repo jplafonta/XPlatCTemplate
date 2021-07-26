@@ -14,6 +14,12 @@ class AutoGen<%- api.name %>Tests : public PlayFabApiTestCase
 private: 
     static void Log(std::stringstream& ss);
     static HRESULT LogHR(HRESULT hr);
+
+<% for (var i = 0; i < prerequisiteApis.length; i++)
+{
+    var call = prerequisiteApis[i];
+%>    void Prerequisite<%- api.name + call.name %>(TestContext& testContext);
+<% } %>
 <% for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
 {
     var call = categorizedApi.otherCalls[i];
@@ -24,6 +30,21 @@ private:
 protected:
     void AddTests();
 
+<% 
+var hasPrereqFillBeenDefinedMap = {};
+var hasPrereqValidateBeenDefinedMap = {};
+for (var i = 0; i < prerequisiteApis.length; i++) 
+{
+    var call = prerequisiteApis[i];
+    if( !(call.request in hasPrereqFillBeenDefinedMap) && call.request != "void" ) {
+        hasPrereqFillBeenDefinedMap[call.request] = true;
+%>    static void LogPlayFabPrerequisite<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request, const char* prereqName );
+    static void FillPlayFabPrerequisite<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request );
+<% } if (!(call.result in hasPrereqValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") { 
+    hasPrereqValidateBeenDefinedMap[call.result] = true;
+%>    static HRESULT LogPlayFabPrerequisite<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result );
+    static HRESULT StorePlayFabPrerequisite<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result );
+<% } } %>
 <% 
 var hasFillBeenDefinedMap = {};
 var hasValidateBeenDefinedMap = {};
@@ -39,7 +60,6 @@ for (var i = 0; i < categorizedApi.otherCalls.length; i++)
 %>    static HRESULT LogPlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result );
     static HRESULT ValidatePlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result );
 <% } } %>
-
 public:
     PlayFabStateHandle stateHandle{ nullptr };
     PlayFabEntityHandle entityHandle{ nullptr };
