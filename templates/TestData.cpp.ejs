@@ -76,6 +76,72 @@ function debugLogCollection(varName, propName, property, prefix, apiName) {
 {
 
 <% 
+var hasPrereqFillBeenDefinedMap = {};
+var hasPrereqValidateBeenDefinedMap = {};
+for (var i = 0; i < prerequisiteApis.length; i++) 
+{
+    var call = prerequisiteApis[i];
+    var asyncName = "PlayFab" + api.name + call.name + "Async"; 
+    var testName = "Test" + api.name + call.name;
+    let testStatusListStatus = testStatusMap[testName];
+    let passingWithDataTest = (testStatusListStatus == "PassingWithData");
+    let passingButNoDataTest = (testStatusListStatus == "PassingButNoData");
+    let failingTest = (testStatusListStatus == "Failing");
+    let crashingTest = (testStatusListStatus == "Crashing");
+    var addDebugMarker = (!passingWithDataTest);
+    if( !(call.request in hasPrereqFillBeenDefinedMap) && call.request != "void" ) {  // call.name == "AcceptTrade"
+        hasPrereqFillBeenDefinedMap[call.request] = true;
+%>void AutoGen<%- api.name %>Tests::FillPlayFabPrerequisite<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request )
+{<% 
+    var found = false;
+    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
+    {
+        var datatype = sortedClasses[classIdx];
+        if( datatype.name == call.request )
+        {
+            found = true; 
+%><% if (addDebugMarker) { %>
+    // TODO: debug <%- testStatusListStatus %> prereq<% } %>
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( <%- getRequestExample(api, call) %> );
+    request->FromJson(inputJson);<%
+ } }
+if( !found ) { throw Error('Not found ' + call.request) } %>
+}
+
+<% } if (!(call.result in hasPrereqValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") {
+    hasPrereqValidateBeenDefinedMap[call.result] = true;
+%>HRESULT AutoGen<%- api.name %>Tests::StorePlayFabPrerequisite<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result )
+{<% 
+    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
+    {
+        var datatype = sortedClasses[classIdx];
+        if( datatype.name == call.result )
+        {
+%>
+    // TODO: store required fields
+<%
+    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
+    {
+        var property = datatype.properties[propIdx];
+        var isInternal = false;
+        var type = getPublicPropertyType(property, prefix);
+        var propName = getPropertyName(property, isInternal);
+%>    <%- "Data()->m_" + propName + " = result->" + propName + ";" %>
+<%
+        if (property.collection && !(type === "PlayFabJsonObject")) 
+        {
+%>    <%- "Data()->m_" + propName + "Count = result->" + propName + "Count;" %>
+<%
+         }
+      }
+} }%>
+    // UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
+<% } } %> 
+
+<% 
 var hasFillBeenDefinedMap = {};
 var hasValidateBeenDefinedMap = {};
 for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
