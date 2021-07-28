@@ -401,14 +401,15 @@ function categorizeCalls(apis) {
 function setPrerequisiteCalls(apis) {
     for (var i = 0; i < apis.length; i++) {
         var api = apis[i];
-        prereqs = [];
+        prerequisiteApis[api.name] = [];
 
         if (api.name == "Groups") {
-            prereqs.push(api.calls.find(elem => elem.name === "CreateGroup"))
-            var name = prereqs[0].name;
+            prerequisiteApis[api.name].push(api.calls.find(elem => elem.name === "CreateGroup"));
+            prerequisiteApis[api.name].push(api.calls.find(elem => elem.name === "GetGroup"));
+            prerequisiteApis[api.name].push(api.calls.find(elem => elem.name === "ApplyToGroup"));
+            prerequisiteApis[api.name].push(api.calls.find(elem => elem.name === "InviteToGroup"));
+            prerequisiteApis[api.name].push(api.calls.find(elem => elem.name === "BlockEntity"));
         }
-
-        prerequisiteApis[api.name] = prereqs;
     }
 }
 
