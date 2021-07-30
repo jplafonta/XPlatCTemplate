@@ -23,10 +23,72 @@ void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsCreateGroupRequest(PlayFab
 HRESULT AutoGenGroupsTests::StorePlayFabPrerequisiteGroupsCreateGroupResponse(PlayFabGroupsCreateGroupResponse* result)
 {
     // TODO: store required fields
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
+
+void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
+{
+    // TODO: debug Failing prereq
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse("{ \"GroupName\": \"Prerequisite Group\"}");
+    request->FromJson(inputJson);
+}
+
+HRESULT AutoGenGroupsTests::StorePlayFabPrerequisiteGroupsGetGroupResponse(PlayFabGroupsGetGroupResponse* result)
+{
+    // TODO: store required fields
     Data()->m_groupId = result->group->id;
 
-    // UNREFERENCED_PARAMETER(result);
     return S_OK;
+}
+
+void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsApplyToGroupRequest(PlayFab::GroupsModels::ApplyToGroupRequest* request)
+{
+    // TODO: debug Failing prereq
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"506624566823DCEE\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+    inputJson["Group"]["Id"].SetString(Data()->m_groupId.c_str(), inputJson.GetAllocator());
+    request->FromJson(inputJson);
+}
+
+HRESULT AutoGenGroupsTests::StorePlayFabPrerequisiteGroupsApplyToGroupResponse(PlayFabGroupsApplyToGroupResponse* result)
+{
+    // TODO: store required fields
+    //Data()->m_groupApplyingEntityId = result->entity->key->id;
+
+    return S_OK;
+}
+
+void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsInviteToGroupRequest(PlayFab::GroupsModels::InviteToGroupRequest* request)
+{
+    // TODO: debug Failing prereq
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"members\", \"AutoAcceptOutstandingApplication\": false, \"Entity\": { \"Id\": \"506624566823DCEE\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+    inputJson["Group"]["Id"].SetString(Data()->m_groupId.c_str(), inputJson.GetAllocator());
+    request->FromJson(inputJson);
+}
+
+HRESULT AutoGenGroupsTests::StorePlayFabPrerequisiteGroupsInviteToGroupResponse(PlayFabGroupsInviteToGroupResponse* result)
+{
+    // TODO: store required fields
+    //Data()->m_expires = result->expires;
+    //Data()->m_group = result->group;
+    //Data()->m_invitedByEntity = result->invitedByEntity;
+    //Data()->m_invitedEntity = result->invitedEntity;
+    //Data()->m_roleId = result->roleId;
+
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
+
+void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsBlockEntityRequest(PlayFab::GroupsModels::BlockEntityRequest* request)
+{
+    // TODO: debug Failing prereq
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"FED18FB0293BA445\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+    inputJson["Group"]["Id"].SetString(Data()->m_groupId.c_str(), inputJson.GetAllocator());
+    request->FromJson(inputJson);
 }
 
 
