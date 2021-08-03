@@ -8,7 +8,7 @@ using namespace PlayFab;
 using namespace PlayFab::QoS;
 
 HRESULT <%- prefix %>QoSGetMeasurmentsAsync(
-    _In_ PFEntityHandle entityHandle,
+    _In_ <%- prefix %>EntityHandle entityHandle,
     _In_ uint32_t pingIterations,
     _In_ uint32_t timeoutMs,
     _Inout_ XAsyncBlock* async

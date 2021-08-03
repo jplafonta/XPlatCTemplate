@@ -189,7 +189,6 @@ AsyncOp<void> Entity::RefreshLogin(const TaskQueue& queue)
         auto serviceResponse = result.ExtractPayload();
         if (serviceResponse.HttpCode == 200)
         {
-            // TODO should this always be LoginResult?
             AuthenticationModels::LoginResult resultModel;
             resultModel.FromJson(serviceResponse.Data);
             m_authTokens->Refresh(resultModel);

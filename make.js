@@ -17,12 +17,13 @@ var SDKFeatureGroups = {};
 // first match will be used).
 var featureGroupOverrides = {};
 
+// Used to generate XML header doc comments. Loaded from XMLRefDocs.json
 var xmlRefDocs = {};
-var propertyReplacements = {};
-var testStatusMap = {};
 
 // Test related data structures
 var prerequisiteApis = {};
+var propertyReplacements = {};
+var testStatusMap = {};
 
 exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     console.log("Generating Combined api from: " + sourceDir + " to: " + apiOutputDir);

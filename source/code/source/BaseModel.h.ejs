@@ -453,18 +453,18 @@ inline void PointerArrayModel<char, String>::FromJson(const JsonValue& input)
 }
 
 template <>
-inline AssociativeArrayModel<PFStringDictionaryEntry, String>::AssociativeArrayModel(const AssociativeArrayModel& src) :
+inline AssociativeArrayModel<<%- prefix %>StringDictionaryEntry, String>::AssociativeArrayModel(const AssociativeArrayModel& src) :
     m_map{ src.m_map }
 {
     m_entries.reserve(m_map.size());
     for (const auto& pair : m_map)
     {
-        m_entries.push_back(PFStringDictionaryEntry{ pair.first.data(), pair.second.data() });
+        m_entries.push_back(<%- prefix %>StringDictionaryEntry{ pair.first.data(), pair.second.data() });
     }
 }
 
 template <>
-inline void AssociativeArrayModel<PFStringDictionaryEntry, String>::FromJson(const JsonValue& input)
+inline void AssociativeArrayModel<<%- prefix %>StringDictionaryEntry, String>::FromJson(const JsonValue& input)
 {
     Clear();
     if (input.IsObject())
@@ -475,13 +475,13 @@ inline void AssociativeArrayModel<PFStringDictionaryEntry, String>::FromJson(con
         {
             auto mapIter = m_map.emplace(pair.name.GetString(), String{}).first;
             JsonUtils::FromJson(pair.value, mapIter->second);
-            m_entries.emplace_back(PFStringDictionaryEntry{ mapIter->first.data(), mapIter->second.data() });
+            m_entries.emplace_back(<%- prefix %>StringDictionaryEntry{ mapIter->first.data(), mapIter->second.data() });
         }
     }
 }
 
 template <>
-inline void AssociativeArrayModel<PFDateTimeDictionaryEntry, void>::FromJson(const JsonValue& input)
+inline void AssociativeArrayModel<<%- prefix %>DateTimeDictionaryEntry, void>::FromJson(const JsonValue& input)
 {
     Clear();
     if (input.IsObject())
@@ -491,14 +491,14 @@ inline void AssociativeArrayModel<PFDateTimeDictionaryEntry, void>::FromJson(con
         for (auto& pair : input.GetObject())
         {
             auto keysIter = m_keys.emplace(pair.name.GetString()).first;
-            m_entries.emplace_back(PFDateTimeDictionaryEntry{ keysIter->data(), time_t{} });
+            m_entries.emplace_back(<%- prefix %>DateTimeDictionaryEntry{ keysIter->data(), time_t{} });
             JsonUtils::FromJson(pair.value, m_entries.back().value, true);
         }
     }
 }
 
 template <>
-inline JsonValue AssociativeArrayModel<PFDateTimeDictionaryEntry, void>::ToJson() const
+inline JsonValue AssociativeArrayModel<<%- prefix %>DateTimeDictionaryEntry, void>::ToJson() const
 {
     JsonValue output{ rapidjson::kObjectType };
     for (auto& entry : m_entries)

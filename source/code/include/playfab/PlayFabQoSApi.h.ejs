@@ -62,7 +62,7 @@ typedef struct <%- prefix %>QoSMeasurements
 /// to determine response time, and finally uploads that result to PlayFab. The QoS measuresments are also returned
 /// to the caller.
 /// </summary>
-/// <param name="entityHandle">PFEntityHandle returned from a auth call.</param>
+/// <param name="entityHandle"><%- prefix %>EntityHandle returned from a auth call.</param>
 /// <param name="pingIterations">The number of times to ping each server to compute average latency.</param>
 /// <param name="timeoutMs">The timeout (in milliseconds) for each ping attempt.</param>
 /// <returns>Result code for this API operation.</returns>
@@ -70,7 +70,7 @@ typedef struct <%- prefix %>QoSMeasurements
 /// If successful, call <see cref="<%- prefix %>QoSGetMeasurementsGetResult"/> to get the result.
 /// </remarks>
 HRESULT <%- prefix %>QoSGetMeasurmentsAsync(
-    _In_ PFEntityHandle entityHandle,
+    _In_ <%- prefix %>EntityHandle entityHandle,
     _In_ uint32_t pingIterations,
     _In_ uint32_t timeoutMs,
     _Inout_ XAsyncBlock* async

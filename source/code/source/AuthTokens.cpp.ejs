@@ -7,7 +7,7 @@ namespace PlayFab
 {
 
 EntityToken::EntityToken(const AuthenticationModels::EntityTokenResponse& tokenResponse) :
-    PFEntityToken{},
+    <%- prefix %>EntityToken{},
     m_token{ AS_STRING(tokenResponse.entityToken) },
     m_expiration{ tokenResponse.tokenExpiration ? *tokenResponse.tokenExpiration : StdExtra::optional<time_t>{} }
 {
@@ -16,7 +16,7 @@ EntityToken::EntityToken(const AuthenticationModels::EntityTokenResponse& tokenR
 }
 
 EntityToken::EntityToken(const AuthenticationModels::GetEntityTokenResponse& tokenResponse) :
-    PFEntityToken{},
+    <%- prefix %>EntityToken{},
     m_token{ tokenResponse.entityToken },
     m_expiration{ tokenResponse.tokenExpiration }
 {
@@ -33,7 +33,7 @@ EntityToken::EntityToken(const EntityToken& src) :
 }
 
 EntityToken::EntityToken(EntityToken&& src) :
-    PFEntityToken{ src },
+    <%- prefix %>EntityToken{ src },
     m_token{ std::move(src.m_token) },
     m_expiration{ src.m_expiration }
 {

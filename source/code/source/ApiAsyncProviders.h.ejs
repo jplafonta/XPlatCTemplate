@@ -182,7 +182,7 @@ protected:
             {
                 TRACE_VERBOSE("AuthCallProvider[ID=%s] Call suceeded (hr=0x%08x)", identityName, result.hr);
                 this->m_entity = result.ExtractPayload();
-                this->Complete(sizeof(PFEntity*));
+                this->Complete(sizeof(<%- prefix %>Entity*));
             }
             else
             {
@@ -196,9 +196,9 @@ protected:
 
     HRESULT GetResult(void* buffer, size_t bufferSize) override
     {
-        assert(bufferSize == sizeof(PFEntity*));
-        auto contextPtr = static_cast<PFEntity**>(buffer);
-        *contextPtr = MakeUnique<PFEntity>(m_entity).release();
+        assert(bufferSize == sizeof(<%- prefix %>Entity*));
+        auto contextPtr = static_cast<<%- prefix %>Entity**>(buffer);
+        *contextPtr = MakeUnique<<%- prefix %>Entity>(m_entity).release();
         return S_OK;
     }
 
