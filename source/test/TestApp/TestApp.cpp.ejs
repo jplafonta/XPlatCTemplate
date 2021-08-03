@@ -16,8 +16,8 @@
 #include "EntityTests.h"
 <% for(var featureGroupName in SDKFeatureGroups) 
 { 
-    if (featureGroupName !== "Shared") { %>
-#include "AutoGenTests/AutoGen<%- apiName %>Tests.h" <%
+    if (false) { %>
+#include "AutoGenTests/AutoGen<%- featureGroupName %>Tests.h" <%
     }
 } %>
 
@@ -96,8 +96,8 @@ var verNum = 0;
 for(var featureGroupName in SDKFeatureGroups) 
 {
     verNum++;
-    if (featureGroupName === "Groups") { %>
-        AutoGen<%- apiName %>Tests apiTests<%- verNum %>;
+    if (false) { %>
+        AutoGen<%- featureGroupName %>Tests apiTests<%- verNum %>;
         apiTests<%- verNum %>.SetTitleInfo(testTitleData);
         testRunner.Add(apiTests<%- verNum %>);
 <% } } %>

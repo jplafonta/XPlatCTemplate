@@ -86,7 +86,7 @@ function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
         featureGroup: featureGroup,
         prefix: prefix,
         globalPrefix: globalPrefix, 
-        prerequisiteApis: prerequisiteApis[api.name],
+        //prerequisiteApis: prerequisiteApis[api.name],
         getBaseTypes: getBaseTypes,
         getPropertyDefinition: getPropertyDefinition,
         getPropertyFromJson: getPropertyFromJson,
@@ -1000,8 +1000,8 @@ function getSeeAlso(call) {
     return result;
 }
 
-function getCallDoc(apiName, call) {
-    var asyncName = globalPrefix + apiName + call.name + "Async";
+function getCallDoc(featureGroupName, call) {
+    var asyncName = globalPrefix + featureGroupName + call.name + "Async";
     if (asyncName in xmlRefDocs) {
         var docForCall = xmlRefDocs[asyncName];
         return docForCall;

@@ -139,7 +139,7 @@ AsyncOp<SharedPtr<Entity>> AuthenticationAPI::LoginWithXUser(
     const PFAuthenticationLoginWithXUserRequest& request,
     SharedPtr<HttpClient const> httpClient,
     const TaskQueue& queue
-) const
+)
 {
     auto wrapUserHandleResult = XUser::WrapHandle(request.userHandle);
     RETURN_IF_FAILED(wrapUserHandleResult.hr);
