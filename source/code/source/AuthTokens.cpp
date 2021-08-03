@@ -6,8 +6,8 @@
 namespace PlayFab
 {
 
-EntityToken::EntityToken(const EntityTokenResponse& tokenResponse) :
-    PlayFabEntityToken{},
+EntityToken::EntityToken(const AuthenticationModels::EntityTokenResponse& tokenResponse) :
+    PFEntityToken{},
     m_token{ AS_STRING(tokenResponse.entityToken) },
     m_expiration{ tokenResponse.tokenExpiration ? *tokenResponse.tokenExpiration : StdExtra::optional<time_t>{} }
 {
@@ -16,7 +16,7 @@ EntityToken::EntityToken(const EntityTokenResponse& tokenResponse) :
 }
 
 EntityToken::EntityToken(const AuthenticationModels::GetEntityTokenResponse& tokenResponse) :
-    PlayFabEntityToken{},
+    PFEntityToken{},
     m_token{ tokenResponse.entityToken },
     m_expiration{ tokenResponse.tokenExpiration }
 {
@@ -33,14 +33,14 @@ EntityToken::EntityToken(const EntityToken& src) :
 }
 
 EntityToken::EntityToken(EntityToken&& src) :
-    PlayFabEntityToken{ src },
+    PFEntityToken{ src },
     m_token{ std::move(src.m_token) },
     m_expiration{ src.m_expiration }
 {
     expiration = m_expiration ? m_expiration.operator->() : nullptr;
 }
 
-AuthTokens::AuthTokens(const LoginResult& result) :
+AuthTokens::AuthTokens(const AuthenticationModels::LoginResult& result) :
     m_sessionTicket{ result.sessionTicket }
 {
     assert(result.entityToken);
@@ -48,7 +48,15 @@ AuthTokens::AuthTokens(const LoginResult& result) :
     m_entityToken = &m_entityTokens.front();
 }
 
-AuthTokens::AuthTokens(const ClientModels::RegisterPlayFabUserResult& result) :
+AuthTokens::AuthTokens(const AuthenticationModels::ServerLoginResult& result) :
+    m_sessionTicket{ result.sessionTicket }
+{
+    assert(result.entityToken);
+    m_entityTokens.emplace_front(*result.entityToken);
+    m_entityToken = &m_entityTokens.front();
+}
+
+AuthTokens::AuthTokens(const AuthenticationModels::RegisterPlayFabUserResult& result) :
     m_sessionTicket{ result.sessionTicket }
 {
     assert(result.entityToken);
@@ -73,7 +81,7 @@ String const& AuthTokens::SessionTicket() const
     return m_sessionTicket;
 }
 
-void AuthTokens::Refresh(const LoginResult& result)
+void AuthTokens::Refresh(const AuthenticationModels::LoginResult& result)
 {
     std::lock_guard<std::mutex> lock{ m_mutex };
     assert(result.entityToken);
@@ -81,7 +89,15 @@ void AuthTokens::Refresh(const LoginResult& result)
     m_entityToken = &m_entityTokens.front();
 }
 
-void AuthTokens::Refresh(const ClientModels::RegisterPlayFabUserResult& result)
+void AuthTokens::Refresh(const AuthenticationModels::ServerLoginResult& result)
+{
+    std::lock_guard<std::mutex> lock{ m_mutex };
+    assert(result.entityToken);
+    m_entityTokens.emplace_front(*result.entityToken);
+    m_entityToken = &m_entityTokens.front();
+}
+
+void AuthTokens::Refresh(const AuthenticationModels::RegisterPlayFabUserResult& result)
 {
     std::lock_guard<std::mutex> lock{ m_mutex };
     assert(result.entityToken);

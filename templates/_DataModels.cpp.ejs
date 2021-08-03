@@ -1,33 +1,33 @@
 #include "stdafx.h"
-#include "<%- api.name %>DataModels.h"
+#include "<%- featureGroup.name %>DataModels.h"
 #include "JsonUtils.h"
 
 namespace PlayFab
 {<%
-if (!(api.name === "Shared")) { %>
-namespace <%- api.name %>Models
+if (!(featureGroup.name === "Shared")) { %>
+namespace <%- featureGroup.name %>Models
 {<%
 } %>
-<% for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) {
-    var datatype = sortedClasses[typeIdx];
-    var initializationList = datatype.isInternalOnly ? "" : " :\n    "  + prefix + datatype.name + "{}"; %>
+<% for (var typeIndex = 0; typeIndex < featureGroup.sortedClasses.length; typeIndex++) {
+    var datatype = featureGroup.sortedClasses[typeIndex];
+    var initializationList = datatype.isInternalOnly ? "" : " :\n    "  + datatype.prefix + datatype.name + "{}"; %>
 <%- datatype.name %>::<%- datatype.name %>()<%- initializationList %>
 {
 }
 <% if (!canDefaultCopyConstructor(datatype)) {  %>
-<%- datatype.name %>::<%- datatype.name %>(const <%- datatype.name %>& src)<%- getCopyConstructorInitializationList("    ", datatype, prefix) %>
-{<%- getCopyConstructorBody("    ", datatype, prefix) %>
+<%- datatype.name %>::<%- datatype.name %>(const <%- datatype.name %>& src)<%- getCopyConstructorInitializationList(datatype) %>
+{<%- getCopyConstructorBody(datatype) %>
 }
 
-<%- datatype.name %>::<%- datatype.name %>(<%- datatype.name %>&& src)<%- getMoveConstructorInitializationList("    ", datatype, prefix) %>
-{<%- getCopyConstructorBody("    ", datatype, prefix) %>
+<%- datatype.name %>::<%- datatype.name %>(<%- datatype.name %>&& src)<%- getMoveConstructorInitializationList(datatype) %>
+{<%- getCopyConstructorBody(datatype) %>
 }<%
 } // end if
 
 if (!datatype.isInternalOnly) {
 // TODO this could be made more efficient. Shouldn't have to go to Json and back, can just make deep copy directly %>
 
-<%- datatype.name %>::<%- datatype.name %>(const <%- prefix %><%- datatype.name %>& src)
+<%- datatype.name %>::<%- datatype.name %>(const <%- datatype.prefix %><%- datatype.name %>& src)
 {
     FromJson(JsonUtils::ToJson(src));
 }<%
@@ -51,13 +51,13 @@ if (datatype.isInternalOnly) { %>
     } // end for %>
     return output;<%
 } else { %>
-    return JsonUtils::ToJson<<%- prefix %><%- datatype.name %>>(*this);<%
+    return JsonUtils::ToJson<<%- datatype.prefix %><%- datatype.name %>>(*this);<%
 } %>
 }
 <%  if (isSerializable(datatype)) { %>
 size_t <%- datatype.name %>::SerializedSize() const
 {
-    size_t serializedSize{ sizeof(<%- prefix %><%- datatype.name %>) };<%
+    size_t serializedSize{ sizeof(<%- datatype.prefix %><%- datatype.name %>) };<%
         for (var i = 0; i < datatype.properties.length; i++) { 
             var property = datatype.properties[i];
             if (property.actualtype === "String") { %>
@@ -69,8 +69,8 @@ size_t <%- datatype.name %>::SerializedSize() const
 
 void <%- datatype.name %>::Serialize(void* buffer, size_t bufferSize) const
 {
-    auto serializedStruct = new (buffer) <%- prefix %><%- datatype.name %>{ *this };
-    char* stringBuffer = static_cast<char*>(buffer) + sizeof(<%- prefix %><%- datatype.name %>);<%
+    auto serializedStruct = new (buffer) <%- datatype.prefix %><%- datatype.name %>{ *this };
+    char* stringBuffer = static_cast<char*>(buffer) + sizeof(<%- datatype.prefix %><%- datatype.name %>);<%
         var hasStringProp = false;
         for (i = 0; i < datatype.properties.length; i++) {
             var property = datatype.properties[i]; 
@@ -88,20 +88,20 @@ void <%- datatype.name %>::Serialize(void* buffer, size_t bufferSize) const
 }
 <%  } // end if
 } // end for
-if (!(api.name === "Shared")) { %>
-} // namespace <%- api.name %>Models<%
+if (!(featureGroup.name === "Shared")) { %>
+} // namespace <%- featureGroup.name %>Models<%
 } %>
 
 namespace JsonUtils
 {
 // Serialization methods for public models
-<% for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { 
-    var datatype = sortedClasses[typeIdx];
+<% for (var typeIndex = 0; typeIndex < featureGroup.sortedClasses.length; typeIndex++) { 
+    var datatype = featureGroup.sortedClasses[typeIndex];
     if (datatype.isInternalOnly) {
         continue;
     } %>
 template<>
-inline JsonValue ToJson<>(const <%- prefix %><%- datatype.name %>& input)
+inline JsonValue ToJson<>(const <%- datatype.prefix %><%- datatype.name %>& input)
 {
     JsonValue output{ rapidjson::kObjectType };<%
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) { 

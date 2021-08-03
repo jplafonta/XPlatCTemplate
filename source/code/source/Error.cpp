@@ -10,7 +10,7 @@ HRESULT ServiceErrorToHR(ServiceErrorCode errorCode)
     // https://docs.microsoft.com/en-us/gaming/playfab/api-references/global-api-method-error-codes for more details about
     // the various global API errors.
     //
-    // API specific errors are being translated to E_PLAYFAB_SERVICEERROR. More details can be found in http response
+    // API specific errors are being translated to E_PF_SERVICEERROR. More details can be found in http response
     // and/or via SDK traces.
 
     switch (errorCode)
@@ -22,73 +22,73 @@ HRESULT ServiceErrorToHR(ServiceErrorCode errorCode)
     case ServiceErrorCode::UnkownError:
     case ServiceErrorCode::UnknownError:
     {
-        return E_PLAYFAB_UNKNOWNERROR;
+        return E_PF_UNKNOWNERROR;
     }
     case ServiceErrorCode::APIClientRequestRateLimitExceeded:
     case ServiceErrorCode::APIConcurrentRequestLimitExceeded:
     case ServiceErrorCode::ConcurrentEditError:
     case ServiceErrorCode::DataUpdateRateExceeded:
     {
-        return E_PLAYFAB_RATELIMITEXCEEDED;
+        return E_PF_RATELIMITEXCEEDED;
     }
     case ServiceErrorCode::DownstreamServiceUnavailable:
     case ServiceErrorCode::ServiceUnavailable:
     {
-        return E_PLAYFAB_SERVICEUNAVAILABLE;
+        return E_PF_SERVICEUNAVAILABLE;
     }
     case ServiceErrorCode::OverLimit:
     {
-        return E_PLAYFAB_OVERGAMEMANAGERLIMIT;
+        return E_PF_OVERGAMEMANAGERLIMIT;
     }
     case ServiceErrorCode::AccountBanned:
     {
-        return E_PLAYFAB_ACCOUNTBANNED;
+        return E_PF_ACCOUNTBANNED;
     }
     case ServiceErrorCode::AccountDeleted:
     {
-        return E_PLAYFAB_ACCOUNTDELETED;
+        return E_PF_ACCOUNTDELETED;
     }
     case ServiceErrorCode::AccountNotFound:
     {
-        return E_PLAYFAB_ACCOUNTNOTFOUND;
+        return E_PF_ACCOUNTNOTFOUND;
     }
     case ServiceErrorCode::APIRequestsDisabledForTitle:
     {
-        return E_PLAYFAB_APIREQUESTSDISABLEDFORTITLE;
+        return E_PF_APIREQUESTSDISABLEDFORTITLE;
     }
     case ServiceErrorCode::InvalidContentType:
     case ServiceErrorCode::InvalidParams:
     case ServiceErrorCode::InvalidRequest:
     case ServiceErrorCode::InvalidTitleId:
     {
-        return E_PLAYFAB_INVALIDREQUEST;
+        return E_PF_INVALIDREQUEST;
     }
     case ServiceErrorCode::NotAuthenticated:
     {
-        return E_PLAYFAB_NOTAUTHENTICATED;
+        return E_PF_NOTAUTHENTICATED;
     }
     case ServiceErrorCode::NotAuthorized:
     case ServiceErrorCode::NotAuthorizedByTitle:
     {
-        return E_PLAYFAB_NOTAUTHORIZED;
+        return E_PF_NOTAUTHORIZED;
     }
     case ServiceErrorCode::ProfileDoesNotExist:
     {
-        return E_PLAYFAB_PROFILEDOESNOTEXIST;
+        return E_PF_PROFILEDOESNOTEXIST;
     }
     case ServiceErrorCode::TitleDeleted:
     {
-        return E_PLAYFAB_TITLEDELETED;
+        return E_PF_TITLEDELETED;
     }
     case ServiceErrorCode::EntityTokenExpired:
     case ServiceErrorCode::EntityTokenRevoked:
     {
-        return E_PLAYFAB_INTERNAL_EXPIREDAUTHTOKEN;
+        return E_PF_INTERNAL_EXPIREDAUTHTOKEN;
     }
     default:
     {
         // Generic service error
-        return E_PLAYFAB_SERVICEERROR;
+        return E_PF_SERVICEERROR;
     }
     }
 }

@@ -136,7 +136,7 @@ HRESULT PlayFabEventManagerEventSetDoubleProperty(
 }
 
 HRESULT PlayFabEventManagerCustomizeEventPipelineSettings(
-    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PFEntityHandle entityHandle,
     _In_ PlayFabEventManagerPipelineType pipeline,
     _In_ XTaskQueueHandle queue,
     _In_ size_t* minimumBufferSizeBytes,
@@ -177,7 +177,7 @@ HRESULT PlayFabEventManagerCustomizeEventPipelineSettings(
 }
 
 HRESULT PlayFabEventManagerWriteEventAsync(
-    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PFEntityHandle entityHandle,
     _In_ PlayFabEventManagerEventHandle eventHandle,
     _In_opt_ void* callbackContext,
     _In_opt_ PlayFabEventManagerWriteEventCompletionCallback* callback
@@ -203,7 +203,7 @@ HRESULT PlayFabEventManagerWriteEventAsync(
 }
 
 HRESULT PlayFabEventManagerTerminate(
-    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PFEntityHandle entityHandle,
     _In_ bool wait,
     _In_opt_ void* callbackContext,
     _In_opt_ PlayFabEventManagerTerminatedCallback* callback

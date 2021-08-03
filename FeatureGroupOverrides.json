@@ -1,0 +1,18 @@
+{
+  "calls": {},
+  "apis": {},
+  "subgroups": {
+    "Account Management": "AccountManagement",
+    "Characters": "Character",
+    "Character Data": "Character",
+    "Server-Side Cloud Script": "CloudScript",
+    "Friend List Management": "Friends",
+    "Custom Server Management": "GameServer",
+    "Platform Specific Methods": "PlatformSpecificMethods",
+    "Player Data Management": "PlayerDataManagement",
+    "Player Item Management": "PlayerItemManagement",
+    "PlayStream Events": "PlayStream",
+    "Shared Group Data": "Groups",
+    "Title-Wide Data Management": "TitleDataManagement"
+  }
+}

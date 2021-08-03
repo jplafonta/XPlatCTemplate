@@ -20,7 +20,7 @@ protected:
     void AddTests() override;
 
 public:
-    PlayFabStateHandle stateHandle{ nullptr };
+    PFStateHandle stateHandle{ nullptr };
 
     void ClassSetUp() override;
     void ClassTearDown() override;

@@ -53,8 +53,8 @@ protected:
     // 1. If there is no result payload, there is no result to store & GetResult Op should never be called.
     // 2. If the result payload is serializable, store the result, report the needed result buffer size, and serialize it into
     //    the clients buffer during GetResult.
-    // 3. If the result payload isn't serializable, store the result, report the needed buffer size as sizeof(PlayFabResultHandle),
-    //    and during GetResult, create a PlayFabResult object return a pointer to that.
+    // 3. If the result payload isn't serializable, store the result, report the needed buffer size as sizeof(<%- prefix %>ResultHandle),
+    //    and during GetResult, create a <%- prefix %>Result object return a pointer to that.
 
     template<typename T = ResultT>
     size_t StoreResult(Result<void>&&, typename std::enable_if_t<std::is_void_v<T>>* = 0)
@@ -74,7 +74,7 @@ protected:
     size_t StoreResult(Result<ResultT>&& result, typename std::enable_if_t<!std::is_void_v<T> && !std::is_base_of_v<SerializableModel, T>>* = 0)
     {
         this->m_result.emplace(std::move(result));
-        return sizeof(PlayFabResultHandle);
+        return sizeof(<%- prefix %>ResultHandle);
     }
 
     template<typename T = ResultT>
@@ -95,8 +95,8 @@ protected:
     void GetResultHelper(void* buffer, size_t /*bufferSize*/, typename std::enable_if_t<!std::is_void_v<T> && !std::is_base_of_v<SerializableModel, T>>* = 0)
     {
         assert(m_result.has_value());
-        auto resultPtr = static_cast<PlayFabResult**>(buffer);
-        *resultPtr = MakeUnique<PlayFabResult>(MakeShared<ResultT>(m_result->ExtractPayload())).release();
+        auto resultPtr = static_cast<<%- prefix %>Result**>(buffer);
+        *resultPtr = MakeUnique<<%- prefix %>Result>(MakeShared<ResultT>(m_result->ExtractPayload())).release();
     }
 
     CallT m_call;
@@ -182,7 +182,7 @@ protected:
             {
                 TRACE_VERBOSE("AuthCallProvider[ID=%s] Call suceeded (hr=0x%08x)", identityName, result.hr);
                 this->m_entity = result.ExtractPayload();
-                this->Complete(sizeof(PlayFabEntity*));
+                this->Complete(sizeof(PFEntity*));
             }
             else
             {
@@ -196,9 +196,9 @@ protected:
 
     HRESULT GetResult(void* buffer, size_t bufferSize) override
     {
-        assert(bufferSize == sizeof(PlayFabEntity*));
-        auto contextPtr = static_cast<PlayFabEntity**>(buffer);
-        *contextPtr = MakeUnique<PlayFabEntity>(m_entity).release();
+        assert(bufferSize == sizeof(PFEntity*));
+        auto contextPtr = static_cast<PFEntity**>(buffer);
+        *contextPtr = MakeUnique<PFEntity>(m_entity).release();
         return S_OK;
     }
 

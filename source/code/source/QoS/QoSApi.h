@@ -1,8 +1,8 @@
 #pragma once
 
 #include "QoSDataModels.h"
-#include "Multiplayer/MultiplayerApi.h"
-#include "Events/EventsApi.h"
+#include "MultiplayerServer/MultiplayerServerApi.h"
+#include "PlayStream/PlayStreamApi.h"
 
 namespace PlayFab
 {
@@ -18,8 +18,8 @@ public:
     AsyncOp<Measurements> GetMeasurements(uint32_t pingIterations, uint32_t timeoutMs, const TaskQueue& queue) const;
 
 private:
-    EventsAPI const m_eventsApi;
-    MultiplayerAPI const m_multiplayerApi;
+    PlayStreamAPI const m_playStreamApi;
+    MultiplayerServerAPI const m_multiplayerServerApi;
 
     AsyncOp<void> GetServers(const TaskQueue& queue) const;
     AsyncOp<Measurements> PingServers(uint32_t pingIterations, uint32_t timeoutMs, const TaskQueue& queue) const;

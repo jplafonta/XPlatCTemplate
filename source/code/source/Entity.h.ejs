@@ -2,15 +2,14 @@
 
 #include <AuthTokens.h>
 #include <CallbackManager.h>
-#include <Client/ClientDataModels.h>
 #include <Authentication/AuthenticationDataModels.h>
-#include <Events/Manager/EventManagerApi.h>
 #include <QoS/QoSApi.h><%
-for(var apiName in categorizedApis) {
-    var api = categorizedApis[apiName];
-    if (api.otherCalls.length > 0 && !api.otherCallsRequireSecretKey) { %>
-#include <<%- apiName %>/<%- apiName %>Api.h><%
+for(var featureGroupName in SDKFeatureGroups) {
+    if (featureGroupName === "Shared") {
+        continue;
     }
+    var featureGroup = SDKFeatureGroups[featureGroupName]; %>
+#include <<%- featureGroup.name %>/<%- featureGroup.name %>Api.h><%
 } %>
 
 namespace PlayFab
@@ -41,8 +40,9 @@ private:
 class Entity : public std::enable_shared_from_this<Entity>
 {
 public:
-    Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const LoginResult& loginResult);
-    Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const ClientModels::RegisterPlayFabUserResult& registerUserResult);
+    Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::LoginResult& loginResult);
+    Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::ServerLoginResult& loginResult);
+    Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::RegisterPlayFabUserResult& registerUserResult);
     Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse);
 
     Entity(const Entity&) = delete;
@@ -66,7 +66,7 @@ public:
     // call will be authenticated with either the EntityToken or the ClientSessionTicket. If the Entity Token requested if for the calling Entity
     // (aka just refreshing our token), the AuthTokens will be updated and a SharedPtr to 'this' will be returned. If the token requested is for another
     // entity, a new Entity object will be created and returned.
-    AsyncOp<SharedPtr<Entity>> GetEntityToken(const PlayFabAuthenticationGetEntityTokenRequest& request, const TaskQueue& queue);
+    AsyncOp<SharedPtr<Entity>> GetEntityToken(const <%- prefix %>AuthenticationGetEntityTokenRequest& request, const TaskQueue& queue);
 
     // TokenRefreshedCallbacks exist to support PlayFab Party & PlayFab Lobby interfaces which require titles to provide and manually update a raw 
     // entity token. Whenever the Entity token is silently refreshed (ex. during MakePlayFabCallWithAuthRetry) these callbacks will be invoked.
@@ -82,18 +82,18 @@ public:
     PlayFab::EntityToken const& EntityToken() const;
     GetPlayerCombinedInfoResultPayload const* PlayerCombinedInfo() const;
     time_t const* LastLoginTime() const;
-    UserSettings const* UserSettings() const;
+    AuthenticationModels::UserSettings const* UserSettings() const;
     TreatmentAssignment const* TreatmentAssignment() const;
 
-    // Non-generated APIs
-    EventManager::EventManagerAPI eventManagerAPI;
+    // Non-generated API
     QoS::QoSAPI const QoSAPI;
-<% for(var apiName in categorizedApis) {
-    var api = categorizedApis[apiName];
-    if (api.otherCalls.length > 0 && !api.otherCallsRequireSecretKey) { 
-        var apiMemberName = apiName.charAt(0).toLowerCase() + apiName.slice(1) + "API"; %>
-    <%- apiName %>API const <%- apiMemberName %>;<%
+<% for(var featureGroupName in SDKFeatureGroups) {
+    if (featureGroupName === "Shared") {
+        continue;
     }
+    var featureGroup = SDKFeatureGroups[featureGroupName];
+    var apiMemberName = featureGroup.name.charAt(0).toLowerCase() + featureGroup.name.slice(1) + "API"; %>
+    <%- featureGroup.name %>API const <%- apiMemberName %>;<%
 } %>
 
 private:
@@ -108,17 +108,17 @@ private:
 
     UniquePtr<GetPlayerCombinedInfoResultPayload> m_playerCombinedInfo;
     StdExtra::optional<time_t const> m_lastLoginTime;
-    StdExtra::optional<PlayFab::UserSettings const> m_userSettings;
+    StdExtra::optional<AuthenticationModels::UserSettings const> m_userSettings;
     UniquePtr<PlayFab::TreatmentAssignment> m_treatmentAssignment;
 };
 
 }
 
-struct PlayFabEntity
+struct <%- prefix %>Entity
 {
-    PlayFabEntity(PlayFab::SharedPtr<PlayFab::Entity> entity_) : entity{ entity_ } {}
-    PlayFabEntity(const PlayFabEntity&) = default;
-    ~PlayFabEntity() = default;
+    <%- prefix %>Entity(PlayFab::SharedPtr<PlayFab::Entity> entity_) : entity{ entity_ } {}
+    <%- prefix %>Entity(const <%- prefix %>Entity&) = default;
+    ~<%- prefix %>Entity() = default;
 
     PlayFab::SharedPtr<PlayFab::Entity> entity;
 };
@@ -170,8 +170,8 @@ auto Entity::MakePlayFabCallWithAuthRetry(const TaskQueue& queue, CallT call) ->
                 m_attemptRefreshLogin = false;
 
                 if (result.hr == HTTP_E_STATUS_DENIED || /* REST error code (401) */
-                    result.hr == E_PLAYFAB_INTERNAL_EXPIREDAUTHTOKEN || /* PlayFab error code for EntityToken expired */
-                    result.hr == E_PLAYFAB_NOTAUTHENTICATED /* PlayFab error code for SessionTicket expired */)
+                    result.hr == E_PF_INTERNAL_EXPIREDAUTHTOKEN || /* PlayFab error code for EntityToken expired */
+                    result.hr == E_PF_NOTAUTHENTICATED /* PlayFab error code for SessionTicket expired */)
                 {
                     m_entity->RefreshLogin(m_queue).Finally([this](Result<void> result)
                     {

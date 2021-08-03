@@ -16,7 +16,7 @@ extern "C"
 /// <summary>
 /// The result of pinging a QoS server.
 /// </summary>
-typedef struct PlayFabQoSRegionResult
+typedef struct <%- prefix %>QoSRegionResult
 {
     /// <summary>
     /// The region the server is locationed in.
@@ -38,46 +38,46 @@ typedef struct PlayFabQoSRegionResult
     /// </summary>
     uint32_t failedPingCount;
 
-} PlayFabQoSRegionResult;
+} <%- prefix %>QoSRegionResult;
 
 /// <summary>
 /// QoS measurements for multiple regions.
 /// </summary>
-typedef struct PlayFabQoSMeasurements
+typedef struct <%- prefix %>QoSMeasurements
 {
     /// <summary>
     /// List of QoS measurements for different regions.
     /// </summary>
-    PlayFabQoSRegionResult const* const* regionResults;
+    <%- prefix %>QoSRegionResult const* const* regionResults;
 
     /// <summary>
     /// Count of regionResults.
     /// </summary>
     uint32_t regionResultsCount;
 
-} PlayFabQoSMeasurements;
+} <%- prefix %>QoSMeasurements;
 
 /// <summary>
 /// Take QoS measurements and upload them to PlayFab. The operation first queries for the QoS servers, pings each of them
 /// to determine response time, and finally uploads that result to PlayFab. The QoS measuresments are also returned
 /// to the caller.
 /// </summary>
-/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
+/// <param name="entityHandle">PFEntityHandle returned from a auth call.</param>
 /// <param name="pingIterations">The number of times to ping each server to compute average latency.</param>
 /// <param name="timeoutMs">The timeout (in milliseconds) for each ping attempt.</param>
 /// <returns>Result code for this API operation.</returns>
 /// <remarks>
-/// If successful, call <see cref="PlayFabQoSGetMeasurementsGetResult"/> to get the result.
+/// If successful, call <see cref="<%- prefix %>QoSGetMeasurementsGetResult"/> to get the result.
 /// </remarks>
-HRESULT PlayFabQoSGetMeasurmentsAsync(
-    _In_ PlayFabEntityHandle entityHandle,
+HRESULT <%- prefix %>QoSGetMeasurmentsAsync(
+    _In_ PFEntityHandle entityHandle,
     _In_ uint32_t pingIterations,
     _In_ uint32_t timeoutMs,
     _Inout_ XAsyncBlock* async
 ) noexcept;
 
 /// <summary>
-/// Gets the result of a successful PlayFabQoSGetMeasurmentsAsync call.
+/// Gets the result of a successful <%- prefix %>QoSGetMeasurmentsAsync call.
 /// </summary>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <param name="resultHandle">Opaque handle to the result object.</param>
@@ -85,12 +85,12 @@ HRESULT PlayFabQoSGetMeasurmentsAsync(
 /// <returns>Result code for this API operation.</returns>
 /// <remarks>
 /// The lifetime of the result object is tied to the result handle. When the result is no longer needed, call
-/// PlayFabResultCloseHandle to release the result object.
+/// <%- prefix %>ResultCloseHandle to release the result object.
 /// </remarks>
-HRESULT PlayFabQoSGetMeasurementsGetResult(
+HRESULT <%- prefix %>QoSGetMeasurementsGetResult(
     _In_ XAsyncBlock* async,
-    _Out_ PlayFabResultHandle* resultHandle,
-    _Outptr_ PlayFabQoSMeasurements** result
+    _Out_ <%- prefix %>ResultHandle* resultHandle,
+    _Outptr_ <%- prefix %>QoSMeasurements** result
 ) noexcept;
 
 }

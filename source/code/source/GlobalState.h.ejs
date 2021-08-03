@@ -1,16 +1,7 @@
 #pragma once
 
 #include <playfab/PlayFabGlobal.h>
-#include "HttpClient.h"<%
-for(var apiName in categorizedApis) {
-    var api = categorizedApis[apiName];
-    if (api.loginCalls.length > 0) { %>
-#include <<%- apiName %>/<%- apiName %>AuthApi.h><%
-    }
-    if (api.otherCalls.length > 0 && api.otherCallsRequireSecretKey) { %>
-#include <<%- apiName %>/<%- apiName %>Api.h><%
-    }
-} %>
+#include "HttpClient.h"
 
 namespace PlayFab
 {
@@ -21,36 +12,19 @@ public:
     GlobalState(String&& titleId, _In_opt_z_ const char* secretKey, _In_opt_ XTaskQueueHandle backgroundQueue);
     virtual ~GlobalState() = default;
 
-private:
-    // The order of members is important here. These fields are needed to initialize APIs so make sure they get initialized first.
-    SharedPtr<HttpClient> m_httpClient;
-    SharedPtr<String> m_secretKey;
-    TaskQueue m_backgroundQueue;
-
 public:
     SharedPtr<HttpClient const> HttpClient() const;
+    SharedPtr<String const> SecretKey() const;
 
-    // Auth APIs (require either secret key or no authorization). Used to get an authenticated Entity object.<%
-for(var apiName in categorizedApis) {
-    if (categorizedApis[apiName].loginCalls.length > 0) { 
-        var authApiMemberName = apiName.charAt(0).toLowerCase() + apiName.slice(1) + "AuthAPI";%>
-    <%- apiName %>AuthAPI const <%- authApiMemberName %>;<%
-    }
-} %>
-
-    // APIs that use secret key authorization (no Entity AuthTokens required)<%
-for(var apiName in categorizedApis) {
-    var api = categorizedApis[apiName];
-    if (api.otherCalls.length > 0 && api.otherCallsRequireSecretKey) { 
-        var apiMemberName = apiName.charAt(0).toLowerCase() + apiName.slice(1) + "API"; %>
-    <%- apiName %>API const <%- apiMemberName %>;<%
-    }
-} %>
+private:
+    SharedPtr<PlayFab::HttpClient> m_httpClient;
+    SharedPtr<String> m_secretKey;
+    TaskQueue m_backgroundQueue;
 };
 
 }
 
-struct PlayFabGlobalState
+struct <%- prefix %>GlobalState
 {
     PlayFab::SharedPtr<PlayFab::GlobalState> state;
 
@@ -58,11 +32,11 @@ struct PlayFabGlobalState
         _In_z_ const char* titleId,
         _In_opt_z_ const char* secretKey,
         _In_opt_ XTaskQueueHandle backgroundQueue,
-        _Outptr_ PlayFabStateHandle* stateHandle
+        _Outptr_ <%- prefix %>StateHandle* stateHandle
     );
 
     HRESULT CleanupAsync(XAsyncBlock* async);
 
 private:
-    PlayFabGlobalState(_In_z_ const char* titleId, _In_opt_z_ const char* secretKey, _In_opt_ XTaskQueueHandle backgroundQueue);
+    <%- prefix %>GlobalState(_In_z_ const char* titleId, _In_opt_z_ const char* secretKey, _In_opt_ XTaskQueueHandle backgroundQueue);
 };
