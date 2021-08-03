@@ -19,18 +19,17 @@ for (var file in projectFiles.TestClientAppFiles) {
     </ClCompile><%
     }
 }
-for(var apiName in categorizedApis) { 
-    var api = categorizedApis[apiName]; %>
-    <ClInclude Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.h">
+for(var featureGroupName in SDKFeatureGroups) { %>
+    <ClInclude Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- featureGroupName %>Tests.h">
       <Filter>Source\AutoGen Tests</Filter>
     </ClInclude>
-    <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestData.cpp">
+    <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- featureGroupName %>TestData.cpp">
       <Filter>Source\AutoGen Tests</Filter>
     </ClCompile>
-    <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>TestLog.cpp">
+    <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- featureGroupName %>TestLog.cpp">
       <Filter>Source\AutoGen Tests</Filter>
     </ClCompile>
-    <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- apiName %>Tests.cpp">
+    <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- featureGroupName %>Tests.cpp">
       <Filter>Source\AutoGen Tests</Filter>
     </ClCompile><%
 } %>

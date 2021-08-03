@@ -2,11 +2,7 @@
 #include "TestContext.h"
 #include "ApiTests.h"
 #include "XAsyncHelper.h"
-#include <playfab/PlayFabClientAuthApi.h>
-#include <playfab/PlayFabClientApi.h>
-#include <playfab/PlayFabProfilesApi.h>
-#include <playfab/PlayFabAdminApi.h>
-#include <playfab/PlayFabAuthenticationAuthApi.h>
+#include "playfab/PlayFab.h"
 
 namespace PlayFabUnit
 {
@@ -16,17 +12,17 @@ void ApiTests::TestApiStaticSizeResult(TestContext& testContext)
 {
     struct GetTimeResult : public XAsyncResult
     {
-        PlayFabClientGetTimeResult result{};
+        PFTitleDataManagementGetTimeResult result{};
 
         HRESULT Get(XAsyncBlock* async) override
         {
-            return PlayFabClientGetTimeGetResult(async, &result);
+            return PFTitleDataManagementClientGetTimeGetResult(async, &result);
         }
     };
 
     auto async = std::make_unique<XAsyncHelper<GetTimeResult>>(testContext);
 
-    HRESULT hr = PlayFabClientGetTimeAsync(entityHandle, &async->asyncBlock);
+    HRESULT hr = PFTitleDataManagementClientGetTimeAsync(entityHandle, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabClientGetTimeAsync", hr);
@@ -41,15 +37,15 @@ void ApiTests::TestApiSerializableResult(TestContext& testContext)
 
     struct CreateSharedGroupResult : public XAsyncResult
     {
-        PlayFabClientCreateSharedGroupResult* result;
+        PFGroupsCreateSharedGroupResult* result;
 
         HRESULT Get(XAsyncBlock* async) override
         {
             size_t requiredBufferSize;
-            RETURN_IF_FAILED(PlayFabClientCreateSharedGroupGetResultSize(async, &requiredBufferSize));
+            RETURN_IF_FAILED(PFGroupsClientCreateSharedGroupGetResultSize(async, &requiredBufferSize));
 
             resultBuffer.resize(requiredBufferSize);
-            return PlayFabClientCreateSharedGroupGetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr);
+            return PFGroupsClientCreateSharedGroupGetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr);
         }
 
         HRESULT Validate() override
@@ -68,8 +64,8 @@ void ApiTests::TestApiSerializableResult(TestContext& testContext)
     uniqueGroupId << "GroupId_" << time(nullptr);
     groupId = uniqueGroupId.str();
 
-    PlayFabClientCreateSharedGroupRequest request{ groupId.data() };
-    HRESULT hr = PlayFabClientCreateSharedGroupAsync(entityHandle, &request, &async->asyncBlock);
+    PFGroupsCreateSharedGroupRequest request{ groupId.data() };
+    HRESULT hr = PFGroupsClientCreateSharedGroupAsync(entityHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabClientCreateSharedGroupAsync", hr);
@@ -83,11 +79,11 @@ void ApiTests::TestApiResultHandle(TestContext& testContext)
 {
     struct GetPlayerProfileResult : public XAsyncResult
     {
-        PlayFabClientGetPlayerProfileResult* result{ nullptr };
+        PFAccountManagementGetPlayerProfileResult* result{ nullptr };
 
         HRESULT Get(XAsyncBlock* async) override
         {
-            return PlayFabClientGetPlayerProfileGetResult(async, &resultHandle, &result);
+            return PFAccountManagementClientGetPlayerProfileGetResult(async, &resultHandle, &result);
         }
 
         HRESULT Validate() override
@@ -99,8 +95,8 @@ void ApiTests::TestApiResultHandle(TestContext& testContext)
 
     auto async = std::make_unique<XAsyncHelper<GetPlayerProfileResult>>(testContext);
 
-    PlayFabClientGetPlayerProfileRequest request{};
-    HRESULT hr = PlayFabClientGetPlayerProfileAsync(entityHandle, &request, &async->asyncBlock);
+    PFAccountManagementGetPlayerProfileRequest request{};
+    HRESULT hr = PFAccountManagementClientGetPlayerProfileAsync(entityHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabClientGetPlayerProfileAsync", hr);
@@ -118,18 +114,18 @@ void ApiTests::TestApiEntityToken(TestContext& testContext)
 {
     struct GetProfilesResult : public XAsyncResult
     {
-        PlayFabProfilesGetEntityProfileResponse* result{ nullptr };
+        PFAccountManagementGetEntityProfileResponse* result{ nullptr };
 
         HRESULT Get(XAsyncBlock* async) override
         {
-            return PlayFabProfilesGetProfileGetResult(async, &resultHandle, &result);
+            return PFAccountManagementGetProfileGetResult(async, &resultHandle, &result);
         }
     };
 
     auto async = std::make_unique<XAsyncHelper<GetProfilesResult>>(testContext);
 
-    PlayFabProfilesGetEntityProfileRequest request{};
-    HRESULT hr = PlayFabProfilesGetProfileAsync(entityHandle, &request, &async->asyncBlock);
+    PFAccountManagementGetEntityProfileRequest request{};
+    HRESULT hr = PFAccountManagementGetProfileAsync(entityHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabProfilesGetProfileAsync", hr);
@@ -142,18 +138,18 @@ void ApiTests::TestApiSecretKey(TestContext& testContext)
 {
     struct GetTitleDataResult : public XAsyncResult
     {
-        PlayFabAdminGetTitleDataResult* result;
+        PFTitleDataManagementGetTitleDataResult* result;
 
         HRESULT Get(XAsyncBlock* async) override
         {
-            return PlayFabAdminGetTitleDataGetResult(async, &resultHandle, &result);
+            return PFTitleDataManagementAdminGetTitleDataGetResult(async, &resultHandle, &result);
         }
     };
 
     auto async = std::make_unique<XAsyncHelper<GetTitleDataResult>>(testContext);
 
-    PlayFabAdminGetTitleDataRequest request{};
-    HRESULT hr = PlayFabAdminGetTitleDataAsync(stateHandle, &request, &async->asyncBlock);
+    PFTitleDataManagementGetTitleDataRequest request{};
+    HRESULT hr = PFTitleDataManagementAdminGetTitleDataAsync(stateHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabAdminGetTitleDataAsync", hr);
@@ -166,24 +162,24 @@ void ApiTests::TestApiNoAuth(TestContext& testContext)
 {
     struct GetTitlePublicKeyResult : public XAsyncResult
     {
-        PlayFabClientGetTitlePublicKeyResult* result;
+        PFAuthenticationGetTitlePublicKeyResult* result;
 
         HRESULT Get(XAsyncBlock* async) override
         {
             size_t requiredBufferSize;
-            RETURN_IF_FAILED(PlayFabClientGetTitlePublicKeyGetResultSize(async, &requiredBufferSize));
+            RETURN_IF_FAILED(PFAuthenticationClientGetTitlePublicKeyGetResultSize(async, &requiredBufferSize));
 
             resultBuffer.resize(requiredBufferSize);
-            return PlayFabClientGetTitlePublicKeyGetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr);
+            return PFAuthenticationClientGetTitlePublicKeyGetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr);
         }
     };
 
     auto async = std::make_unique<XAsyncHelper<GetTitlePublicKeyResult>>(testContext);
 
-    PlayFabClientGetTitlePublicKeyRequest request{};
+    PFAuthenticationGetTitlePublicKeyRequest request{};
     request.titleId = testTitleData.titleId.data();
     request.titleSharedSecret = testTitleData.developerSecretKey.data();
-    HRESULT hr = PlayFabClientGetTitlePublicKeyAsync(stateHandle, &request, &async->asyncBlock);
+    HRESULT hr = PFAuthenticationClientGetTitlePublicKeyAsync(stateHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabClientGetTitlePublicKeyAsync", hr);
@@ -196,8 +192,8 @@ void ApiTests::TestGetEntityTokenWithAuthContext(TestContext& testContext)
 {
     auto async = std::make_unique<XAsyncHelper<XAsyncResult>>(testContext);
 
-    PlayFabAuthenticationGetEntityTokenRequest request{};
-    HRESULT hr = PlayFabEntityGetEntityTokenAsync(entityHandle, &request, &async->asyncBlock);
+    PFAuthenticationGetEntityTokenRequest request{};
+    HRESULT hr = PFEntityGetEntityTokenAsync(entityHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabEntityGetEntityTokenAsync", hr);
@@ -210,23 +206,23 @@ void ApiTests::TestGetEntityTokenWithSecretKey(TestContext& testContext)
 {
     struct GetEntityTokenResult : public XAsyncResult
     {
-        PlayFabEntityHandle newEntityHandle{};
+        PFEntityHandle newEntityHandle{};
 
         HRESULT Get(XAsyncBlock* async) override
         {
-            return PlayFabGetAuthResult(async, &newEntityHandle);
+            return PFGetAuthResult(async, &newEntityHandle);
         }
 
         ~GetEntityTokenResult()
         {
-            PlayFabEntityCloseHandle(newEntityHandle);
+            PFEntityCloseHandle(newEntityHandle);
         }
     };
 
     auto async = std::make_unique<XAsyncHelper<GetEntityTokenResult>>(testContext);
 
-    PlayFabAuthenticationGetEntityTokenRequest request{};
-    HRESULT hr = PlayFabAuthenticationGetEntityTokenAsync(stateHandle, &request, &async->asyncBlock);
+    PFAuthenticationGetEntityTokenRequest request{};
+    HRESULT hr = PFAuthenticationGetEntityTokenAsync(stateHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabAuthenticationGetEntityTokenAsync", hr);
@@ -239,17 +235,17 @@ void ApiTests::TestGetQoSMeasurements(TestContext& testContext)
 {
     struct QoSMeasurements : public XAsyncResult
     {
-        PlayFabQoSMeasurements* qosMeasurements;
+        PFQoSMeasurements* qosMeasurements;
 
         HRESULT Get(XAsyncBlock* async) override
         {
-            return PlayFabQoSGetMeasurementsGetResult(async, &resultHandle, &qosMeasurements);
+            return PFQoSGetMeasurementsGetResult(async, &resultHandle, &qosMeasurements);
         }
     };
 
     auto async = std::make_unique<XAsyncHelper<QoSMeasurements>>(testContext);
 
-    HRESULT hr = PlayFabQoSGetMeasurmentsAsync(entityHandle, 30, 250, &async->asyncBlock);
+    HRESULT hr = PFQoSGetMeasurmentsAsync(entityHandle, 30, 250, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabAuthenticationGetEntityTokenAsync", hr);
@@ -274,24 +270,24 @@ void ApiTests::AddTests()
 
 void ApiTests::ClassSetUp()
 {
-    HRESULT hr = PlayFabAdminInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), nullptr, &stateHandle);
+    HRESULT hr = PFAdminInitialize(testTitleData.titleId.data(), testTitleData.developerSecretKey.data(), nullptr, &stateHandle);
     if (SUCCEEDED(hr))
     {
-        PlayFabClientLoginWithCustomIDRequest request{};
+        PFAuthenticationLoginWithCustomIDRequest request{};
         request.customId = "CustomId";
         bool createAccount = true;
         request.createAccount = &createAccount;
         request.titleId = testTitleData.titleId.data();
 
         XAsyncBlock async{};
-        hr = PlayFabClientLoginWithCustomIDAsync(stateHandle, &request, &async);
+        hr = PFAuthenticationClientLoginWithCustomIDAsync(stateHandle, &request, &async);
         if (SUCCEEDED(hr))
         {
             // Synchronously what for login to complete
             hr = XAsyncGetStatus(&async, true);
             if (SUCCEEDED(hr))
             {
-                PlayFabGetAuthResult(&async, &entityHandle);
+                PFGetAuthResult(&async, &entityHandle);
             }
         }
     }
@@ -299,10 +295,10 @@ void ApiTests::ClassSetUp()
 
 void ApiTests::ClassTearDown()
 {
-    PlayFabEntityCloseHandle(entityHandle);
+    PFEntityCloseHandle(entityHandle);
 
     XAsyncBlock async{};
-    HRESULT hr = PlayFabCleanupAsync(stateHandle, &async);
+    HRESULT hr = PFCleanupAsync(stateHandle, &async);
     assert(SUCCEEDED(hr));
 
     hr = XAsyncGetStatus(&async, true);

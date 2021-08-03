@@ -7,70 +7,93 @@
 
 #pragma once
 
-#include <playfab/PlayFab<%- api.name %>DataModels.h>
-#include <playfab/PlayFabGlobal.h><%
-if (!categorizedApi.otherCallsRequireSecretKey) { %>
-#include <playfab/PlayFabEntity.h><% 
-} %>
+#include <playfab/PlayFab<%- featureGroup.name %>DataModels.h>
+#include <playfab/PlayFabGlobal.h>
+#include <playfab/PlayFabEntity.h>
 
 extern "C"
 {
 <%
-for (var i = 0; i < categorizedApi.otherCalls.length; i++) {
-    var call = categorizedApi.otherCalls[i]; 
-    var contextHandleParam = categorizedApi.otherCallsRequireSecretKey || call.auth === "None" ? "PlayFabStateHandle stateHandle" : "PlayFabEntityHandle entityHandle"; 
-    var requestParam = call.request === "void" ? "" : "_In_ const PlayFab" + api.name + call.request + "* request,\n    "; %>
+for (var callIndex = 0; callIndex < featureGroup.calls.length; callIndex++) {
+    var call = featureGroup.calls[callIndex]; 
+    var contextHandleParam =  call.entityRequired ? globalPrefix + "EntityHandle entityHandle" : globalPrefix + "StateHandle stateHandle";
+    var requestParam = call.requestDatatype ? "_In_ const " + call.requestDatatype.prefix + call.requestDatatype.name + "* request,\n    " : ""; %>
 /// <summary>
-<%- getFormattedCallDescription(api.name, call) %>
+<%- getFormattedCallDescription(featureGroup.name, call) %>
 /// </summary><%
-    if (categorizedApi.otherCallsRequireSecretKey || call.auth === "None") { %>
-/// <param name="stateHandle">PlayFabStateHandle returned from PlayFabInitialize call.</param><%
+    if (call.entityRequired) { %>
+/// <param name="entityHandle"><%- globalPrefix %>EntityHandle returned from a auth call.</param><%
     } else { %>
-/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param><%
-    } 
-    if (!(call.request === "void")) { %>
+/// <param name="stateHandle"><%- globalPrefix %>StateHandle returned from <%- globalPrefix %>Initialize call.</param><%
+    }
+    if (call.requestDatatype) { %>
 /// <param name="request">Populated request object.</param><%
     } %>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <returns>Result code for this API operation.</returns>
 /// <remarks><%
-    if (call.result === "void"|| call.url === "/Authentication/GetEntityToken") { %>
-/// Call <see cref="XAsyncGetStatus"/> to get the status of the operation.<%
+    if (call.resultDatatype) { %>
+/// If successful, call <see cref="<%- prefix %><%- call.name %>GetResult"/> to get the result.<%
     } else { %>
-/// If successful, call <see cref="PlayFab<%- api.name %><%- call.name %>GetResult"/> to get the result.<%
+/// Call <see cref="XAsyncGetStatus"/> to get the status of the operation.<%
     } %>
 /// </remarks>
-HRESULT PlayFab<%- api.name %><%- call.name %>Async(
+HRESULT <%- prefix %><%- call.name %>Async(
     _In_ <%- contextHandleParam %>,
     <%- requestParam %>_Inout_ XAsyncBlock* async
 ) noexcept;
-<%  if (call.result === "void" || call.url === "/Authentication/GetEntityToken") { 
-        // No Get Result method needed
-    } else if (isFixedSize(api.datatypes[call.result])) { %>
+<%  
+    // Explicitly add XUser login API alongside generated LoginWithXbox API
+    if (call.name === "ClientLoginWithXbox") { %>
+#if HC_PLATFORM == HC_PLATFORM_GDK
 /// <summary>
-/// Gets the result of a successful PlayFab<%- api.name %><%- call.name %>Async call.
+/// Login using a GDK XUser handle. The API will first acquire an XToken and then authenticate with PlayFab service.
+/// The returned Entity will hold an XUser reference (via XUserDuplicateHandle) until it is closed. The stored XUserHandle
+/// will be used to get a new XToken prior to refreshing PlayFab auth tokens.
+/// </summary>
+/// <param name="stateHandle"><%- globalPrefix %>StateHandle returned from <%- globalPrefix %>Initialize call.</param>
+/// <param name="request">Populated request object.</param>
+/// <param name="async">XAsyncBlock for the async operation.</param>
+/// <returns>Result code for this API operation.</returns>
+/// <remarks>
+/// If successful, call <see cref="<%- globalPrefix %>GetAuthResult"/> to get the result. The resulting <%- globalPrefix %>EntityHandle
+/// will be used to authenticate future PlayFab calls.
+/// </remarks>
+HRESULT <%- globalPrefix %>AuthenticationLoginWithXUserAsync(
+    _In_ <%- globalPrefix %>StateHandle stateHandle,
+    _In_ const <%- globalPrefix %>AuthenticationLoginWithXUserRequest* request,
+    _Inout_ XAsyncBlock* async
+) noexcept;
+#endif
+<%  } // end if
+
+    if ((!call.resultDatatype) || call.entityReturned) { 
+        // No Get Result method needed
+    } else if (isFixedSize(call.resultDatatype)) { %>
+/// <summary>
+/// Gets the result of a successful <%- prefix %><%- call.name %>Async call.
 /// </summary>
 /// <param name="async">XAsyncBlock for the async operation.</param>
-/// <param name="result">PlayFab<%- api.name %><%- call.result %> object that will be populated with the result.</param>
+/// <param name="result"><%- call.resultDatatype.prefix %><%- call.resultDatatype.name %> object that will be populated with the result.</param>
 /// <returns>Result code for this API operation.</returns>
-HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
+HRESULT <%- prefix %><%- call.name %>GetResult(
     _Inout_ XAsyncBlock* async,
-    _Out_ PlayFab<%- api.name %><%- call.result %>* result
+    _Out_ <%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>* result
 ) noexcept;
-<%  } else if (isSerializable(api.datatypes[call.result])) { %>
+<%  } else if (isSerializable(call.resultDatatype)) { %>
 /// <summary>
 /// Get the size in bytes needed to store the result of a <%- call.name %> call.
 /// </summary>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <param name="bufferSize">The buffer size in bytes required for the result.</param>
 /// <returns>Result code for this API operation.</returns>
-HRESULT PlayFab<%- api.name %><%- call.name %>GetResultSize(
+HRESULT <%- prefix %><%- call.name %>GetResultSize(
     _Inout_ XAsyncBlock* async,
     _Out_ size_t* bufferSize
 ) noexcept;
 
 /// <summary>
-/// Gets the result of a successful PlayFab<%- api.name %><%- call.name %>Async call.
+/// Gets the result of a successful <%- prefix %><%- call.name %>Async call.
 /// </summary>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <param name="bufferSize">The size of the buffer for the result object.</param>
@@ -81,16 +104,16 @@ HRESULT PlayFab<%- api.name %><%- call.name %>GetResultSize(
 /// <remarks>
 /// result is a pointer within buffer and does not need to be freed separately.
 /// </remarks>
-HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
+HRESULT <%- prefix %><%- call.name %>GetResult(
     _Inout_ XAsyncBlock* async,
     _In_ size_t bufferSize,
     _Out_writes_bytes_to_(bufferSize, *bufferUsed) void* buffer,
-    _Outptr_ PlayFab<%- api.name %><%- call.result %>** result,
+    _Outptr_ <%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>** result,
     _Out_opt_ size_t* bufferUsed
 ) noexcept;
 <%  } else { %>
 /// <summary>
-/// Gets the result of a successful PlayFab<%- api.name %><%- call.name %>Async call.
+/// Gets the result of a successful <%- prefix %><%- call.name %>Async call.
 /// </summary>
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <param name="resultHandle">Opaque handle to the result object.</param>
@@ -98,12 +121,12 @@ HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
 /// <returns>Result code for this API operation.</returns>
 /// <remarks>
 /// The lifetime of the result object is tied to the result handle. When the result is no longer needed, call
-/// PlayFabResultCloseHandle to release the result object.
+/// <%- globalPrefix %>ResultCloseHandle to release the result object.
 /// </remarks>
-HRESULT PlayFab<%- api.name %><%- call.name %>GetResult(
+HRESULT <%- prefix %><%- call.name %>GetResult(
     _Inout_ XAsyncBlock* async,
-    _Out_ PlayFabResultHandle* resultHandle,
-    _Outptr_ PlayFab<%- api.name %><%- call.result %>** result
+    _Out_ <%- globalPrefix %>ResultHandle* resultHandle,
+    _Outptr_ <%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>** result
 ) noexcept;
 <%  } // end if
 } // end for %>

@@ -231,7 +231,7 @@ const uint32_t PlayFabEventManagerPollDelayInMsDefault = 10;
 /// prior to calling PlayFabEventManagerWriteEventAsync. If values are not provided PlayFabEventManagerCustomizeEventPipelineSettings
 /// is never called) the above defaults will be used.
 /// </summary>
-/// <param name="entityHandle">PlayFabEntityHandle to customize settings for.</param>
+/// <param name="entityHandle">PFEntityHandle to customize settings for.</param>
 /// <param name="pipeline">The event pipeline the provided settings will be applied to. Pass PlayFabEventManagerPipelineType::All to configure settings for all event pipelines.</param>
 /// <param name="queue">XTaskQueue where background work will be scheduled. If not default value is "null" (process default queue will be used).</param>
 /// <param name="minimumBufferSizeBytes">The minimum size of the event buffer, in bytes. The actually allocated size will be a power of 2 that is equal or greater than this value.</param>
@@ -241,7 +241,7 @@ const uint32_t PlayFabEventManagerPollDelayInMsDefault = 10;
 /// <param name="pollDelayInMs">The delay between each time the background operation will poll the event buffer and evaluate if events should be uploaded.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabEventManagerCustomizeEventPipelineSettings(
-    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PFEntityHandle entityHandle,
     _In_ PlayFabEventManagerPipelineType pipeline,
     _In_opt_ XTaskQueueHandle queue,
     _In_opt_ size_t* minimumBufferSizeBytes,
@@ -256,13 +256,13 @@ HRESULT PlayFabEventManagerCustomizeEventPipelineSettings(
 /// Prior to shutdown, PlayFabEventManagerTerminate should be called to ensure any pending events
 /// get written to the service.
 /// </summary>
-/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
+/// <param name="entityHandle">PFEntityHandle returned from a auth call.</param>
 /// <param name="eventHandle">Event to upload.</param>
 /// <param name="callbackContext">Optional context pointer to pass to the callback.</param>
 /// <param name="callback">Optional callback to be called when the event upload (attempt) completes.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabEventManagerWriteEventAsync(
-    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PFEntityHandle entityHandle,
     _In_ PlayFabEventManagerEventHandle eventHandle,
     _In_opt_ void* callbackContext,
     _In_opt_ PlayFabEventManagerWriteEventCompletionCallback* callback
@@ -274,13 +274,13 @@ HRESULT PlayFabEventManagerWriteEventAsync(
 /// events may be lost. Note that the write result for each event will still be delivered normally via the
 /// callback provided to PlayFabEventManagerWriteEventAsync.
 /// </summary>
-/// <param name="entityHandle">PlayFabEntityHandle returned from a auth call.</param>
+/// <param name="entityHandle">PFEntityHandle returned from a auth call.</param>
 /// <param name='wait'>True to synchronously wait for the termination to complete.</param>
 /// <param name="callbackContext">Optional context pointer to pass to the callback.</param>
 /// <param name="callback">An optional callback that will be called when termination completes.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT PlayFabEventManagerTerminate(
-    _In_ PlayFabEntityHandle entityHandle,
+    _In_ PFEntityHandle entityHandle,
     _In_ bool wait,
     _In_opt_ void* callbackContext,
     _In_opt_ PlayFabEventManagerTerminatedCallback* callback

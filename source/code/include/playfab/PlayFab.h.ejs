@@ -11,22 +11,14 @@
 #include <playfab/PlayFabGlobal.h>
 #include <playfab/PlayFabEntity.h>
 
-// PlayFab Authenitcation APIs<%
-for(var apiName in categorizedApis) {
-    var api = categorizedApis[apiName];
-    if (api.loginCalls.length > 0) { %>
-#include <playfab/PlayFab<%- apiName %>AuthApi.h><%
+// PlayFab service wrappers<%
+for(var featureGroupName in SDKFeatureGroups) {
+    if (featureGroupName === "Shared") {
+        continue;
     }
-} %>
-
-// PlayFab Service wrapper APIs<%
-for(var apiName in categorizedApis) {
-    var api = categorizedApis[apiName];
-    if (api.otherCalls.length > 0) { %>
-#include <playfab/PlayFab<%- apiName %>Api.h><%
-    }
+    var featureGroup = SDKFeatureGroups[featureGroupName]; %>
+#include <playfab/PlayFab<%- featureGroupName %>Api.h><%
 } %>
 
 // PlayFab scenario APIs
-#include <playfab/PlayFabEventManagerApi.h>
 #include <playfab/PlayFabQoSApi.h>

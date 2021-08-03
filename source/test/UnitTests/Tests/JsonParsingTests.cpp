@@ -6,14 +6,14 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 namespace PlayFab
 {
 
-enum class PlayFabEnum
+enum class PFEnum
 {
     Value1,
     Value2
 };
 
-template<> struct EnumRange<PlayFabEnum> { static constexpr PlayFabEnum maxValue = PlayFabEnum::Value2; };
-template<> struct EnumRange<PlayFabCountryCode> { static constexpr PlayFabCountryCode maxValue = PlayFabCountryCode::ZW; };
+template<> struct EnumRange<PFEnum> { static constexpr PFEnum maxValue = PFEnum::Value2; };
+template<> struct EnumRange<PFCountryCode> { static constexpr PFCountryCode maxValue = PFCountryCode::ZW; };
 
 namespace UnitTests
 {
@@ -36,7 +36,7 @@ public:
     {
         struct SubObjectModel : public BaseModel
         {
-            PlayFabCountryCode CountryCode;
+            PFCountryCode CountryCode;
 
             void FromJson(const JsonValue& input)
             {
@@ -53,7 +53,7 @@ public:
 
         struct ObjectModel : public BaseModel
         {
-            PlayFabEnum EnumValue;
+            PFEnum EnumValue;
             PointerArrayModel<int, int> ArrayValue;
             SubObjectModel SubObjectValue;
 

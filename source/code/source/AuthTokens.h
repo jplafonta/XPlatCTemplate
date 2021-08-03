@@ -1,16 +1,15 @@
 #pragma once
 
 #include <playfab/PlayFabEntity.h>
-#include <Client/ClientDataModels.h>
 #include <Authentication/AuthenticationDataModels.h>
 
 namespace PlayFab
 {
 
-class EntityToken : public PlayFabEntityToken
+class EntityToken : public PFEntityToken
 {
 public:
-    EntityToken(const EntityTokenResponse& tokenResponse);
+    EntityToken(const AuthenticationModels::EntityTokenResponse& tokenResponse);
     EntityToken(const AuthenticationModels::GetEntityTokenResponse& tokenResponse);
     EntityToken(const EntityToken& src);
     EntityToken(EntityToken&& src);
@@ -25,15 +24,17 @@ private:
 class AuthTokens
 {
 public:
-    AuthTokens(const LoginResult& loginResult);
-    AuthTokens(const ClientModels::RegisterPlayFabUserResult& registerUserResult);
+    AuthTokens(const AuthenticationModels::LoginResult& loginResult);
+    AuthTokens(const AuthenticationModels::ServerLoginResult& loginResult);
+    AuthTokens(const AuthenticationModels::RegisterPlayFabUserResult& registerUserResult);
     AuthTokens(const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse);
 
     PlayFab::EntityToken const& EntityToken() const;
     String const& SessionTicket() const;
 
-    void Refresh(const LoginResult& loginResult);
-    void Refresh(const ClientModels::RegisterPlayFabUserResult& registerUserResult); // Needed? is Registering a User twice valid?
+    void Refresh(const AuthenticationModels::LoginResult& loginResult);
+    void Refresh(const AuthenticationModels::ServerLoginResult& loginResult);
+    void Refresh(const AuthenticationModels::RegisterPlayFabUserResult& registerUserResult); // Needed? is Registering a User twice valid?
     void Refresh(const AuthenticationModels::GetEntityTokenResponse& getEntityTokenResponse);
 
 private:

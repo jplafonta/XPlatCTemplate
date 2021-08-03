@@ -1,11 +1,10 @@
 #include "pch.h"
-#include "Client/ClientDataModels.h"
+#include "Shared/SharedDataModels.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace PlayFab
 {
-using namespace ClientModels;
 
 namespace UnitTests
 {
@@ -52,7 +51,7 @@ public:
             inputJson.AddMember(JsonValue{ ss.str().data(), a }, JsonValue{ PlayFab::TimeTToIso8601String(times[i]).data(), a }, a);
         }
 
-        AssociativeArrayModel<PlayFabDateTimeDictionaryEntry, void> dictionary;
+        AssociativeArrayModel<PFDateTimeDictionaryEntry, void> dictionary;
         dictionary.FromJson(inputJson);
 
         Assert::IsTrue(times.size() == inputJson.MemberCount());

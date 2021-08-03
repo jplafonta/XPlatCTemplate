@@ -1,23 +1,23 @@
 #pragma once
 
-#include <playfab/PlayFab<%- api.name %>DataModels.h><%
-if (!(api.name === "Shared")) { %>
+#include <playfab/PlayFab<%- featureGroup.name %>DataModels.h><%
+if (!(featureGroup.name === "Shared")) { %>
 #include <Shared/SharedDataModels.h><%
 } %>
 #include "BaseModel.h"
 
 namespace PlayFab
 {<%
-if (!(api.name === "Shared")) { %>
-namespace <%- api.name %>Models
+if (!(featureGroup.name === "Shared")) { %>
+namespace <%- featureGroup.name %>Models
 {<%
 } %>
 
-// <%- api.name %> Classes<%
-for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) {
-    var datatype = sortedClasses[typeIdx]; 
+// <%- featureGroup.name %> Classes<%
+for (var typeIndex = 0; typeIndex < featureGroup.sortedClasses.length; typeIndex++) {
+    var datatype = featureGroup.sortedClasses[typeIndex]; 
     var propertyVisibility = datatype.isInternalOnly ? "public" : "private"; %>
-struct <%- datatype.name %> : <%- getBaseTypes(prefix, datatype) %>
+struct <%- datatype.name %> : <%- getBaseTypes(datatype) %>
 {
     <%- datatype.name %>();<%
     if (canDefaultCopyConstructor(datatype)) { %>
@@ -40,34 +40,38 @@ struct <%- datatype.name %> : <%- getBaseTypes(prefix, datatype) %>
     void Serialize(void* buffer, size_t bufferSize) const override;
 <%  } // end if %>
 <%- propertyVisibility %>:<%
-    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
-        var property = datatype.properties[propIdx];
-%><%- getPropertyDefinition("    ", datatype, property, prefix, true) %><%
+    for (var propertyIndex = 0; propertyIndex < datatype.properties.length; propertyIndex++) {
+        var property = datatype.properties[propertyIndex];
+%><%- getPropertyDefinition(datatype, property, true) %><%
     } // end for %>
 };
 <% } // end for 
-if (!(api.name === "Shared")) { %>
-} // namespace <%- api.name %>Models<%
+if (!(featureGroup.name === "Shared")) { %>
+} // namespace <%- featureGroup.name %>Models<%
 } %>
 
 namespace JsonUtils
 {
 // Serialization methods for public models
-<% for (var typeIdx = 0; typeIdx < sortedClasses.length; typeIdx++) { 
-    var datatype = sortedClasses[typeIdx]; 
+<% for (var typeIndex = 0; typeIndex < featureGroup.sortedClasses.length; typeIndex++) { 
+    var datatype = featureGroup.sortedClasses[typeIndex]; 
     if (datatype.isInternalOnly) {
         continue;
     } %>
-template<> inline JsonValue ToJson<>(const <%- prefix %><%- datatype.name %>& input);<%
+template<> inline JsonValue ToJson<>(const <%- datatype.prefix %><%- datatype.name %>& input);<%
 } // end for %>
 } // namespace JsonUtils
 
 // EnumRange definitions used for Enum (de)serialization<%
-for (var enumIdx = 0; enumIdx < enumtypes.length; enumIdx++) { 
-    var enumtype = enumtypes[enumIdx]; var maxval = enumtype.enumvalues[enumtype.enumvalues.length-1]; %>
-template<> struct EnumRange<<%- prefix %><%- enumtype.name %>>
+for (var typeIndex = 0; typeIndex < featureGroup.datatypes.length; typeIndex++) { 
+    var datatype = featureGroup.datatypes[typeIndex];
+    if (!datatype.isenum) {
+        continue;
+    }
+    var maxval = datatype.enumvalues[enumtype.enumvalues.length-1]; %>
+template<> struct EnumRange<<%- datatype.prefix %><%- datatype.name %>>
 {
-    static constexpr <%- prefix %><%- enumtype.name %> maxValue = <%- prefix %><%- enumtype.name %>::<%- maxval.name %>;
+    static constexpr <%- datatype.prefix %><%- datatype.name %> maxValue = <%- datatype.prefix %><%- datatype.name %>::<%- maxval.name %>;
 };
 <% } // end for %>
 } // namespace PlayFab

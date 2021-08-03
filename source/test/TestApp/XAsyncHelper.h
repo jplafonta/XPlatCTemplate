@@ -1,10 +1,6 @@
 #include "TestAppPch.h"
 #include "TestContext.h"
-#include <playfab/PlayFabClientAuthApi.h>
-#include <playfab/PlayFabClientApi.h>
-#include <playfab/PlayFabProfilesApi.h>
-#include <playfab/PlayFabAdminApi.h>
-#include <playfab/PlayFabAuthenticationAuthApi.h>
+#include <playfab/PlayFabAuthenticationApi.h>
 
 namespace PlayFabUnit
 {
@@ -15,7 +11,7 @@ namespace PlayFabUnit
 struct XAsyncResult
 {
     std::vector<char> resultBuffer{};
-    PlayFabResultHandle resultHandle{ nullptr };
+    PFResultHandle resultHandle{ nullptr };
 
     virtual HRESULT Get(XAsyncBlock* async)
     {
@@ -27,7 +23,7 @@ struct XAsyncResult
     }
     virtual ~XAsyncResult()
     {
-        PlayFabResultCloseHandle(resultHandle);
+        PFResultCloseHandle(resultHandle);
     }
 };
 

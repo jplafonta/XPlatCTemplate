@@ -4,20 +4,20 @@ var path = require("path");
 if (typeof getCompiledTemplate === "undefined") getCompiledTemplate = function () { };
 if (typeof templatizeTree === "undefined") templatizeTree = function () { };
 
-var categorizedApis = {};
 var xmlRefDocs = {};
 var propertyReplacements = {};
-var globalPrefix = "PlayFab"; // Global prefix for all public types
+var globalPrefix = "PF"; // Global prefix for all public types
 var testStatusMap = {};
-var apiGrouping = {};
 
-// Shared API. Structured the same as other api objects so it can be used the same in template files. Used to generate shared DataModels
-var sharedApi = {
-    "name": "Shared",
-    "datatypes": {},
-    "calls": [],
-    "dictionaryEntryTypes": {}
-}; 
+// Calls and datatypes produced based on api.calls & api.datatypes, but rather than being categorized by service API, they are
+// categorized based on feature group. This structure will be used to generate the SDK.
+var SDKFeatureGroups = {};
+
+// By default calls/datatypes will be categorized into SDKFeatureGroups based on service "subgroup" (api.calls[*].subgroup).
+// featureGroupOverrides gives more control over the SDK feature groups we expose and which calls appear in which header file. Object will be
+// loaded from featureGroupOverrides.json. The overrides will processed in order calls->apis->subgroup (if a call matches multiple overrides, the
+// first match will be used).
+var featureGroupOverrides = {};
 
 exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     console.log("Generating Combined api from: " + sourceDir + " to: " + apiOutputDir);
@@ -28,19 +28,20 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
         throw "The file: replacements.json was not properly formatted JSON";
     }
 
-    // Populate SharedApi and add to apis
-    populateSharedDatatypes(apis);
-    apis.push(sharedApi);
-
-    categorizeCalls(apis);
-
+    featureGroupOverrides = parseDataFile("FeatureGroupOverrides.json");
     xmlRefDocs = parseDataFile("XMLRefDocs.json");
     testStatusMap = parseDataFile("TestStatus.json");
-    apiGrouping = parseDataFile("APIGrouping.json");
+
+    // Make SDK customizations to apis structure
+    curateServiceApis(apis)
+
+    // populate SDKFeatureGroups structure
+    populateSDKFeatureGroups(apis);
 
     var locals = {
         apis: apis,
-        categorizedApis: categorizedApis,
+        prefix: globalPrefix,
+        SDKFeatureGroups: SDKFeatureGroups,
         projectFiles: parseProjectFiles("project_files.json"),
         buildIdentifier: sdkGlobals.buildIdentifier,
         sdkVersion: sdkGlobals.sdkVersion,
@@ -52,29 +53,24 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     };
 
     templatizeTree(locals, path.resolve(sourceDir, "source"), apiOutputDir);
-    for (var a = 0; a < apis.length; a++) {
-        makeApiFiles(apis[a], sourceDir, apiOutputDir);
+    for (var featureGroupName in SDKFeatureGroups) {
+        makeFeatureGroupFiles(SDKFeatureGroups[featureGroupName], sourceDir, apiOutputDir);
     }
 };
 
-function makeApiFiles(api, sourceDir, apiOutputDir) {
+function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
 
-    if (api.name === "Shared") {
+    if (featureGroup.name === "Shared") {
         // Use just globalPrefix for shared datatypes
         var prefix = globalPrefix;
     } else {
-        prefix = globalPrefix + api.name;
+        prefix = globalPrefix + featureGroup.name;
     }
 
-    populateDictionaryEntryTypes(api);
-
     var locals = {
-        api: api,
+        featureGroup: featureGroup,
         prefix: prefix,
-        categorizedApi: categorizedApis[api.name],
-        categorizedApis: categorizedApis,
-        enumtypes: getEnumTypes(api.datatypes),
-        sortedClasses: getSortedClasses(api),
+        globalPrefix: globalPrefix, // TODO consider removing
         getBaseTypes: getBaseTypes,
         getPropertyDefinition: getPropertyDefinition,
         getPropertyFromJson: getPropertyFromJson,
@@ -92,61 +88,34 @@ function makeApiFiles(api, sourceDir, apiOutputDir) {
         getRequestExample: getRequestExample,
         getPublicPropertyType: getPublicPropertyType,
         testStatusMap: testStatusMap,
-        apiGrouping: apiGrouping
     };
 
-    var dataModelHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.h.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "DataModels.h"), dataModelHeaderTemplate(locals));
+    // DataModels
+    var publicDataModelsHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/include/playFab", "PlayFab" + featureGroup.name + "DataModels.h"), publicDataModelsHeader(locals));
 
-    var dataModelTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.cpp.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "DataModels.cpp"), dataModelTemplate(locals));
+    var internalDataModelsHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, featureGroup.name + "DataModels.h"), internalDataModelsHeader(locals));
 
-    var dataModelTemplate_c = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels.h.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/include/playFab", "PlayFab" + api.name + "DataModels.h"), dataModelTemplate_c(locals));
+    var internalDataModels = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.cpp.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, featureGroup.name + "DataModels.cpp"), internalDataModels(locals));
 
     // Currently don't need anything except data models for Shared API
-    if (!(api.name === "Shared")) {
+    if (featureGroup.name !== "Shared") {
 
-        var testCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.cpp.ejs"));
-        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "Tests.cpp"), testCppTemplate(locals));
+        // Internal APIs
+        var internalApisHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.h.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, featureGroup.name + "Api.h"), internalApisHeader(locals));
 
-        var testLogCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/TestLog.cpp.ejs"));
-        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "TestLog.cpp"), testLogCppTemplate(locals));
+        var internalApis = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.cpp.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, featureGroup.name + "Api.cpp"), internalApis(locals));
 
-        var testDataCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/TestData.cpp.ejs"));
-        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "TestData.cpp.autogen"), testDataCppTemplate(locals));
+        // Public APIs
+        var publicApisHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_Api.h.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + featureGroup.name + "Api.h"), publicApisHeader(locals));
 
-        var testHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.h.ejs"));
-        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + api.name + "Tests.h"), testHeaderTemplate(locals));
-
-        var testCsvTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/API-List.csv.ejs"));
-        writeFile(path.resolve(apiOutputDir, "test/", "API-List.csv"), testCsvTemplate(locals));
-
-        var iapihTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.h.ejs"));
-        writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "Api.h"), iapihTemplate(locals));
-
-        var iapiCppTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.cpp.ejs"));
-        writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "Api.cpp"), iapiCppTemplate(locals));
-
-        var publicApiHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_Api.h.ejs"));
-        writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "Api.h"), publicApiHeaderTemplate(locals));
-
-        var publicApiTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_Api.cpp.ejs"));
-        writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, "PlayFab" + api.name + "Api.cpp"), publicApiTemplate(locals));
-
-        if (locals.categorizedApi.loginCalls.length > 0) {
-            var authApiHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_AuthApi.h.ejs"));
-            writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "AuthApi.h"), authApiHeaderTemplate(locals));
-
-            var authApiTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/_AuthApi.cpp.ejs"));
-            writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, api.name + "AuthApi.cpp"), authApiTemplate(locals));
-
-            var publicAuthApiHeaderTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_AuthApi.h.ejs"));
-            writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + api.name + "AuthApi.h"), publicAuthApiHeaderTemplate(locals));
-
-            var publicAuthApiTemplate = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_AuthApi.cpp.ejs"));
-            writeFile(path.resolve(apiOutputDir, "code/source/" + api.name, "PlayFab" + api.name + "AuthApi.cpp"), publicAuthApiTemplate(locals));
-        }
+        var publicApis = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_Api.cpp.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, "PlayFab" + featureGroup.name + "Api.cpp"), publicApis(locals));
     }
 }
 
@@ -181,316 +150,415 @@ function parseDataFile(filename) {
     return data;
 }
 
-function pruneEmptyTypes(api) {
+// Curate provided 'apis' object as follows:
+// - Prune datatypes from apis[*].datatypes which are empty classes and update any references to them
+// - Add a reference to the 'datatype' object for each 'call' object in apis[*].calls. This allows us to skip looking up the datatype by name later
+// - Add a reference to the 'datatype' object for each 'property' object in apis[*].datatypes.*.properties.
+// - Annotate each 'call' in apis[*].calls with "entityReturned=true" or "entityRequired=true" if the call returns/requires an SDK Entity object
+function curateServiceApis(apis) {
 
-    var datatypes = api.datatypes;
+    for (var apiIndex = 0; apiIndex < apis.length; apiIndex++) {
+        var api = apis[apiIndex];
+        var datatypes = api.datatypes;
 
-    // Prune properties whose type is an empty class
-    for (var typeIdx in datatypes) {
-        var datatype = datatypes[typeIdx];
-        if (datatype.properties) {
-            for (var propIdx = datatype.properties.length - 1; propIdx >= 0; propIdx--) {
-                var property = datatype.properties[propIdx];
-                if (property.isclass) {
-                    var propertyDataType;
-                    if (property.actualtype in datatypes) {
-                        propertyDataType = datatypes[property.actualtype]
-                    } else if (property.actualtype in sharedApi.datatypes) {
-                        propertyDataType = sharedApi.datatypes[property.actualtype]
-                    }
-                    if (!propertyDataType.properties || propertyDataType.properties.length === 0) {
-                        datatype.properties.splice(propIdx, 1);
+        // Prune datatypes which are empty classes
+        for (typename in datatypes) {
+            datatype = datatypes[typename];
+            if (datatype.properties && datatype.properties.length === 0) {
+                delete datatypes[typename];
+            }
+        }
+
+        // Update datatype.properties
+        for (var typename in datatypes) {
+            var datatype = datatypes[typename];
+            if (datatype.properties) {
+                for (var propertyIndex = datatype.properties.length - 1; propertyIndex >= 0; propertyIndex--) {
+                    var property = datatype.properties[propertyIndex];
+
+                    if (property.isclass) {
+                        if (datatypes.hasOwnProperty(property.actualtype)) {
+                            // If the datatype exists still (wasn't pruned above), add a reference to it in the 'property' for easy access
+                            property.datatype = datatypes[property.actualtype];
+                        } else {
+                            // Otherwise remove the property
+                            datatype.properties.splice(propertyIndex, 1);
+                        }
+                    } else if (property.isenum) {
+                        property.datatype = datatypes[property.actualtype];
                     }
                 }
             }
         }
-    }
 
-    // Prune datatypes which are empty classes
-    for (typeIdx in datatypes) {
-        datatype = datatypes[typeIdx];
-        if (datatype.properties && datatype.properties.length === 0) {
-            delete datatypes[typeIdx];
+        // Update calls
+        var calls = api.calls;
+        for (var callIndex = 0; callIndex < api.calls.length; callIndex++) {
+            var call = calls[callIndex];
+
+            if (call.request in datatypes) {
+                call.requestDatatype = datatypes[call.request];
+            } else {
+                delete call.request;
+            }
+
+            if (call.result in datatypes) {
+                call.resultDatatype = datatypes[call.result];
+            } else {
+                delete call.result;
+            }
+
+            // Note whether a PlayFab::Entity object is required to make the call.
+            if (call.auth === "EntityToken" || call.auth === "SessionTicket") {
+                call.entityRequired = true;
+            }
+
+            // Note whether a PlayFab::Entity object is created (client side only) as a result of the call. These are mostly Login* methods.
+            // Annotate result types for these calls as internal only. The public result of a login call will always be an Entity handle; the service response
+            // model will not be directly returned to clients.
+            if (call.url === "/Authentication/GetEntityToken") {
+                // Special case for GetEntityToken call. Service API spec marks it as Auth type "None", but in reality authentication is required 
+                // and any of the three auth tokens can be used. In the SDK, we will split this call into two APIs, one that can be called by an 
+                // authenticated Entity, and one that can be called via a PFStateHandle w/ a SecretKey. The latter will be auto generated,
+                // and the former will be implemented manually as a one off.
+                // Note that when getting an EntityToken using an EntityHandle, the requesting Entity must "own" the entity for which it
+                // is requesting a token.
+
+                call.auth = "SecretKey"; // Set auth to "SecretKey" so that the GetEntityToken login call is autogenerated correctly
+                call.entityReturned = true;
+                call.resultDatatype.isInternalOnly = true;
+
+            } else if (call.result && (call.result.toLowerCase().endsWith("loginresult") || call.result === "RegisterPlayFabUserResult")) {
+                call.entityReturned = true;
+                call.resultDatatype.isInternalOnly = true;
+            }
         }
     }
-
-    // Change request and response types if they are empty classes
-    var calls = api.calls;
-    for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
-        var apiCall = calls[callIdx];
-        if (!(apiCall.request in datatypes || apiCall.request in sharedApi.datatypes)) {
-            apiCall.request = "void";
-        }
-        if (!(apiCall.result in datatypes || apiCall.result in sharedApi.datatypes)) {
-            apiCall.result = "void";
-        }
-    }
-
 }
 
-// When adding a datatype to sharedApi.datatypes, ensure that the types are actually identical (have the same properties & property types)
-function ensureTypesMatch(type1, type2) {
+// Compare two datatypes. If the types have the same type (enum vs class), the same name (datatype.name), and the same properties (datatype.properties).
+// we can consider them the same in the SDK. If properties are optional in one type but not the other, consider them as always required.
+// If the types meet these match requirements, deep copy each property so they are completely identical (This is needed because calls/properties still may reference
+// either instance).
+function doTypesMatch(type1, type2) {
+
+    if (type1.name !== type2.name) {
+        return false;
+    }
+
     if (type1.isenum) {
         if (type2.isenum) {
+            if (type1.enumvalues.length !== type2.enumvalues.length) {
+                return false;
+            }
+            for (let i = 0; i < type1.enumvalues.length; i++) {
+                if (type1.enumvalues[i].name !== type2.enumvalues[i].name) {
+                    return false;
+                }
+            }
             return true;
         }
         else {
             return false;
         }
     }
-
-    if (!(type1.properties.length === type2.properties.length)) {
-        return false;
-    }
-
-    for (var i = 0; i < type1.properties.length; i++) {
-        var property1 = type1.properties[i];
-        var property2 = type2.properties[i];
-        if (!(property1.name === property2.name && property1.actualtype === property2.actualtype && property1.optional === property2.optional)) {
+    else {
+        if (!(type1.properties.length === type2.properties.length)) {
             return false;
         }
+
+        for (var i = 0; i < type1.properties.length; i++) {
+            let property1 = type1.properties[i];
+            let property2 = type2.properties[i];
+            if (!(property1.name === property2.name && property1.actualtype === property2.actualtype)) {
+                return false;
+            }
+        }
+
+        // At this point we can consider the types equivalent, reconcile property optional
+        for (let i = 0; i < type1.properties.length; i++) {
+            let property1 = type1.properties[i];
+            let property2 = type2.properties[i];
+            if (property1.optional === false || property2.optional === false) {
+                property1.optional = false;
+                property2.optional = false;
+            }
+        }
     }
-    return true
+
+    return true;
 }
 
-function populateSharedDatatypes(apis) {
-    // Extract datatypes that are used by multiple APIs into sharedApi.dataypes.
+// Add 'datatype' to featureGroup.datatypes. If the type already exists in a different featureGroup,
+// remove it from that featureGroup and add the type to SDKFeatureGroups.shared.datatypes instead (rather than to 'featureGroup').
+// Also annotate datatype with appropriate prefix based on featureGroup.name & isShared flag if the datatype is used within multiple SDKFeatureGroups
+function addDatatypeToFeatureGroup(datatype, featureGroup) {
 
-    // Categorizing all LoginResult types (and their subtypes) as shared. This is because the LoginResult isn't returned directly to clients after a login call,
-    // its stored as part of the returned Entity object. Client & Server Login results are identical (but have different service namespaces & typenames), and returning the
-    // data from the Entity is much simpler if we unify those types. 
+    var featureGroupDatatypes = featureGroup.datatypes;
+    var sharedDatatypes = SDKFeatureGroups.Shared.datatypes;
 
-    // First rename all LoginResults & update all references to them
-    var unifiedLoginResultName = "LoginResult";
+    if (featureGroupDatatypes.hasOwnProperty(datatype.name)) {
+        let existingDatatype = featureGroupDatatypes[datatype.name];
 
-    for (var i = 0; i < apis.length; i++) {
-        var datatypes = apis[i].datatypes;
-        for (var typename in datatypes) {
-            if (typename.toLowerCase().endsWith(unifiedLoginResultName.toLowerCase())) {
-                var datatype = datatypes[typename];
-                if (!(typename === datatype.name)) {
-                    throw Error("datatypes key & datatype.name don't match");
-                }
-                datatype.name = unifiedLoginResultName;
-                delete datatypes[typename];
-                datatypes[unifiedLoginResultName] = datatype;
+        if (existingDatatype == datatype) {
+            // This datatype instance has already been added. No work to do
+        } else if (doTypesMatch(datatype, existingDatatype)) {
+            // Apply previously added annotations (prefix, etc.) to datatype
+            Object.assign(datatype, existingDatatype);
+        } else {
+            // Use service API name to differtiate non-matching datatypes with the same name. Serivce namespace for data models have format "PlayFab.<ServiceApi>.Models".
+            // Extract ServiceApi and mangle change datatype.name to <ServiceApi><datatype.name>. Note that this isn't just a public prefix,
+            // it affects both the internal and public name for the datatype.
+            if (existingDatatype.name === datatype.name) {
+                existingDatatype.name = existingDatatype.classNameSpace.split(".")[1] + existingDatatype.name;
             }
+            datatype.name = datatype.classNameSpace.split(".")[1] + datatype.name;
+            datatype.prefix = globalPrefix + featureGroup.name;
+            featureGroupDatatypes[datatype.name] = datatype;
+            // existingDatatype intentionally remains indexed by service name (not mangled name) so that future type collisions will still be detected
         }
-        var calls = apis[i].calls;
-        for (var ci = 0; ci < calls.length; ci++) {
-            var call = calls[ci];
-            if (call.result.toLowerCase().endsWith(unifiedLoginResultName.toLowerCase())) {
-                call.result = unifiedLoginResultName;
+    } else if (sharedDatatypes.hasOwnProperty(datatype.name)) {
+
+        let existingDatatype = sharedDatatypes[datatype.name];
+
+        if (existingDatatype == datatype) {
+            // This datatype instance has already been added. No work to do
+        } else if (doTypesMatch(datatype, existingDatatype)) {
+            // Update datatype with any annotations we've added previously (publicName, isShared, etc.).
+            Object.assign(datatype, existingDatatype);
+        } else {
+            // Can't easily handle this situation so throw error here
+            throw Error("Unexpected: Type mismatch cannot be reconciled");
+        }
+
+    } else {
+        // Tentatively add datatype to featureGroup[datatype]. Will be moved to SDKFeatureGroups.Shared below if we discover that it is also referenced in another featureGroup
+        datatype.prefix = globalPrefix + featureGroup.name;
+        featureGroupDatatypes[datatype.name] = datatype;
+
+        // Check if the a matching datatype already exists in another featureGroupName and move to sharedDatatypes if so
+        for (var otherFeatureGroupName in SDKFeatureGroups) {
+            if (otherFeatureGroupName !== featureGroup.name && otherFeatureGroupName !== "Shared") {
+                var otherFeatureGroupDatatypes = SDKFeatureGroups[otherFeatureGroupName].datatypes;
+
+                if (otherFeatureGroupDatatypes.hasOwnProperty(datatype.name)) {
+                    let existingDatatype = otherFeatureGroupDatatypes[datatype.name];
+
+                    if (doTypesMatch(datatype, existingDatatype)) {
+                        datatype.prefix = globalPrefix;
+                        datatype.isShared = true;
+                        Object.assign(existingDatatype, datatype);
+                        sharedDatatypes[datatype.name] = datatype;
+
+                        // remove from the feature group datatypes now as well
+                        delete otherFeatureGroupDatatypes[datatype.name];
+                        delete featureGroupDatatypes[datatype.name];
+
+                        break;
+                    }
+                }
             }
         }
     }
 
-    // Now extract those types (and their subtypes) from each api.datatypes into sharedApi.datatypes 
-    var extractType = function (typename) {
-        console.log("extracting " + typename);
-        for (var i = 0; i < apis.length; i++) {
-            var apiDatatypes = apis[i].datatypes;
-            if (apiDatatypes.hasOwnProperty(typename)) {
-                if (sharedApi.datatypes.hasOwnProperty(typename)) {
-                    if (!ensureTypesMatch(sharedApi.datatypes[typename], apiDatatypes[typename])) {
-                        throw Error("Mismatch between sharedApi and " + apis[i].name + " " + typename);
+    // Recursively add all subtypes of 'datatype' as well
+    if (datatype.hasOwnProperty("properties")) {
+        for (var propertyIndex = 0; propertyIndex < datatype.properties.length; propertyIndex++) {
+            var property = datatype.properties[propertyIndex];
+            if (property.isclass || property.isenum) {
+                addDatatypeToFeatureGroup(property.datatype, featureGroup);
+            }
+        }
+    }
+}
+
+function getOrCreateFeatureGroup(name) {
+    if (!SDKFeatureGroups.hasOwnProperty(name)) {
+        SDKFeatureGroups[name] = {
+            "name": name,
+            "datatypes": {},
+            "calls": [],
+            "sortedClasses": [], // subset of 'datatypes' that are classes (datatype.isclass = true), sorted such that type dependencies are honored
+            "dictionaryEntryTypes": {} // subset of 'datatypes' that appear as values in a map (property.collection = map)
+        }
+    }
+    return SDKFeatureGroups[name];
+}
+
+function populateSDKFeatureGroups(apis) {
+
+    // Create special "Shared" feature group manually. It will hold datatypes which are referenced in multiple SDKFeatureGroups.
+    getOrCreateFeatureGroup("Shared");
+
+    for (var apiIndex = 0; apiIndex < apis.length; apiIndex++) {
+        var api = apis[apiIndex];
+        var apiDatatypes = api["datatypes"];
+
+        for (var callIndex = 0; callIndex < api.calls.length; ++callIndex) {
+
+            var call = api.calls[callIndex];
+
+            // Mangle name of "Classic" API calls to avoid conflicts. Note that this is in addition to the global & featureGroup prefixes that will
+            // be added to the public SDK APIs.
+            // TODO should we only do this when there is a conflict? or for all classic APIs?
+            if (api.name === "Client" || api.name === "Server" || api.name === "Admin") {
+                call.name = api.name + call.name;
+            }
+
+            let featureGroupName = call.subgroup;
+            if (featureGroupOverrides.calls.hasOwnProperty(call.name)) {
+                featureGroupName = featureGroupOverrides.calls[call.name];
+            } else if (featureGroupOverrides.apis.hasOwnProperty(api.name)) {
+                featureGroupName = featureGroupOverrides.apis[api.name];
+            } else if (featureGroupOverrides.subgroups.hasOwnProperty(call.subgroup)) {
+                featureGroupName = featureGroupOverrides.subgroups[call.subgroup];
+            }
+
+            let featureGroup = getOrCreateFeatureGroup(featureGroupName);
+            featureGroup.calls.push(call);
+
+            // Add request & response types to featureGroup.datatypes
+            if (call.hasOwnProperty("requestDatatype")) {
+                addDatatypeToFeatureGroup(call.requestDatatype, featureGroup);
+            }
+            if (call.hasOwnProperty("resultDatatype")) {
+                addDatatypeToFeatureGroup(call.resultDatatype, featureGroup);
+            }
+        }
+    }
+
+    // populate featuresGroups.*.sortedClasses and SDKFeatureGroups.*.dictionaryEntryTypes
+    for (var featureGroupName in SDKFeatureGroups) {
+        var featureGroup = SDKFeatureGroups[featureGroupName]
+        var sortedClasses = featureGroup.sortedClasses;
+        var addedTypes = new Set();
+
+        var addType = function (datatype) {
+            if (addedTypes.has(datatype.name) || datatype.isenum) {
+                return;
+            }
+            // In C++, dependent types must be defined first
+            if (datatype.properties) {
+                for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
+                    var property = datatype.properties[propIdx];
+                    if (property.isclass && featureGroup.datatypes.hasOwnProperty(property.datatype.name)) {
+                        addType(property.datatype);
                     }
-                    delete apiDatatypes[typename];
-                } else {
-                    var apiDataype = apiDatatypes[typename];
-                    if (apiDataype.properties) {
-                        for (var propIdx = 0; propIdx < apiDataype.properties.length; propIdx++) {
-                            var property = apiDataype.properties[propIdx];
-                            if (property.isclass || property.isenum) {
-                                extractType(property.actualtype);
-                            }
+                }
+            }
+            addedTypes.add(datatype.name);
+            sortedClasses.push(datatype);
+        };
+
+        // Add all types and their dependencies
+        for (let typeKey in featureGroup.datatypes) {
+            addType(featureGroup.datatypes[typeKey]);
+        }
+
+        // Add all (non-primitive) types which appear as a Value in a map featureGroup.dictionaryEntryTypes (or SDKFeatureGroups.Shared.dictionaryEntryTypes as appropriate)
+        for (let typeKey in featureGroup.datatypes) {
+            let datatype = featureGroup.datatypes[typeKey];
+            if (datatype.properties) {
+                for (var propertyIndex = 0; propertyIndex < datatype.properties.length; propertyIndex++) {
+                    var property = datatype.properties[propertyIndex];
+                    if (property.collection === "map" && (property.isclass || property.isenum)) {
+                        if (property.datatype.isShared) {
+                            SDKFeatureGroups.Shared.dictionaryEntryTypes[property.datatype.name] = property.datatype;
+                        } else {
+                            featureGroup.dictionaryEntryTypes[property.datatype.name] = property.datatype;
                         }
                     }
-                    sharedApi.datatypes[typename] = apiDataype;
-                    delete apiDatatypes[typename];
-                }
-            }
-        }
-    }
-
-    extractType(unifiedLoginResultName);
-}
-
-function categorizeCalls(apis) {
-    // Categorize calls for each API into the following categories:
-    // loginCalls: calls which acquire an AuthContext
-    // otherCalls: calls which require an AuthContext (i.e. auth = "EntityToken" || "SessionTicket") OR a secretKey (i.e. auth = "SecretKey")
-    //
-    // Note whether a secret key is required for the "loginCalls" as well as for the "otherCalls". 
-    // Annotate result types for auth methods as internal only. The public result of a login call will always be an Entity handle; the service response
-    // model will not be directly returned to clients.
-
-    for (var i = 0; i < apis.length; i++) {
-        var api = apis[i];
-        pruneEmptyTypes(api);
-        var categorizedApi = { loginCalls: [], otherCalls: [] };
-
-        for (var j = 0; j < api.calls.length; j++) {
-            var call = api.calls[j];
-            if (call.url === "/Authentication/GetEntityToken") {
-                // Special case for GetEntityToken API. API spec marks it as Auth type "None", but it allows any of the auth tokens to be used.
-                // In the SDK, we will split this into two APIs, one that can be called by an authenticated Entity, and one that can be called via
-                // a PlayFabStateHandle w/ a SecretKey. The loginCall can be auto generated, the Entity call will be implemented manually 
-                // as a one off. When getting an EntityToken using an EntityHandle, the requesting Entity must "own" the entity for which it
-                // is requesting a token.
-
-                call.auth = "SecretKey"; // Set auth to "SecretKey" so that the GetEntityToken login call is autogenerated correctly
-                categorizedApi.loginCalls.push(call);
-                categorizedApi.loginCallsRequireSecretKey = true;
-
-                if (api.datatypes.hasOwnProperty(call.result)) {
-                    api.datatypes[call.result]["isInternalOnly"] = true;
-                } else if (sharedApi.datatypes.hasOwnProperty(call.result)) {
-                    sharedApi.datatypes[call.result]["isInternalOnly"] = true;
-                } else {
-                    throw Error("Call result type not found");
-                }
-
-            } else if (call.result.toLowerCase().endsWith("loginresult") || call.result === "RegisterPlayFabUserResult") {
-                categorizedApi.loginCalls.push(call);
-                if (call.auth === "SecretKey") {
-                    categorizedApi.loginCallsRequireSecretKey = true;
-                }
-
-                if (api.datatypes.hasOwnProperty(call.result)) {
-                    api.datatypes[call.result]["isInternalOnly"] = true;
-                } else if (sharedApi.datatypes.hasOwnProperty(call.result)) {
-                    sharedApi.datatypes[call.result]["isInternalOnly"] = true;
-                } else {
-                    throw Error("Call result type not found");
-                }
-
-            } else if (call.auth === "EntityToken" || call.auth === "SessionTicket" || call.auth === "None") {
-                categorizedApi.otherCalls.push(call);
-                if (categorizedApi.otherCallsRequireSecretKey) {
-                    throw Error("A single API can't require both Entity AuthTokens and a secretKey");
-                }
-                categorizedApi.otherCallsRequireSecretKey = false;
-            } else if (call.auth === "SecretKey") {
-                categorizedApi.otherCalls.push(call);
-                if (categorizedApi.otherCallsRequireSecretKey === false) {
-                    throw Error("A single API can't require both an Entity AuthTokens and a secretKey");
-                }
-                categorizedApi.otherCallsRequireSecretKey = true;
-            } else {
-                throw Error("Unable to categorize api call");
-            }
-        }
-
-        categorizedApis[api.name] = categorizedApi;
-    }
-}
-
-function getEnumTypes(datatypes) {
-    var enumtypes = [];
-
-    for (var typeIdx in datatypes) // Add all types and their dependencies
-        if (datatypes[typeIdx].isenum)
-            enumtypes.push(datatypes[typeIdx]);
-    return enumtypes;
-}
-
-function getSortedClasses(api) {
-    var sortedClasses = [];
-    var addedTypes = new Set();
-
-    var addType = function (datatype) {
-        if (addedTypes.has(datatype.name) || datatype.isenum)
-            return;
-        // In C++, dependent types must be defined first
-        if (datatype.properties) {
-            for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
-                var property = datatype.properties[propIdx];
-                if ((property.isclass || property.isenum) && api.datatypes.hasOwnProperty(property.actualtype)) {
-                    addType(api.datatypes[property.actualtype]);
-                }
-            }
-        }
-        addedTypes.add(datatype.name);
-        sortedClasses.push(datatype);
-    };
-
-    // Add all types and their dependencies
-    for (var typeIdx in api.datatypes) {
-        addType(api.datatypes[typeIdx]);
-    }
-
-    // Annotate classes
-    annotateClasses(sortedClasses, api);
-
-    return sortedClasses;
-}
-
-// Annotates request & result datatypes with the APIs they are used with for documentation purposes
-function annotateClasses(sortedClasses, api) {
-    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) {
-        var datatype = sortedClasses[classIdx];
-        if (api.hasOwnProperty("calls")) {
-            for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
-                var call = api.calls[callIdx];
-                if (call.request === datatype.name || call.result === datatype.name) {
-                    if (datatype.calls) {
-                        datatype.calls.push(call.name);
-                    } else {
-                        datatype.calls = [];
-                        datatype.calls.push(call.name);
-                    }
                 }
             }
         }
     }
 }
 
-function populateDictionaryEntryTypes(api) {
-    // Gets all (non-primitive) types which appear as a Value in a map
+//function getEnumTypes(datatypes) {
+//    var enumtypes = [];
 
-    if (!api.hasOwnProperty("dictionaryEntryTypes")) {
-        api["dictionaryEntryTypes"] = {};
-    }
+//    for (var typeIdx in datatypes) // Add all types and their dependencies
+//        if (datatypes[typeIdx].isenum)
+//            enumtypes.push(datatypes[typeIdx]);
+//    return enumtypes;
+//}
 
-    for (var typeIdx in api.datatypes) {
-        var datatype = api.datatypes[typeIdx];
-        if (datatype.properties) {
-            for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
-                var property = datatype.properties[propIdx];
-                if (property.collection === "map" && (property.isclass || property.isenum)) {
-                    if (sharedApi.datatypes.hasOwnProperty(property.actualtype) && !sharedApi.dictionaryEntryTypes.hasOwnProperty(property.actualtype)) {
-                        sharedApi.dictionaryEntryTypes[property.actualtype] = sharedApi.datatypes[property.actualtype];
-                    } else if (api.datatypes.hasOwnProperty(property.actualtype) && !api.dictionaryEntryTypes.hasOwnProperty(property.actualtype)) {
-                        api.dictionaryEntryTypes[property.actualtype] = api.datatypes[property.actualtype];
-                    }
-                }
-            }
-        }
-    }
-}
+//function getSortedClasses(api) {
+//    var sortedClasses = [];
+//    var addedTypes = new Set();
+
+//    var addType = function (datatype) {
+//        if (addedTypes.has(datatype.name) || datatype.isenum)
+//            return;
+//        // In C++, dependent types must be defined first
+//        if (datatype.properties) {
+//            for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
+//                var property = datatype.properties[propIdx];
+//                if ((property.isclass || property.isenum) && api.datatypes.hasOwnProperty(property.actualtype)) {
+//                    addType(api.datatypes[property.actualtype]);
+//                }
+//            }
+//        }
+//        addedTypes.add(datatype.name);
+//        sortedClasses.push(datatype);
+//    };
+
+//    // Add all types and their dependencies
+//    for (var typeIdx in api.datatypes) {
+//        addType(api.datatypes[typeIdx]);
+//    }
+
+//    // Annotate classes
+//    annotateClasses(sortedClasses, api);
+
+//    return sortedClasses;
+//}
+
+//// Annotates request & result datatypes with the APIs they are used with for documentation purposes
+//function annotateClasses(sortedClasses, api) {
+//    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) {
+//        var datatype = sortedClasses[classIdx];
+//        if (api.hasOwnProperty("calls")) {
+//            for (var callIdx = 0; callIdx < api.calls.length; callIdx++) {
+//                var call = api.calls[callIdx];
+//                if (call.request === datatype.name || call.result === datatype.name) {
+//                    if (datatype.calls) {
+//                        datatype.calls.push(call.name);
+//                    } else {
+//                        datatype.calls = [];
+//                        datatype.calls.push(call.name);
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 // *************************** ejs-exposed methods ***************************
 
-function addAuthHeader(apiCall, tabbing) {
+// Used by functions which return code snippets
+var tab = "    ";
+
+function addAuthHeader(apiCall) {
+    var output = "";
     switch (apiCall.auth) {
         case "EntityToken": {
-            var output = ("auto& entityToken{ m_tokens->EntityToken() };\n" + tabbing + "if (!entityToken.token)\n" + tabbing + "{\n" + tabbing + "    return E_PLAYFAB_NOENTITYTOKEN;\n" + tabbing + "}\n");
-            output += (tabbing + "headers.emplace(\"X-EntityToken\", entityToken.token);");
+            output += ("\n" + tab + "auto& entityToken{ m_tokens->EntityToken() };\n" + tab + "if (!entityToken.token)\n" + tab + "{\n" + tab + "    return E_PF_NOENTITYTOKEN;\n" + tab + "}\n");
+            output += (tab + "headers.emplace(\"X-EntityToken\", entityToken.token);");
             return output;
         }
         case "SessionTicket": {
-            output = ("auto sessionTicket{ m_tokens->SessionTicket() };\n" + tabbing + "if (sessionTicket.empty())\n" + tabbing + "{\n" + tabbing + "    return E_PLAYFAB_NOSESSIONTICKET;\n" + tabbing + "}\n");
-            output += (tabbing + "headers.emplace(\"X-Authorization\", std::move(sessionTicket));");
+            output += ("\n" + tab + "auto sessionTicket{ m_tokens->SessionTicket() };\n" + tab + "if (sessionTicket.empty())\n" + tab + "{\n" + tab + "    return E_PF_NOSESSIONTICKET;\n" + tab + "}\n");
+            output += (tab + "headers.emplace(\"X-Authorization\", std::move(sessionTicket));");
             return output;
         }
         case "SecretKey": {
-            output = ("if (m_secretKey == nullptr || m_secretKey->empty())\n" + tabbing + "{\n" + tabbing + "    return E_PLAYFAB_NOSECRETKEY;\n" + tabbing + "}\n");
-            output += (tabbing + "headers.emplace(\"X-SecretKey\", *m_secretKey);");
+            output += ("\n" + tab + "if (secretKey == nullptr || secretKey->empty())\n" + tab + "{\n" + tab + "    return E_PF_NOSECRETKEY;\n" + tab + "}\n");
+            output += (tab + "headers.emplace(\"X-SecretKey\", *secretKey);");
             return output;
         }
         case "None": {
-            return "// No auth header required for this API";
+            return output;
         }
         default: {
             throw Error("getAuthParams: Unknown auth type: " + apiCall.auth + " for " + apiCall.name);
@@ -525,11 +593,11 @@ function isSerializable(datatype) {
     return true;
 }
 
-function getBaseTypes(prefix, datatype) {
+function getBaseTypes(datatype) {
     var baseTypes = "";
 
     if (!datatype.isInternalOnly) {
-        baseTypes = "public " + prefix + datatype.name + ", ";
+        baseTypes = "public " + datatype.prefix + datatype.name + ", ";
     }
 
     if (isSerializable(datatype) || isFixedSize(datatype)) {
@@ -552,7 +620,7 @@ function getDictionaryEntryTypeFromValueType(valueType) {
     };
 
     if (valueType in types) {
-        return "PlayFab" + types[valueType] + "DictionaryEntry";
+        return globalPrefix + types[valueType] + "DictionaryEntry";
     } else {
         // valueType should already be prefixed appropriately
         return valueType + "DictionaryEntry";
@@ -570,13 +638,8 @@ function requiresDynamicStorage(property) {
     return true;
 }
 
-function getInternalPropertyType(property, prefix) {
+function getInternalPropertyType(property) {
     var type = "";
-
-    // If property type is shared, override 'prefix' with the global prefix
-    if (sharedApi.datatypes.hasOwnProperty(property.actualtype)) {
-        prefix = globalPrefix;
-    }
 
     // Service types that can be mapped directly to C++ types
     var types = {
@@ -586,11 +649,13 @@ function getInternalPropertyType(property, prefix) {
 
     if (property.actualtype in types) {
         type = types[property.actualtype];
-    } else if (property.isclass) {
-        type = property.actualtype;
-    } else if (property.isenum) {
-        // Enums always defined in global namespace so add prefix
-        type = prefix + property.actualtype
+    } else if (property.datatype) {
+        if (property.isclass) {
+            type = property.datatype.name;
+        } else if (property.isenum) {
+            // Enums always defined in global namespace so add prefix
+            type = property.datatype.prefix + property.datatype.name
+        }
     } else {
         throw Error("Unrecognized property type " + property.actualtype);
     }
@@ -599,15 +664,15 @@ function getInternalPropertyType(property, prefix) {
     if (!(property.actualtype === "object")) {
         if (property.collection === "map") {
             if (property.isclass) {
-                return "AssociativeArrayModel<" + getDictionaryEntryTypeFromValueType(prefix + type) + ", " + type + ">";
+                return "AssociativeArrayModel<" + getDictionaryEntryTypeFromValueType(property.datatype.prefix + type) + ", " + type + ">";
             } else if (type === "String") {
-                return "AssociativeArrayModel<PlayFabStringDictionaryEntry, String>";
+                return "AssociativeArrayModel<" + globalPrefix + "StringDictionaryEntry, String>";
             } else {
                 return "AssociativeArrayModel<" + getDictionaryEntryTypeFromValueType(type) + ", void>";
             }
         } else if (property.collection === "array") {
             if (property.isclass) {
-                return "PointerArrayModel<" + prefix + type + ", " + type + ">";
+                return "PointerArrayModel<" + property.datatype.prefix + type + ", " + type + ">";
             } else if (type === "String") {
                 return "PointerArrayModel<char, String>";
             } else {
@@ -625,24 +690,22 @@ function getInternalPropertyType(property, prefix) {
     return type;
 }
 
-function getPublicPropertyType(property, prefix, addConsts) {
+function getPublicPropertyType(property, addConsts) {
     var type = "";
-
-    // If property type is shared, override 'prefix' with the global prefix
-    if (sharedApi.datatypes.hasOwnProperty(property.actualtype)) {
-        prefix = globalPrefix;
-    }
 
     // Service types that can be mapped directly to C types
     var types = {
         "String": "const char*", "Boolean": "bool", "int16": "int16_t", "uint16": "uint16_t", "int32": "int32_t", "uint32": "uint32_t",
-        "int64": "int64_t", "uint64": "uint64_t", "float": "float", "double": "double", "DateTime": "time_t", "object": "PlayFabJsonObject"
+        "int64": "int64_t", "uint64": "uint64_t", "float": "float", "double": "double", "DateTime": "time_t", "object": globalPrefix + "JsonObject"
     };
 
     if (property.actualtype in types) {
         type = types[property.actualtype];
-    } else if (property.isclass || property.isenum) {
-        type = prefix + property.actualtype;
+    } else if (property.datatype) {
+        if (!property.datatype.prefix) {
+            throw Error("No prefix!");
+        }
+        type = property.datatype.prefix + property.datatype.name;
     } else {
         throw Error("Unrecognized property type " + property.actualtype);
     }
@@ -664,7 +727,7 @@ function getPublicPropertyType(property, prefix, addConsts) {
                 }
             } else if (property.optional) {
                 // Types which aren't already nullable will be made pointer types
-                if (!(type === "const char*" || type === "PlayFabJsonObject")) {
+                if (!(type === "const char*" || type === (globalPrefix + "JsonObject"))) {
                     return type;
                 }
             }
@@ -689,7 +752,7 @@ function getPublicPropertyType(property, prefix, addConsts) {
                 }
             } else if (property.optional) {
                 // Types which aren't already nullable will be made pointer types
-                if (!(type === "const char*" || type === "PlayFabJsonObject")) {
+                if (!(type === "const char*" || type === (globalPrefix + "JsonObject"))) {
                     return type + " const*";
                 }
             }
@@ -731,12 +794,12 @@ function getPropertyName(property, isPrivate) {
     return isPrivate ? "m_" + name : name;
 }
 
-function getPropertyDefinition(tabbing, datatype, property, prefix, isInternal) {
+function getPropertyDefinition(datatype, property, isInternal) {
     var output = "";
 
     // for public properties, add XML ref doc comments
     if (!isInternal) {
-        var xmlComment = tabbing + "/// <summary>\n" + tabbing + "///"
+        var xmlComment = tab + "/// <summary>\n" + tab + "///"
         var propertyDescription = property.optional ? "(Optional) " : "";
         if (property.description) {
             propertyDescription += property.description.charAt(0).toUpperCase() + property.description.slice(1);
@@ -748,19 +811,19 @@ function getPropertyDefinition(tabbing, datatype, property, prefix, isInternal) 
         }
 
         xmlComment = appendToXmlDocComment(xmlComment, propertyDescription);
-        xmlComment += ("\n" + tabbing + "/// </summary>")
+        xmlComment += ("\n" + tab + "/// </summary>")
         output += ("\n" + xmlComment);
     }
 
     if (!isInternal || datatype.isInternalOnly || requiresDynamicStorage(property)) {
-        var type = isInternal ? getInternalPropertyType(property, prefix) : getPublicPropertyType(property, prefix, true);
+        var type = isInternal ? getInternalPropertyType(property) : getPublicPropertyType(property, true);
         var propName = getPropertyName(property, datatype.isInternalOnly ? false : isInternal);
-        output += ("\n" + tabbing + type + " " + propName + ";");
+        output += ("\n" + tab + type + " " + propName + ";");
 
         // For public collection properties add an additional "count" property
-        if (property.collection && !(type === "PlayFabJsonObject") && !isInternal) {
-            output += ("\n\n" + tabbing + "/// <summary>\n" + tabbing + "/// Count of " + propName + "\n" + tabbing + "/// </summary>");
-            output += ("\n" + tabbing + "uint32_t " + propName + "Count;");
+        if (property.collection && !(type === (globalPrefix + "JsonObject")) && !isInternal) {
+            output += ("\n\n" + tab + "/// <summary>\n" + tab + "/// Count of " + propName + "\n" + tab + "/// </summary>");
+            output += ("\n" + tab + "uint32_t " + propName + "Count;");
         }
     }
 
@@ -828,65 +891,65 @@ function canDefaultCopyConstructor(datatype) {
     return true;
 }
 
-function getCopyConstructorInitializationList(tabbing, datatype, prefix) {
+function getCopyConstructorInitializationList(datatype) {
     var output = "";
-    var conjunction = " :\n" + tabbing;
+    var conjunction = " :\n" + tab;
 
     if (!(datatype.isInternalOnly)) {
-        output += conjunction + prefix + datatype.name + "{ src }"
-        conjunction = ",\n" + tabbing;
+        output += conjunction + datatype.prefix + datatype.name + "{ src }"
+        conjunction = ",\n" + tab;
     }
 
-    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
-        var property = datatype.properties[propIdx];
+    for (var i = 0; i < datatype.properties.length; i++) {
+        var property = datatype.properties[i];
         if (datatype.isInternalOnly || requiresDynamicStorage(property)) {
             var propName = getPropertyName(property, datatype.isInternalOnly ? false : true);
             output += (conjunction + propName + "{ src." + propName + " }");
-            conjunction = ",\n" + tabbing;
+            conjunction = ",\n" + tab;
         }
     }
     return output;
 }
 
-function getMoveConstructorInitializationList(tabbing, datatype, prefix) {
+function getMoveConstructorInitializationList(datatype) {
     var output = "";
-    var conjunction = " :\n" + tabbing;
+    var conjunction = " :\n" + tab;
 
     if (!(datatype.isInternalOnly)) {
-        output += conjunction + prefix + datatype.name + "{ src }"
-        conjunction = ",\n" + tabbing;
+        output += conjunction + datatype.prefix + datatype.name + "{ src }"
+        conjunction = ",\n" + tab;
     }
 
-    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
-        var property = datatype.properties[propIdx];
+    for (var i = 0; i < datatype.properties.length; i++) {
+        var property = datatype.properties[i];
         if (datatype.isInternalOnly || requiresDynamicStorage(property)) {
             var propName = getPropertyName(property, datatype.isInternalOnly ? false : true);
             output += (conjunction + propName + "{ std::move(src." + propName + ") }");
-            conjunction = ",\n" + tabbing;
+            conjunction = ",\n" + tab;
         }
     }
     return output;
 }
 
-function getCopyConstructorBody(tabbing, datatype, prefix) {
+function getCopyConstructorBody(datatype) {
     var output = "";
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
         var property = datatype.properties[propIdx];
         if (requiresDynamicStorage(property) && !datatype.isInternalOnly) {
             var publicPropName = getPropertyName(property, false);
             var privatePropName = getPropertyName(property, true);
-            var internalPropertyType = getInternalPropertyType(property, prefix);
+            var internalPropertyType = getInternalPropertyType(property);
 
             if (internalPropertyType === "JsonObject") {
-                output += ("\n" + tabbing + publicPropName + ".stringValue = " + privatePropName + ".StringValue();");
+                output += ("\n" + tab + publicPropName + ".stringValue = " + privatePropName + ".StringValue();");
             } else if (internalPropertyType.includes("Array")) {
-                output += ("\n" + tabbing + publicPropName + " = " + privatePropName + ".Empty() ? nullptr : " + privatePropName + ".Data();");
+                output += ("\n" + tab + publicPropName + " = " + privatePropName + ".Empty() ? nullptr : " + privatePropName + ".Data();");
             } else if (internalPropertyType === "String" || internalPropertyType.includes("Vector")) {
-                output += ("\n" + tabbing + publicPropName + " = " + privatePropName + ".empty() ? nullptr : " + privatePropName + ".data();");
+                output += ("\n" + tab + publicPropName + " = " + privatePropName + ".empty() ? nullptr : " + privatePropName + ".data();");
             } else if (property.optional) {
-                output += ("\n" + tabbing + publicPropName + " = " + privatePropName + " ? " + privatePropName + ".operator->() : nullptr;");
+                output += ("\n" + tab + publicPropName + " = " + privatePropName + " ? " + privatePropName + ".operator->() : nullptr;");
             } else if (property.isclass) {
-                output += ("\n" + tabbing + publicPropName + " = (" + getPublicPropertyType(property, prefix, true) + ")&" + privatePropName + ";");
+                output += ("\n" + tab + publicPropName + " = (" + getPublicPropertyType(property, true) + ")&" + privatePropName + ";");
             } else {
                 throw Error("Unable to copy property of type " + property.actualtype);
             }
@@ -911,8 +974,8 @@ function appendToXmlDocComment(comment, str) {
     return comment;
 }
 
-function getFormattedDatatypeDescription(prefix, datatype) {
-    var output = "/// " + prefix + datatype.name + " data model.";
+function getFormattedDatatypeDescription(datatype) {
+    var output = "/// " + datatype.prefix + datatype.name + " data model.";
 
     if (datatype.description) {
         if (datatype.description.endsWith(".")) {
@@ -950,6 +1013,7 @@ function getFormattedDatatypeDescription(prefix, datatype) {
 }
 
 function getFormattedCallDescription(apiName, call) {
+    // TODO xmlRefDocs groups by service API not featureGroup
     if (apiName in xmlRefDocs) {
         var apiRefDocs = xmlRefDocs[apiName];
         if (call.name in apiRefDocs.calls) {
