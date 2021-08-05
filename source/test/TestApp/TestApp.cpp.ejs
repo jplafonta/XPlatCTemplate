@@ -16,7 +16,7 @@
 #include "EntityTests.h"
 <% for(var featureGroupName in SDKFeatureGroups) 
 { 
-    if (false) { %>
+    if (featureGroupName === "Groups") { %>
 #include "AutoGenTests/AutoGen<%- featureGroupName %>Tests.h" <%
     }
 } %>
@@ -96,7 +96,7 @@ var verNum = 0;
 for(var featureGroupName in SDKFeatureGroups) 
 {
     verNum++;
-    if (false) { %>
+    if (featureGroupName === "Groups") { %>
         AutoGen<%- featureGroupName %>Tests apiTests<%- verNum %>;
         apiTests<%- verNum %>.SetTitleInfo(testTitleData);
         testRunner.Add(apiTests<%- verNum %>);

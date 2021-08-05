@@ -3,31 +3,25 @@
 #include "TestApp.h"
 #include "AutoGenGroupsTests.h"
 #include "XAsyncHelper.h"
-#include <playfab/PlayFabClientAuthApi.h>
-#include <playfab/PlayFabClientApi.h>
-#include <playfab/PlayFabProfilesApi.h>
-#include <playfab/PlayFabAdminApi.h>
-#include <playfab/PlayFabAuthenticationAuthApi.h>
-#include <playfab/PlayFabClientDataModels.h>
 
 namespace PlayFabUnit
 {
 
-void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsCreateGroupRequest(PlayFab::GroupsModels::CreateGroupRequest* request)
+void AutoGenGroupsTests::FillPrerequisiteCreateGroupRequest( PlayFab::GroupsModels::CreateGroupRequest* request )
 {
     PlayFab::JsonDocument inputJson;
-    inputJson.Parse("{ \"GroupName\": \"Prerequisite Group\"}");
+    inputJson.Parse( "{ \"GroupName\": \"Example Group\"}" );
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::StorePlayFabPrerequisiteGroupsCreateGroupResponse(PlayFabGroupsCreateGroupResponse* result)
+HRESULT AutoGenGroupsTests::StorePrerequisitePFGroupsCreateGroupResponse( PFGroupsCreateGroupResponse* result )
 {
     // TODO: store required fields
     UNREFERENCED_PARAMETER(result);
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
+void AutoGenGroupsTests::FillPrerequisiteGetGroupRequest( PlayFab::GroupsModels::GetGroupRequest* request )
 {
     // TODO: debug Failing prereq
     PlayFab::JsonDocument inputJson;
@@ -35,7 +29,7 @@ void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsGetGroupRequest(PlayFab::G
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::StorePlayFabPrerequisiteGroupsGetGroupResponse(PlayFabGroupsGetGroupResponse* result)
+HRESULT AutoGenGroupsTests::StorePrerequisitePFGroupsGetGroupResponse( PFGroupsGetGroupResponse* result )
 {
     // TODO: store required fields
     Data()->m_groupId = result->group->id;
@@ -43,7 +37,7 @@ HRESULT AutoGenGroupsTests::StorePlayFabPrerequisiteGroupsGetGroupResponse(PlayF
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsApplyToGroupRequest(PlayFab::GroupsModels::ApplyToGroupRequest* request)
+void AutoGenGroupsTests::FillPrerequisiteApplyToGroupRequest( PlayFab::GroupsModels::ApplyToGroupRequest* request )
 {
     // TODO: debug Failing prereq
     PlayFab::JsonDocument inputJson;
@@ -52,15 +46,15 @@ void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsApplyToGroupRequest(PlayFa
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::StorePlayFabPrerequisiteGroupsApplyToGroupResponse(PlayFabGroupsApplyToGroupResponse* result)
+HRESULT AutoGenGroupsTests::StorePrerequisitePFGroupsApplyToGroupResponse( PFGroupsApplyToGroupResponse* result )
 {
     // TODO: store required fields
     //Data()->m_groupApplyingEntityId = result->entity->key->id;
-
+    UNREFERENCED_PARAMETER(result);
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsInviteToGroupRequest(PlayFab::GroupsModels::InviteToGroupRequest* request)
+void AutoGenGroupsTests::FillPrerequisiteInviteToGroupRequest( PlayFab::GroupsModels::InviteToGroupRequest* request )
 {
     // TODO: debug Failing prereq
     PlayFab::JsonDocument inputJson;
@@ -69,7 +63,7 @@ void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsInviteToGroupRequest(PlayF
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::StorePlayFabPrerequisiteGroupsInviteToGroupResponse(PlayFabGroupsInviteToGroupResponse* result)
+HRESULT AutoGenGroupsTests::StorePrerequisitePFGroupsInviteToGroupResponse( PFGroupsInviteToGroupResponse* result )
 {
     // TODO: store required fields
     //Data()->m_expires = result->expires;
@@ -79,10 +73,11 @@ HRESULT AutoGenGroupsTests::StorePlayFabPrerequisiteGroupsInviteToGroupResponse(
     //Data()->m_roleId = result->roleId;
 
     UNREFERENCED_PARAMETER(result);
+
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsBlockEntityRequest(PlayFab::GroupsModels::BlockEntityRequest* request)
+void AutoGenGroupsTests::FillPrerequisiteBlockEntityRequest( PlayFab::GroupsModels::BlockEntityRequest* request )
 {
     // TODO: debug Failing prereq
     PlayFab::JsonDocument inputJson;
@@ -91,8 +86,81 @@ void AutoGenGroupsTests::FillPlayFabPrerequisiteGroupsBlockEntityRequest(PlayFab
     request->FromJson(inputJson);
 }
 
+ 
+void AutoGenGroupsTests::FillSetPublisherDataRequest( PlayFab::SetPublisherDataRequest* request )
+{
+    // TODO: debug  test
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( "{ \"Key\": \"Running Speed\", \"Value\": \"1.03\"}" );
+    request->FromJson(inputJson);
+}
 
-void AutoGenGroupsTests::FillPlayFabGroupsAcceptGroupApplicationRequest(PlayFab::GroupsModels::AcceptGroupApplicationRequest* request)
+void AutoGenGroupsTests::FillAddSharedGroupMembersRequest( PlayFab::GroupsModels::AddSharedGroupMembersRequest* request )
+{
+    // TODO: debug  test
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( "{ \"SharedGroupId\": \"Clan Data\", \"PlayFabIds\": [ \"D984A64B832\", \"F74A523E1562\" ]}" );
+    request->FromJson(inputJson);
+}
+
+void AutoGenGroupsTests::FillCreateSharedGroupRequest( PlayFab::GroupsModels::CreateSharedGroupRequest* request )
+{
+    // TODO: debug  test
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( "{ \"SharedGroupId\": \"Clan Data\"}" );
+    request->FromJson(inputJson);
+}
+
+HRESULT AutoGenGroupsTests::ValidatePFGroupsCreateSharedGroupResult( PFGroupsCreateSharedGroupResult* result )
+{    // result.sharedGroupId = const char*;
+
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
+
+void AutoGenGroupsTests::FillGetSharedGroupDataRequest( PlayFab::GroupsModels::GetSharedGroupDataRequest* request )
+{
+    // TODO: debug  test
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( "{ \"SharedGroupId\": \"Clan Data\", \"Keys\": [ \"ClanKills\", \"LastClanUpdate\" ], \"GetMembers\": true}" );
+    request->FromJson(inputJson);
+}
+
+HRESULT AutoGenGroupsTests::ValidatePFGroupsGetSharedGroupDataResult( PFGroupsGetSharedGroupDataResult* result )
+{    // result.data = struct PFGroupsSharedGroupDataRecordDictionaryEntry const*;
+    // result.dataCount = uint32_t;
+    // result.members = const char* const*;
+    // result.membersCount = uint32_t;
+
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
+
+void AutoGenGroupsTests::FillRemoveSharedGroupMembersRequest( PlayFab::GroupsModels::RemoveSharedGroupMembersRequest* request )
+{
+    // TODO: debug  test
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( "{ \"SharedGroupId\": \"Clan Data\", \"PlayFabIds\": [ \"D984A64B832\", \"F74A523E1562\" ]}" );
+    request->FromJson(inputJson);
+}
+
+void AutoGenGroupsTests::FillUpdateSharedGroupDataRequest( PlayFab::GroupsModels::UpdateSharedGroupDataRequest* request )
+{
+    // TODO: debug  test
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( "{ \"SharedGroupId\": \"Clan Data\", \"Data\": { \"ClanKills\": \"34\", \"LastClanUpdate\": \"2014-10-03T09:21:14Z\" }, \"Permission\": \"Public\"}" );
+    request->FromJson(inputJson);
+}
+
+void AutoGenGroupsTests::FillDeleteSharedGroupRequest( PlayFab::GroupsModels::DeleteSharedGroupRequest* request )
+{
+    // TODO: debug  test
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( "{ \"SharedGroupId\": \"Clan Data\"}" );
+    request->FromJson(inputJson);
+}
+
+void AutoGenGroupsTests::FillAcceptGroupApplicationRequest( PlayFab::GroupsModels::AcceptGroupApplicationRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -101,7 +169,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsAcceptGroupApplicationRequest(PlayFab:
     request->FromJson(inputJson);
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsAcceptGroupInvitationRequest(PlayFab::GroupsModels::AcceptGroupInvitationRequest* request)
+void AutoGenGroupsTests::FillAcceptGroupInvitationRequest( PlayFab::GroupsModels::AcceptGroupInvitationRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -110,7 +178,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsAcceptGroupInvitationRequest(PlayFab::
     request->FromJson(inputJson);
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsAddMembersRequest(PlayFab::GroupsModels::AddMembersRequest* request)
+void AutoGenGroupsTests::FillAddMembersRequest( PlayFab::GroupsModels::AddMembersRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -119,7 +187,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsAddMembersRequest(PlayFab::GroupsModel
     request->FromJson(inputJson);
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsApplyToGroupRequest(PlayFab::GroupsModels::ApplyToGroupRequest* request)
+void AutoGenGroupsTests::FillApplyToGroupRequest( PlayFab::GroupsModels::ApplyToGroupRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -128,7 +196,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsApplyToGroupRequest(PlayFab::GroupsMod
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsApplyToGroupResponse(PlayFabGroupsApplyToGroupResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsApplyToGroupResponse( PFGroupsApplyToGroupResponse* result )
 {
     // result.entity = PlayFabGroupsEntityWithLineage const*;
     // result.expires = time_t;
@@ -138,7 +206,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsApplyToGroupResponse(PlayFabGro
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsBlockEntityRequest(PlayFab::GroupsModels::BlockEntityRequest* request)
+void AutoGenGroupsTests::FillBlockEntityRequest( PlayFab::GroupsModels::BlockEntityRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -147,7 +215,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsBlockEntityRequest(PlayFab::GroupsMode
     request->FromJson(inputJson);
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsChangeMemberRoleRequest(PlayFab::GroupsModels::ChangeMemberRoleRequest* request)
+void AutoGenGroupsTests::FillChangeMemberRoleRequest( PlayFab::GroupsModels::ChangeMemberRoleRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -156,7 +224,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsChangeMemberRoleRequest(PlayFab::Group
     request->FromJson(inputJson);
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsCreateGroupRequest(PlayFab::GroupsModels::CreateGroupRequest* request)
+void AutoGenGroupsTests::FillCreateGroupRequest( PlayFab::GroupsModels::CreateGroupRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -164,7 +232,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsCreateGroupRequest(PlayFab::GroupsMode
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsCreateGroupResponse(PlayFabGroupsCreateGroupResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsCreateGroupResponse( PFGroupsCreateGroupResponse* result )
 {
     // result.adminRoleId = const char*;
     // result.created = time_t;
@@ -179,7 +247,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsCreateGroupResponse(PlayFabGrou
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsCreateGroupRoleRequest(PlayFab::GroupsModels::CreateGroupRoleRequest* request)
+void AutoGenGroupsTests::FillCreateGroupRoleRequest( PlayFab::GroupsModels::CreateGroupRoleRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -188,7 +256,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsCreateGroupRoleRequest(PlayFab::Groups
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsCreateGroupRoleResponse(PlayFabGroupsCreateGroupRoleResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsCreateGroupRoleResponse( PFGroupsCreateGroupRoleResponse* result )
 {
     // result.profileVersion = int32_t;
     // result.roleId = const char*;
@@ -198,7 +266,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsCreateGroupRoleResponse(PlayFab
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsDeleteGroupRequest(PlayFab::GroupsModels::DeleteGroupRequest* request)
+void AutoGenGroupsTests::FillDeleteGroupRequest( PlayFab::GroupsModels::DeleteGroupRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -207,7 +275,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsDeleteGroupRequest(PlayFab::GroupsMode
     request->FromJson(inputJson);
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsDeleteRoleRequest(PlayFab::GroupsModels::DeleteRoleRequest* request)
+void AutoGenGroupsTests::FillDeleteRoleRequest( PlayFab::GroupsModels::DeleteRoleRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -216,7 +284,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsDeleteRoleRequest(PlayFab::GroupsModel
     request->FromJson(inputJson);
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
+void AutoGenGroupsTests::FillGetGroupRequest( PlayFab::GroupsModels::GetGroupRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -225,7 +293,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsGetGroupRequest(PlayFab::GroupsModels:
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsGetGroupResponse(PlayFabGroupsGetGroupResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsGetGroupResponse( PFGroupsGetGroupResponse* result )
 {
     // result.adminRoleId = const char*;
     // result.created = time_t;
@@ -240,7 +308,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsGetGroupResponse(PlayFabGroupsG
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsInviteToGroupRequest(PlayFab::GroupsModels::InviteToGroupRequest* request)
+void AutoGenGroupsTests::FillInviteToGroupRequest( PlayFab::GroupsModels::InviteToGroupRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -249,7 +317,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsInviteToGroupRequest(PlayFab::GroupsMo
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsInviteToGroupResponse(PlayFabGroupsInviteToGroupResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsInviteToGroupResponse( PFGroupsInviteToGroupResponse* result )
 {
     // result.expires = time_t;
     // result.group = PlayFabEntityKey const*;
@@ -261,7 +329,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsInviteToGroupResponse(PlayFabGr
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsIsMemberRequest(PlayFab::GroupsModels::IsMemberRequest* request)
+void AutoGenGroupsTests::FillIsMemberRequest( PlayFab::GroupsModels::IsMemberRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -270,7 +338,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsIsMemberRequest(PlayFab::GroupsModels:
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsIsMemberResponse(PlayFabGroupsIsMemberResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsIsMemberResponse( PFGroupsIsMemberResponse* result )
 {
     // result.isMember = bool;
 
@@ -278,7 +346,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsIsMemberResponse(PlayFabGroupsI
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsListGroupApplicationsRequest(PlayFab::GroupsModels::ListGroupApplicationsRequest* request)
+void AutoGenGroupsTests::FillListGroupApplicationsRequest( PlayFab::GroupsModels::ListGroupApplicationsRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -287,7 +355,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsListGroupApplicationsRequest(PlayFab::
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListGroupApplicationsResponse(PlayFabGroupsListGroupApplicationsResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupApplicationsResponse( PFGroupsListGroupApplicationsResponse* result )
 {
     // result.applications = PlayFabGroupsGroupApplication const* const*;
     // result.applicationsCount = uint32_t;
@@ -296,7 +364,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListGroupApplicationsResponse(P
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsListGroupBlocksRequest(PlayFab::GroupsModels::ListGroupBlocksRequest* request)
+void AutoGenGroupsTests::FillListGroupBlocksRequest( PlayFab::GroupsModels::ListGroupBlocksRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -305,7 +373,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsListGroupBlocksRequest(PlayFab::Groups
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListGroupBlocksResponse(PlayFabGroupsListGroupBlocksResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupBlocksResponse( PFGroupsListGroupBlocksResponse* result )
 {
     // result.blockedEntities = PlayFabGroupsGroupBlock const* const*;
     // result.blockedEntitiesCount = uint32_t;
@@ -314,7 +382,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListGroupBlocksResponse(PlayFab
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsListGroupInvitationsRequest(PlayFab::GroupsModels::ListGroupInvitationsRequest* request)
+void AutoGenGroupsTests::FillListGroupInvitationsRequest( PlayFab::GroupsModels::ListGroupInvitationsRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -323,7 +391,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsListGroupInvitationsRequest(PlayFab::G
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListGroupInvitationsResponse(PlayFabGroupsListGroupInvitationsResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupInvitationsResponse( PFGroupsListGroupInvitationsResponse* result )
 {
     // result.invitations = PlayFabGroupsGroupInvitation const* const*;
     // result.invitationsCount = uint32_t;
@@ -332,7 +400,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListGroupInvitationsResponse(Pl
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsListGroupMembersRequest(PlayFab::GroupsModels::ListGroupMembersRequest* request)
+void AutoGenGroupsTests::FillListGroupMembersRequest( PlayFab::GroupsModels::ListGroupMembersRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -341,7 +409,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsListGroupMembersRequest(PlayFab::Group
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListGroupMembersResponse(PlayFabGroupsListGroupMembersResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupMembersResponse( PFGroupsListGroupMembersResponse* result )
 {
     // result.members = PlayFabGroupsEntityMemberRole const* const*;
     // result.membersCount = uint32_t;
@@ -350,14 +418,14 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListGroupMembersResponse(PlayFa
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsListMembershipRequest(PlayFab::GroupsModels::ListMembershipRequest* request)
+void AutoGenGroupsTests::FillListMembershipRequest( PlayFab::GroupsModels::ListMembershipRequest* request )
 {
     PlayFab::JsonDocument inputJson;
     inputJson.Parse("{}");
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListMembershipResponse(PlayFabGroupsListMembershipResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListMembershipResponse( PFGroupsListMembershipResponse* result )
 {
     // result.groups = PlayFabGroupsGroupWithRoles const* const*;
     // result.groupsCount = uint32_t;
@@ -366,7 +434,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListMembershipResponse(PlayFabG
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsListMembershipOpportunitiesRequest(PlayFab::GroupsModels::ListMembershipOpportunitiesRequest* request)
+void AutoGenGroupsTests::FillListMembershipOpportunitiesRequest( PlayFab::GroupsModels::ListMembershipOpportunitiesRequest* request )
 {
     // TODO: debug PassingButNoData test
     PlayFab::JsonDocument inputJson;
@@ -374,7 +442,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsListMembershipOpportunitiesRequest(Pla
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListMembershipOpportunitiesResponse(PlayFabGroupsListMembershipOpportunitiesResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListMembershipOpportunitiesResponse( PFGroupsListMembershipOpportunitiesResponse* result )
 {
     // result.applications = PlayFabGroupsGroupApplication const* const*;
     // result.applicationsCount = uint32_t;
@@ -385,7 +453,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsListMembershipOpportunitiesResp
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsRemoveGroupApplicationRequest(PlayFab::GroupsModels::RemoveGroupApplicationRequest* request)
+void AutoGenGroupsTests::FillRemoveGroupApplicationRequest( PlayFab::GroupsModels::RemoveGroupApplicationRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -394,7 +462,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsRemoveGroupApplicationRequest(PlayFab:
     request->FromJson(inputJson);
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsRemoveGroupInvitationRequest(PlayFab::GroupsModels::RemoveGroupInvitationRequest* request)
+void AutoGenGroupsTests::FillRemoveGroupInvitationRequest( PlayFab::GroupsModels::RemoveGroupInvitationRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -403,7 +471,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsRemoveGroupInvitationRequest(PlayFab::
     request->FromJson(inputJson);
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsRemoveMembersRequest(PlayFab::GroupsModels::RemoveMembersRequest* request)
+void AutoGenGroupsTests::FillRemoveMembersRequest( PlayFab::GroupsModels::RemoveMembersRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -412,7 +480,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsRemoveMembersRequest(PlayFab::GroupsMo
     request->FromJson(inputJson);
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsUnblockEntityRequest(PlayFab::GroupsModels::UnblockEntityRequest* request)
+void AutoGenGroupsTests::FillUnblockEntityRequest( PlayFab::GroupsModels::UnblockEntityRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -421,7 +489,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsUnblockEntityRequest(PlayFab::GroupsMo
     request->FromJson(inputJson);
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsUpdateGroupRequest(PlayFab::GroupsModels::UpdateGroupRequest* request)
+void AutoGenGroupsTests::FillUpdateGroupRequest( PlayFab::GroupsModels::UpdateGroupRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -430,7 +498,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsUpdateGroupRequest(PlayFab::GroupsMode
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsUpdateGroupResponse(PlayFabGroupsUpdateGroupResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsUpdateGroupResponse( PFGroupsUpdateGroupResponse* result )
 {
     // result.operationReason = const char*;
     // result.profileVersion = int32_t;
@@ -440,7 +508,7 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsUpdateGroupResponse(PlayFabGrou
     return S_OK;
 }
 
-void AutoGenGroupsTests::FillPlayFabGroupsUpdateGroupRoleRequest(PlayFab::GroupsModels::UpdateGroupRoleRequest* request)
+void AutoGenGroupsTests::FillUpdateGroupRoleRequest( PlayFab::GroupsModels::UpdateGroupRoleRequest* request )
 {
     // TODO: debug Failing test
     PlayFab::JsonDocument inputJson;
@@ -449,7 +517,7 @@ void AutoGenGroupsTests::FillPlayFabGroupsUpdateGroupRoleRequest(PlayFab::Groups
     request->FromJson(inputJson);
 }
 
-HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsUpdateGroupRoleResponse(PlayFabGroupsUpdateGroupRoleResponse* result)
+HRESULT AutoGenGroupsTests::ValidatePFGroupsUpdateGroupRoleResponse( PFGroupsUpdateGroupRoleResponse* result )
 {
     // result.operationReason = const char*;
     // result.profileVersion = int32_t;
@@ -459,6 +527,6 @@ HRESULT AutoGenGroupsTests::ValidatePlayFabGroupsUpdateGroupRoleResponse(PlayFab
     return S_OK;
 }
 
-
+ 
 
 }

@@ -8,11 +8,12 @@
     "Server-Side Cloud Script": "CloudScript",
     "Friend List Management": "Friends",
     "Custom Server Management": "GameServer",
-    "Platform Specific Methods": "PlatformSpecificMethods",
+    "Platform Specific Methods": "PlatformSpecific",
     "Player Data Management": "PlayerDataManagement",
     "Player Item Management": "PlayerItemManagement",
     "PlayStream Events": "PlayStream",
     "Shared Group Data": "Groups",
-    "Title-Wide Data Management": "TitleDataManagement"
+    "Title-Wide Data Management": "TitleDataManagement",
+    "Object": "Data"
   }
 }

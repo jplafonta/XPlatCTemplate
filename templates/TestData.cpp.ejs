@@ -1,25 +1,19 @@
 #include "TestAppPch.h"
 #include "TestContext.h"
 #include "TestApp.h"
-#include "AutoGen<%- api.name %>Tests.h"
+#include "AutoGen<%- featureGroup.name %>Tests.h"
 #include "XAsyncHelper.h"
-#include <playfab/PlayFabClientAuthApi.h>
-#include <playfab/PlayFabClientApi.h>
-#include <playfab/PlayFabProfilesApi.h>
-#include <playfab/PlayFabAdminApi.h>
-#include <playfab/PlayFabAuthenticationAuthApi.h>
-#include <playfab/PlayFabClientDataModels.h>
 
 <%
 function debugLogProp(varName, propName, propCoutName, property, prefix, padding) 
 {
-    var propType = getPublicPropertyType(property, prefix, false);
-    var propTypeWithConst = getPublicPropertyType(property, prefix, true);
-    if (propType == "PlayFabJsonObject") {%>
+    var propType = getPublicPropertyType(property, false);
+    var propTypeWithConst = getPublicPropertyType(property, true);
+    if (propType == "PFJsonObject") {%>
 <%- padding %>if( <%- varName %>-><%- propName %>.stringValue ) { ss << "  <%- propCoutName %> " << <%- varName %>-><%- propName %>.stringValue; Log(ss); } else { ss << "  <%- propName %> = nullptr"; Log(ss); }<%} else 
-if (propTypeWithConst == "PlayFabClientRegion const*") {%>
+if (propTypeWithConst == "PFClientRegion const*") {%>
 <%- padding %>if( <%- varName %>-><%- propName %> ) { ss << "  <%- propCoutName %> " << (int)*<%- varName %>-><%- propName %>; Log(ss); }<%} else 
-if (propType == "PlayFabClientRegion" || propType == "PlayFabClientAdActivity") {%>
+if (propType == "PFClientRegion" || propType == "PFClientAdActivity") {%>
 <%- padding %>ss << "  <%- propCoutName %> " << (int)<%- varName %>-><%- propName %>; Log(ss);<%} else 
 if (propType == "bool const*" || propType == "const char*") {%>
 <%- padding %>if( <%- varName %>-><%- propName %> ) { ss << "  <%- propCoutName %> " << <%- varName %>-><%- propName %>; Log(ss); } else { ss << "  <%- propCoutName %> = nullptr"; Log(ss); }<%} else {%>
@@ -27,48 +21,36 @@ if (propType == "bool const*" || propType == "const char*") {%>
 }
 
 function debugLogCollection(varName, propName, property, prefix, apiName) {
-    var propType = getPublicPropertyType(property, prefix, false);
+    var propType = getPublicPropertyType(property, false);
 %>    
     ss << "  <%- propName %>Count " << <%- varName %>-><%- propName %>Count; Log(ss);
 
     // <%- propType %>
     for( uint32_t i=0; i<<%- varName %>-><%- propName %>Count; i++ )
     {<%
-        var found = false;
-        for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
+        if( property.isclass && !property.collection )
         {
-            var datatype = sortedClasses[classIdx];
-            if( datatype.name == propType ||
-                prefix + datatype.name == propType)
+            var datatype = property.datatype;
+            for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
             {
-                found = true;
-                for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
-                {
-                    var property = datatype.properties[propIdx];
-                    var isInternal = false;
-                    var innerPropName = getPropertyName(property, isInternal);
-                    var innerPropType = getPublicPropertyType(property, prefix, true);
-                    debugLogProp(varName, propName + "[i]->" + innerPropName, propName + "[\"<<i<<\"]->" + innerPropName, property, prefix, "        ")
-                }
+                var property = datatype.properties[propIdx];
+                var isInternal = false;
+                var innerPropName = getPropertyName(property, isInternal);
+                var innerPropType = getPublicPropertyType(property, prefix, true);
+                debugLogProp(varName, propName + "[i]->" + innerPropName, propName + "[\"<<i<<\"]->" + innerPropName, property, prefix, "        ");
             }
         }
-    if (!found)
-    {
-        if( propType == "PlayFabJsonObject" ) {%>
-        ss << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i].stringValue; Log(ss);
-        <%} else if( 
-            propType == "PlayFabUserDataRecordDictionaryEntry" || 
-            propType == "PlayFabVirtualCurrencyRechargeTimeDictionaryEntry" ||
-            propType == "PlayFabClientSharedGroupDataRecordDictionaryEntry" ||
-            propType == "PlayFabStringDictionaryEntry" || 
-            propType == "PlayFabUint32DictionaryEntry" || 
-            propType == "PlayFabInt32DictionaryEntry" ) {%>
-        ss << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i].key << "=" << <%- varName + "->" + propName %>[i].value; Log(ss);
-        <%}
-        else {%>
-        ss << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i]; Log(ss); // <%- propType %><%  
+        else
+        {
+            if( propType == "PFJsonObject" ) {%>
+            ss << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i].stringValue; Log(ss);
+            <%} else if( property.collection === "map") {%>
+            ss << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i].key << "=" << <%- varName + "->" + propName %>[i].value; Log(ss);
+            <%}
+            else {%>
+            ss << "  <%- varName + "->" + propName %>[" << i << "]:" << <%- varName + "->" + propName %>[i]; Log(ss); // <%- propType %><%  
+            }
         }
-    }
         %>
     } <%
 }
@@ -81,49 +63,34 @@ var hasPrereqValidateBeenDefinedMap = {};
 for (var i = 0; i < prerequisiteApis.length; i++) 
 {
     var call = prerequisiteApis[i];
-    var asyncName = "PlayFab" + api.name + call.name + "Async"; 
-    var testName = "Test" + api.name + call.name;
+    var testName = "Test" + featureGroup.name + call.name;
     let testStatusListStatus = testStatusMap[testName];
     let passingWithDataTest = (testStatusListStatus == "PassingWithData");
     let passingButNoDataTest = (testStatusListStatus == "PassingButNoData");
     let failingTest = (testStatusListStatus == "Failing");
     let crashingTest = (testStatusListStatus == "Crashing");
     var addDebugMarker = (!passingWithDataTest);
-    if( !(call.request in hasPrereqFillBeenDefinedMap) && call.request != "void" ) {  // call.name == "AcceptTrade"
-        hasPrereqFillBeenDefinedMap[call.request] = true;
-%>void AutoGen<%- api.name %>Tests::FillPlayFabPrerequisite<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request )
+    if( call.requestDatatype && !(call.requestDatatype.name in hasPrereqFillBeenDefinedMap)) {  // call.name == "AcceptTrade"
+        hasPrereqFillBeenDefinedMap[call.requestDatatype] = true;
+        let requestNamespace = "PlayFab::" + (call.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
+%>void AutoGen<%- featureGroup.name %>Tests::FillPrerequisite<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request )
 {<% 
-    var found = false;
-    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
-    {
-        var datatype = sortedClasses[classIdx];
-        if( datatype.name == call.request )
-        {
-            found = true; 
-%><% if (addDebugMarker) { %>
+    if (addDebugMarker) { %>
     // TODO: debug <%- testStatusListStatus %> prereq<% } %>
     PlayFab::JsonDocument inputJson;
-    inputJson.Parse( <%- getRequestExample(api, call) %> );
-    request->FromJson(inputJson);<%
- } }
-if( !found ) { throw Error('Not found ' + call.request) } %>
+    inputJson.Parse( <%- getRequestExample(featureGroup, call) %> );
+    request->FromJson(inputJson);
 }
 
-<% } if (!(call.result in hasPrereqValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") {
+<% } if (call.resultDatatype && !(call.resultDatatype.name in hasPrereqValidateBeenDefinedMap)) {
     hasPrereqValidateBeenDefinedMap[call.result] = true;
-%>HRESULT AutoGen<%- api.name %>Tests::StorePlayFabPrerequisite<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result )
-{<% 
-    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
-    {
-        var datatype = sortedClasses[classIdx];
-        if( datatype.name == call.result )
-        {
-%>
+%>HRESULT AutoGen<%- featureGroup.name %>Tests::StorePrerequisite<%- call.resultDatatype. prefix + call.resultDatatype.name %>( <%- call.resultDatatype. prefix + call.resultDatatype.name %>* result )
+{
     // TODO: store required fields
 <%
-    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
+    for (var propIdx = 0; propIdx < call.resultDatatype.properties.length; propIdx++) 
     {
-        var property = datatype.properties[propIdx];
+        var property = call.resultDatatype.properties[propIdx];
         var isInternal = false;
         var type = getPublicPropertyType(property, prefix);
         var propName = getPropertyName(property, isInternal);
@@ -133,9 +100,8 @@ if( !found ) { throw Error('Not found ' + call.request) } %>
         {
 %>    <%- "Data()->m_" + propName + "Count = result->" + propName + "Count;" %>
 <%
-         }
-      }
-} }%>
+        } // end if
+    } // end for %>
     return S_OK;
 }
 
@@ -143,63 +109,45 @@ if( !found ) { throw Error('Not found ' + call.request) } %>
 <% 
 var hasFillBeenDefinedMap = {};
 var hasValidateBeenDefinedMap = {};
-for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
+for (var i = 0; i < featureGroup.calls.length; i++) 
 {
-    var call = categorizedApi.otherCalls[i];
-    var asyncName = "PlayFab" + api.name + call.name + "Async"; 
-    var testName = "Test" + api.name + call.name;
+    var call = featureGroup.calls[i];
+    var testName = "Test" + featureGroup.name + call.name;
     let testStatusListStatus = testStatusMap[testName];
     let passingWithDataTest = (testStatusListStatus == "PassingWithData");
     let passingButNoDataTest = (testStatusListStatus == "PassingButNoData");
     let failingTest = (testStatusListStatus == "Failing");
     let crashingTest = (testStatusListStatus == "Crashing");
     var addDebugMarker = (!passingWithDataTest);
-    if( !(call.request in hasFillBeenDefinedMap) && call.request != "void" ) {  // call.name == "AcceptTrade"
+    if(call.requestDatatype && !(call.requestDatatype.name in hasFillBeenDefinedMap)) {  // call.name == "AcceptTrade"
         hasFillBeenDefinedMap[call.request] = true;
-%>void AutoGen<%- api.name %>Tests::FillPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request )
-{<% 
-    var found = false;
-    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
-    {
-        var datatype = sortedClasses[classIdx];
-        if( datatype.name == call.request )
-        {
-            found = true; 
-%><% if (addDebugMarker) { %>
+        let requestNamespace = "PlayFab::" + (call.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
+%>void AutoGen<%- featureGroup.name %>Tests::Fill<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request )
+{<% if (addDebugMarker) { %>
     // TODO: debug <%- testStatusListStatus %> test<% } %>
     PlayFab::JsonDocument inputJson;
-    inputJson.Parse( <%- getRequestExample(api, call) %> );
-    request->FromJson(inputJson);<%
- } }
-if( !found ) { throw Error('Not found ' + call.request) } %>
+    inputJson.Parse( <%- getRequestExample(featureGroup, call) %> );
+    request->FromJson(inputJson);
 }
 
-<% } if (!(call.result in hasValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") {
+<% } if (call.resultDatatype && !(call.resultDatatype.name in hasValidateBeenDefinedMap)) {
     hasValidateBeenDefinedMap[call.result] = true;
-%>HRESULT AutoGen<%- api.name %>Tests::ValidatePlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result )
-{<% 
-    for (var classIdx = 0; classIdx < sortedClasses.length; classIdx++) 
+%>HRESULT AutoGen<%- featureGroup.name %>Tests::Validate<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result )
+{
+<% for (var propIdx = 0; propIdx < call.resultDatatype.properties.length; propIdx++) 
     {
-        var datatype = sortedClasses[classIdx];
-        if( datatype.name == call.result )
-        {
-%>
-<%
-    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) 
-    {
-        var property = datatype.properties[propIdx];
+        var property = call.resultDatatype.properties[propIdx];
         var isInternal = false;
-        var type = getPublicPropertyType(property, prefix);
+        var type = getPublicPropertyType(property);
         var propName = getPropertyName(property, isInternal);
 %>    // <%- "result." + propName + " = " + type + ";" %>
 <%
-        if (property.collection && !(type === "PlayFabJsonObject")) 
+        if (property.collection && !(type === "PFJsonObject")) 
         {
 %>    // <%- "result." + propName + "Count = " + "uint32_t;" %>
 <%
-         }
-      }
-} }%>
+        }
+      } %>
     UNREFERENCED_PARAMETER(result);
     return S_OK;
 }

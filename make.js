@@ -86,8 +86,8 @@ function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
     var locals = {
         featureGroup: featureGroup,
         prefix: prefix,
-        globalPrefix: globalPrefix, 
-        //prerequisiteApis: prerequisiteApis[api.name],
+        globalPrefix: globalPrefix,
+        prerequisiteApis: prerequisiteApis[featureGroup.name],
         getBaseTypes: getBaseTypes,
         getPropertyDefinition: getPropertyDefinition,
         getPropertyFromJson: getPropertyFromJson,
@@ -134,6 +134,19 @@ function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
 
         var publicApis = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_Api.cpp.ejs"));
         writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, "PlayFab" + featureGroup.name + "Api.cpp"), publicApis(locals));
+
+        // Test files
+        var testHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.h.ejs"));
+        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + featureGroup.name + "Tests.h"), testHeader(locals));
+
+        var testMain = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.cpp.ejs"));
+        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + featureGroup.name + "Tests.cpp"), testMain(locals));
+
+        var testLogging = getCompiledTemplate(path.resolve(sourceDir, "templates/TestLog.cpp.ejs"));
+        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + featureGroup.name + "TestLog.cpp"), testLogging(locals));
+
+        var testData = getCompiledTemplate(path.resolve(sourceDir, "templates/TestData.cpp.ejs"));
+        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + featureGroup.name + "TestData.cpp.autogen"), testData(locals));
     }
 }
 
@@ -416,9 +429,8 @@ function populateSDKFeatureGroups(apis) {
 
             var call = api.calls[callIndex];
 
-            // Mangle name of "Classic" API calls to avoid conflicts. Note that this is in addition to the global & featureGroup prefixes that will
-            // be added to the public SDK APIs.
-            // TODO should we only do this when there is a conflict? or for all classic APIs?
+            // Modify name of "Classic" API calls to avoid conflicts & clarify that they are classic APIs.
+            // Note that this is in addition to the global & featureGroup prefixes that will be added to the public SDK APIs.
             if (api.name === "Client" || api.name === "Server" || api.name === "Admin") {
                 call.name = api.name + call.name;
             }
@@ -1055,9 +1067,9 @@ function jsonEscapeQuotes(input) {
     return input;
 }
 
-function getCorrectedRequestExample(api, apiCall) {
-    var output = JSON.parse(apiCall.requestExample);
-    checkReplacements(api, output);
+function getCorrectedRequestExample(featureGroup, call) {
+    var output = JSON.parse(call.requestExample);
+    checkReplacements(featureGroup, output);
     return "\"" + jsonEscapeQuotes(jsonEscape(JSON.stringify(output, null, 2))) + "\"";
 }
 
@@ -1068,14 +1080,14 @@ function doReplace(obj, paramName, newValue) {
     }
 };
 
-function checkReplacements(api, obj) {
+function checkReplacements(featureGroup, obj) {
     for (var replaceCategory in propertyReplacements) {
         if (replaceCategory === "generic") {
             for (var genReplaceName1 in propertyReplacements[replaceCategory]) {
                 doReplace(obj, genReplaceName1, propertyReplacements[replaceCategory][genReplaceName1]);
             }
         }
-        if (replaceCategory === api.name) {
+        if (replaceCategory === featureGroup.name) {
             for (var apiReplaceName in propertyReplacements[replaceCategory]) {
                 if (apiReplaceName === "generic") {
                     for (var genReplaceName2 in propertyReplacements[replaceCategory][apiReplaceName]) {
@@ -1088,17 +1100,17 @@ function checkReplacements(api, obj) {
     }
 }
 
-function getRequestExample(api, apiCall) {
+function getRequestExample(featureGroup, call) {
     var msg = null;
-    if (apiCall.requestExample.length > 0 && apiCall.requestExample.indexOf("{") >= 0) {
-        if (apiCall.requestExample.indexOf("\\\"") === -1) { // I can't handle json in a string in json in a string...
-            return getCorrectedRequestExample(api, apiCall);
+    if (call.requestExample.length > 0 && call.requestExample.indexOf("{") >= 0) {
+        if (call.requestExample.indexOf("\\\"") === -1) { // I can't handle json in a string in json in a string...
+            return getCorrectedRequestExample(featureGroup, call);
         } else {
             msg = "CANNOT PARSE EXAMPLE BODY: ";
         }
     }
 
-    var props = api.datatypes[apiCall.request].properties;
+    var props = call.requestDatatype.properties;
     var output = {};
     for (var p = 0; p < props.length; p++) {
         output[props[p].name] = props[p].jsontype;
@@ -1107,7 +1119,7 @@ function getRequestExample(api, apiCall) {
     if (msg === null) {
         msg = "AUTO GENERATED BODY FOR: ";
     }
-    console.log(msg + api.name + "." + apiCall.name);
+    console.log(msg + featureGroup.name + "." + call.name);
     // console.log("    " + JSON.stringify(output, null, 2));
     return "\"" + jsonEscapeQuotes(jsonEscape(JSON.stringify(output, null, 2))) + "\"";;
 }
