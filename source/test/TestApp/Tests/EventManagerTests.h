@@ -18,7 +18,7 @@ protected:
 
 public:
     PlayFabStateHandle stateHandle{ nullptr };
-    PlayFabEntityHandle entityHandle{ nullptr };
+    PFEntityHandle entityHandle{ nullptr };
 
     void ClassSetUp() override;
     void ClassTearDown() override;

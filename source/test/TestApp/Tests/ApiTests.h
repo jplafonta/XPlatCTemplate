@@ -33,8 +33,8 @@ protected:
     void AddTests() override;
 
 public:
-    PlayFabStateHandle stateHandle{ nullptr };
-    PlayFabEntityHandle entityHandle{ nullptr };
+    PFStateHandle stateHandle{ nullptr };
+    PFEntityHandle entityHandle{ nullptr };
 
     void ClassSetUp() override;
     void ClassTearDown() override;

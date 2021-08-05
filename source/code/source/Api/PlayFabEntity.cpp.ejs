@@ -5,38 +5,38 @@
 
 using namespace PlayFab;
 
-HRESULT PlayFabGetAuthResult(
+HRESULT <%- prefix %>GetAuthResult(
     _In_ XAsyncBlock* async,
-    _Out_ PlayFabEntityHandle* entityHandle
+    _Out_ <%- prefix %>EntityHandle* entityHandle
 ) noexcept
 {
-    return XAsyncGetResult(async, nullptr, sizeof(PlayFabEntityHandle), entityHandle, nullptr);
+    return XAsyncGetResult(async, nullptr, sizeof(<%- prefix %>EntityHandle), entityHandle, nullptr);
 }
 
-HRESULT PlayFabEntityDuplicateHandle(
-    _In_ PlayFabEntityHandle entityHandle,
-    _Out_ PlayFabEntityHandle* duplicatedEntityHandle
+HRESULT <%- prefix %>EntityDuplicateHandle(
+    _In_ <%- prefix %>EntityHandle entityHandle,
+    _Out_ <%- prefix %>EntityHandle* duplicatedEntityHandle
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
     RETURN_HR_INVALIDARG_IF_NULL(duplicatedEntityHandle);
 
-    *duplicatedEntityHandle = MakeUnique<PlayFabEntity>(*entityHandle).release();
+    *duplicatedEntityHandle = MakeUnique<<%- prefix %>Entity>(*entityHandle).release();
     return S_OK;
 }
 
-void PlayFabEntityCloseHandle(
-    _In_ PlayFabEntityHandle entityHandle
+void <%- prefix %>EntityCloseHandle(
+    _In_ <%- prefix %>EntityHandle entityHandle
 ) noexcept
 {
-    UniquePtr<PlayFabEntity>{ entityHandle };
+    UniquePtr<<%- prefix %>Entity>{ entityHandle };
 }
 
-HRESULT PlayFabEntityRegisterTokenRefreshedCallback(
-    _In_ PlayFabEntityHandle entityHandle,
-    _In_ PlayFabEntityTokenRefreshedCallback* callback,
+HRESULT <%- prefix %>EntityRegisterTokenRefreshedCallback(
+    _In_ <%- prefix %>EntityHandle entityHandle,
+    _In_ <%- prefix %>EntityTokenRefreshedCallback* callback,
     _In_opt_ void* context,
-    _Out_ PlayFabRegistrationToken* token
+    _Out_ <%- prefix %>RegistrationToken* token
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
@@ -51,9 +51,9 @@ HRESULT PlayFabEntityRegisterTokenRefreshedCallback(
     return S_OK;
 }
 
-HRESULT PlayFabEntityUnregisterTokenRefreshedCallback(
-    _In_ PlayFabEntityHandle entityHandle,
-    _In_ PlayFabRegistrationToken token
+HRESULT <%- prefix %>EntityUnregisterTokenRefreshedCallback(
+    _In_ <%- prefix %>EntityHandle entityHandle,
+    _In_ <%- prefix %>RegistrationToken token
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
@@ -62,9 +62,9 @@ HRESULT PlayFabEntityUnregisterTokenRefreshedCallback(
     return S_OK;
 }
 
-HRESULT PlayFabEntityGetEntityTokenAsync(
-    _In_ PlayFabEntityHandle entityHandle,
-    _In_ const PlayFabAuthenticationGetEntityTokenRequest* request,
+HRESULT <%- prefix %>EntityGetEntityTokenAsync(
+    _In_ <%- prefix %>EntityHandle entityHandle,
+    _In_ const <%- prefix %>AuthenticationGetEntityTokenRequest* request,
     _Inout_ XAsyncBlock* async
 ) noexcept
 {
@@ -74,8 +74,8 @@ HRESULT PlayFabEntityGetEntityTokenAsync(
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
 
-HRESULT PlayFabEntityGetPlayFabId(
-    _In_ PlayFabEntityHandle entityHandle,
+HRESULT <%- prefix %>EntityGetPlayFabId(
+    _In_ <%- prefix %>EntityHandle entityHandle,
     _Outptr_ const char** playFabId
 ) noexcept
 {
@@ -86,8 +86,8 @@ HRESULT PlayFabEntityGetPlayFabId(
     return S_OK;
 }
 
-HRESULT PlayFabEntityGetEntityId(
-    _In_ PlayFabEntityHandle entityHandle,
+HRESULT <%- prefix %>EntityGetEntityId(
+    _In_ <%- prefix %>EntityHandle entityHandle,
     _Outptr_ const char** entityId
 ) noexcept
 {
@@ -99,8 +99,8 @@ HRESULT PlayFabEntityGetEntityId(
 }
 
 
-HRESULT PlayFabEntityGetEntityType(
-    _In_ PlayFabEntityHandle entityHandle,
+HRESULT <%- prefix %>EntityGetEntityType(
+    _In_ <%- prefix %>EntityHandle entityHandle,
     _Outptr_ const char** entityType
 ) noexcept
 {
@@ -111,9 +111,9 @@ HRESULT PlayFabEntityGetEntityType(
     return S_OK;
 }
 
-HRESULT PlayFabEntityGetCachedEntityToken(
-    _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_ const PlayFabEntityToken** entityToken
+HRESULT <%- prefix %>EntityGetCachedEntityToken(
+    _In_ <%- prefix %>EntityHandle entityHandle,
+    _Outptr_ const <%- prefix %>EntityToken** entityToken
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
@@ -123,9 +123,9 @@ HRESULT PlayFabEntityGetCachedEntityToken(
     return S_OK;
 }
 
-HRESULT PlayFabEntityGetPlayerCombinedInfo(
-    _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_result_maybenull_ const PlayFabGetPlayerCombinedInfoResultPayload** playerCombinedInfo
+HRESULT <%- prefix %>EntityGetPlayerCombinedInfo(
+    _In_ <%- prefix %>EntityHandle entityHandle,
+    _Outptr_result_maybenull_ const <%- prefix %>GetPlayerCombinedInfoResultPayload** playerCombinedInfo
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
@@ -135,8 +135,8 @@ HRESULT PlayFabEntityGetPlayerCombinedInfo(
     return S_OK;
 }
 
-HRESULT PlayFabEntityGetLastLoginTime(
-    _In_ PlayFabEntityHandle entityHandle,
+HRESULT <%- prefix %>EntityGetLastLoginTime(
+    _In_ <%- prefix %>EntityHandle entityHandle,
     _Outptr_result_maybenull_ const time_t** lastLoginTime
 ) noexcept
 {
@@ -147,9 +147,9 @@ HRESULT PlayFabEntityGetLastLoginTime(
     return S_OK;
 }
 
-HRESULT PlayFabEntityGetUserSettings(
-    _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_result_maybenull_ const PlayFabUserSettings** userSettings
+HRESULT <%- prefix %>EntityGetUserSettings(
+    _In_ <%- prefix %>EntityHandle entityHandle,
+    _Outptr_result_maybenull_ const <%- prefix %>AuthenticationUserSettings** userSettings
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
@@ -159,9 +159,9 @@ HRESULT PlayFabEntityGetUserSettings(
     return S_OK;
 }
 
-HRESULT PlayFabEntityGetTreatmentAssignment(
-    _In_ PlayFabEntityHandle entityHandle,
-    _Outptr_result_maybenull_ const PlayFabTreatmentAssignment** treatmentAssignment
+HRESULT <%- prefix %>EntityGetTreatmentAssignment(
+    _In_ <%- prefix %>EntityHandle entityHandle,
+    _Outptr_result_maybenull_ const <%- prefix %>TreatmentAssignment** treatmentAssignment
 ) noexcept 
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);

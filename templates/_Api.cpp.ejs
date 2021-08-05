@@ -1,63 +1,181 @@
 #include "stdafx.h"
-#include "<%- api.name %>Api.h"
+#include "<%- featureGroup.name %>Api.h"<%
+if (featureGroup.name === "Authentication") { %>
+#include "PlatformUser.h"
+#include "Entity.h"<%
+} %>
 
 namespace PlayFab
 {
 
-using namespace <%- api.name %>Models;
+using namespace <%- featureGroup.name %>Models;
 
-<%- api.name %>API::<%- api.name %>API(SharedPtr<HttpClient const> httpClient<%
-if (categorizedApi.otherCallsRequireSecretKey) {
-%>, SharedPtr<String const> secretKey) :
+<%- featureGroup.name %>API::<%- featureGroup.name %>API(SharedPtr<HttpClient const> httpClient, SharedPtr<AuthTokens const> tokens) :
     m_httpClient{ std::move(httpClient) },
-    m_secretKey{ std::move(secretKey) }<%
-} else {
-%>, SharedPtr<AuthTokens const> tokens) :
-    m_httpClient{ std::move(httpClient) },
-    m_tokens{ std::move(tokens) }<%
-} %>
+    m_tokens{ std::move(tokens) }
 {
 }
-<%for (var i = 0; i < categorizedApi.otherCalls.length; i++) {
-    var call = categorizedApi.otherCalls[i];
-    var constModifier = call.auth === "None" ? "" : " const";
-    var resultT = call.result === "void" ? "AsyncOp<void>" : "AsyncOp<" + api.name + "Models::" + call.result + ">";
-    var requestParam = call.request === "void" ? "" : "const PlayFab" + api.name + call.request + "& request,\n    ";
-    var httpClientParam = call.auth === "None" ? "SharedPtr<HttpClient const> httpClient,\n    " : ""; 
-    var httpClient = call.auth === "None" ? "httpClient" : "m_httpClient";
-    var requestBody = call.request === "void" ? "JsonValue{ rapidjson::kNullType }" : "JsonUtils::ToJson(request)"; %>
-<%- resultT %> <%- api.name %>API::<%- call.name %>(
-    <%- requestParam %><%- httpClientParam %>const TaskQueue& queue
+<%for (var i = 0; i < featureGroup.calls.length; i++) {
+    var call = featureGroup.calls[i];
+    var constModifier = call.entityRequired ? " const" : "";
+
+    var resultType = "void";
+    if (call.entityReturned) {
+        resultType = "SharedPtr<Entity>";
+    } else if (call.resultDatatype) {
+        resultType = call.resultDatatype.name;
+    }
+    var requestParam = call.requestDatatype ? "const " + call.requestDatatype.prefix + call.requestDatatype.name + "& request,\n    " : ""; 
+    var secretKeyParam = call.auth === "SecretKey" ? "SharedPtr<String const> secretKey,\n    " : "";
+    var httpClientParam = call.entityRequired ? "" : "SharedPtr<HttpClient const> httpClient,\n    ";
+    var httpClient = call.entityRequired ? "m_httpClient" : "httpClient";
+    var requestBody = call.requestDatatype ? "JsonValue requestBody{ JsonUtils::ToJson(request) };" : "JsonValue requestBody{ rapidjson::kNullType };";
+
+%>
+AsyncOp<<%- resultType %>> <%- featureGroup.name %>API::<%- call.name %>(
+    <%- requestParam %><%- secretKeyParam %><%- httpClientParam %>const TaskQueue& queue
 )<%- constModifier %>
 {
-    UnorderedMap<String, String> headers;
-    <%- addAuthHeader(call, "    ") %>
+    const char* path{ "<%- call.url %>" };
+    <%- requestBody %>
+    UnorderedMap<String, String> headers;<%- addAuthHeader(call) %>
 
-    return <%- httpClient %>->MakePostRequest(
-        "<%- call.url %>",
+    auto requestOp = <%- httpClient %>->MakePostRequest(
+        path,
         headers,
-        <%- requestBody %>,
+        requestBody,
         queue
-    ).Then([](Result<ServiceResponse> result) -> Result<<%- call.result %>>
+    );
+<%  if (call.entityReturned) { %>
+    // Remember LoginContext so we can refresh tokens
+    auto loginContext = MakeShared<LoginContext>(path, std::move(requestBody), std::move(headers));
+
+    return requestOp.Then([ httpClient, loginContext ](Result<ServiceResponse> result) -> Result<SharedPtr<Entity>><%
+    } else { %>
+    return requestOp.Then([](Result<ServiceResponse> result) -> Result<<%- resultType %>><%
+    } %>
     {
         RETURN_IF_FAILED(result.hr);
 
         auto serviceResponse = result.ExtractPayload();
         if (serviceResponse.HttpCode == 200)
         {<% 
-    if (call.result === "void") { %>
-            return S_OK;<%
-    } else { %>
-            <%- call.result %> resultModel;
-            resultModel.FromJson(serviceResponse.Data);
+    if (call.resultDatatype) { %>
+            <%- call.resultDatatype.name %> resultModel;
+            resultModel.FromJson(serviceResponse.Data);<%
+        if (call.entityReturned) { %>
+            return MakeShared<Entity>(httpClient, loginContext, std::move(resultModel));<% 
+        } else { %>
             return resultModel;<%
+        }
+    } else { %>
+            return S_OK;<%
     } %>
         }
         else
-        {
-            return Result<<%- call.result %>>{ ServiceErrorToHR(serviceResponse.ErrorCode), std::move(serviceResponse.ErrorMessage) };
+        {<%
+    if (call.entityReturned) { %>
+            return Result<SharedPtr<Entity>>{ ServiceErrorToHR(serviceResponse.ErrorCode), std::move(serviceResponse.ErrorMessage) };<% 
+    } else { %>
+            return Result<<%- resultType %>>{ ServiceErrorToHR(serviceResponse.ErrorCode), std::move(serviceResponse.ErrorMessage) };<%
+    } %>
         }
     });
 }
-<% } %>
+<%
+// Explicitly add LoginWithXUser implementation alongside Client/LoginWithXbox
+if (call.url === "/Client/LoginWithXbox") { %>
+#if HC_PLATFORM == HC_PLATFORM_GDK
+
+class XUserLoginContext : public LoginContext
+{
+public:
+    XUserLoginContext(XUser&& platformUser, const PFAuthenticationLoginWithXUserRequest& request);
+
+    AsyncOp<JsonValue> GetRequestBody(const TaskQueue& queue) const override;
+
+private:
+    XUser m_platformUser;
+    ClientLoginWithXboxRequest m_request;
+};
+
+XUserLoginContext::XUserLoginContext(XUser&& platformUser, const PFAuthenticationLoginWithXUserRequest& request)
+    : LoginContext{ "/Client/LoginWithXbox" },
+    m_platformUser{ std::move(platformUser) },
+    m_request{ PFAuthenticationClientLoginWithXboxRequest
+    {
+        request.createAccount,
+        request.customTags,
+        request.customTagsCount,
+        nullptr, // encryptedRequest
+        request.infoRequestParameters,
+        request.playerSecret,
+        request.titleId,
+        nullptr // XboxToken, will be populated later
+    }
+    }
+{
+}
+
+AsyncOp<JsonValue> XUserLoginContext::GetRequestBody(const TaskQueue& queue) const
+{
+    return m_platformUser.GetTokenAndSignature(
+        XUserGetTokenAndSignatureOptions::None,
+        "POST",
+        "https://playfabapi.com/",
+        UnorderedMap<String, String>{},
+        0,
+        nullptr,
+        queue
+    ).Then([request{ this->m_request }](Result<TokenAndSignature> getTokenResult) mutable -> Result<JsonValue>
+    {
+        RETURN_IF_FAILED(getTokenResult.hr);
+        request.xboxToken = getTokenResult.Payload().token.data();
+        return request.ToJson();
+    });
+}
+
+AsyncOp<SharedPtr<Entity>> AuthenticationAPI::LoginWithXUser(
+    const PFAuthenticationLoginWithXUserRequest& request,
+    SharedPtr<HttpClient const> httpClient,
+    const TaskQueue& queue
+)
+{
+    auto wrapUserHandleResult = XUser::WrapHandle(request.userHandle);
+    RETURN_IF_FAILED(wrapUserHandleResult.hr);
+
+    auto loginContext = MakeShared<XUserLoginContext>(wrapUserHandleResult.ExtractPayload(), request);
+
+    return loginContext->GetRequestBody(queue.DeriveWorkerQueue()).Then([ httpClient, queue = TaskQueue{ queue }, loginContext](Result<JsonValue> requestBodyResult) -> AsyncOp<ServiceResponse>
+    {
+        RETURN_IF_FAILED(requestBodyResult.hr);
+
+        return httpClient->MakePostRequest(
+            loginContext->RequestPath(),
+            UnorderedMap<String, String>{},
+            requestBodyResult.Payload(),
+            queue
+        );
+
+    }).Then([ httpClient, loginContext ](Result<ServiceResponse> result) -> Result<SharedPtr<Entity>>
+    {
+        RETURN_IF_FAILED(result.hr);
+
+        auto serviceResponse = result.ExtractPayload();
+        if (serviceResponse.HttpCode == 200)
+        {
+            LoginResult resultModel;
+            resultModel.FromJson(serviceResponse.Data);
+            return MakeShared<Entity>(httpClient, loginContext, std::move(resultModel));
+        }
+        else
+        {
+            return Result<SharedPtr<Entity>>{ ServiceErrorToHR(serviceResponse.ErrorCode), std::move(serviceResponse.ErrorMessage) };
+        }
+    });
+}
+#endif
+<% } // end if
+} // end for  %>
+
 }

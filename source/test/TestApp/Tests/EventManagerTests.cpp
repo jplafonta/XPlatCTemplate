@@ -201,7 +201,7 @@ void EventManagerTests::SetUp(TestContext& testContext)
         hr = XAsyncGetStatus(&async, true);
         if (SUCCEEDED(hr))
         {
-            PlayFabGetAuthResult(&async, &entityHandle);
+            PFGetAuthResult(&async, &entityHandle);
         }
     }
 

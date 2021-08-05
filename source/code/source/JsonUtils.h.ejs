@@ -42,7 +42,7 @@ JsonValue ToJson(const char* string);
 
 JsonValue ToJson(const String& string);
 
-JsonValue ToJson(const PlayFabJsonObject& jsonObject);
+JsonValue ToJson(const <%- prefix %>JsonObject& jsonObject);
 
 JsonValue ToJson(time_t value, bool convertToIso8601String = false);
 
@@ -137,7 +137,7 @@ void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const
 template <typename EntryT, typename std::enable_if_t<Detail::IsDictionaryEntry<EntryT>::value>* = 0>
 void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const EntryT* associativeArray, uint32_t arrayCount);
 
-void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const PlayFabDateTimeDictionaryEntry* associativeArray, uint32_t arrayCount, bool convertToIso8601String = false);
+void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const <%- prefix %>DateTimeDictionaryEntry* associativeArray, uint32_t arrayCount, bool convertToIso8601String = false);
 
 // Adds a member if a member with specificed name doesn't exist or set value if it does
 template <typename T>
@@ -157,7 +157,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, T& output);
 template <typename T, typename PointerT>
 void ObjectGetMember(const JsonValue& jsonObject, const char* name, T& output, PointerT*& outputPtr);
 
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, JsonObject& output, PlayFabJsonObject& outputPtr);
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, JsonObject& output, <%- prefix %>JsonObject& outputPtr);
 
 // Optional string fields are mapped to String rather than optional<String> in client models,
 // so this method allows the field to be missing and leaves the output string unmodified.

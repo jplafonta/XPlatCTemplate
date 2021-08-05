@@ -1,6 +1,6 @@
 #pragma once
 
-#include "<%- api.name %>DataModels.h"
+#include "<%- featureGroup.name %>DataModels.h"
 #include "AuthTokens.h"
 #include "HttpClient.h"
 #include "TaskQueue.h"
@@ -8,37 +8,50 @@
 namespace PlayFab
 {
 
-class <%- api.name %>API
+class Entity;
+
+class <%- featureGroup.name %>API
 {
 public:
-    <%- api.name %>API(SharedPtr<HttpClient const> httpClient<%
-if (categorizedApi.otherCallsRequireSecretKey) { 
-%>, SharedPtr<String const> secretKey<%
-} else { 
-%>, SharedPtr<AuthTokens const> tokens<%
-} %>);
-    <%- api.name %>API(const <%- api.name %>API& source) = delete;
-    <%- api.name %>API& operator=(const <%- api.name %>API& source) = delete;
-    ~<%- api.name %>API() = default;
+    <%- featureGroup.name %>API(SharedPtr<HttpClient const> httpClient, SharedPtr<AuthTokens const> tokens);
+    <%- featureGroup.name %>API(const <%- featureGroup.name %>API& source) = delete;
+    <%- featureGroup.name %>API& operator=(const <%- featureGroup.name %>API& source) = delete;
+    ~<%- featureGroup.name %>API() = default;
 
     // ------------ Generated API calls<%
-for (var i = 0; i < categorizedApi.otherCalls.length; i++) {
-    var call = categorizedApi.otherCalls[i];
-    var static = call.auth === "None" ? "static " : ""; // Calls which don't require auth can be static
-    var constModifier = call.auth === "None" ? "" : " const";
-    var resultT = call.result === "void" ? "AsyncOp<void>" : "AsyncOp<" + api.name + "Models::" + call.result + ">";
-    var requestParam = call.request === "void" ? "" : "const PlayFab" + api.name + call.request + "& request, "; 
-    var httpClientParam = call.auth === "None" ? "SharedPtr<HttpClient const> httpClient, " : ""; %>
-    <%- static %><%- resultT %> <%- call.name %>(<%- requestParam %><%- httpClientParam %>const TaskQueue& queue)<%- constModifier %>; <%
-} %>
+for (var i = 0; i < featureGroup.calls.length; i++) {
+    var call = featureGroup.calls[i];
+    var staticModifier = call.entityRequired ? "" : "static ";
+    var constModifier = call.entityRequired ? " const" : "";
+
+    var resultType = "void";
+    if (call.entityReturned) {
+        resultType = "SharedPtr<Entity>";
+    } else if (call.resultDatatype) {
+        if (call.resultDatatype.isShared) {
+            resultType = call.resultDatatype.name;
+        } else {
+            resultType = featureGroup.name + "Models::" + call.resultDatatype.name;
+        }
+    }
+    var requestParam = call.requestDatatype ? "const " + call.requestDatatype.prefix + call.requestDatatype.name + "& request, " : ""; 
+    var secretKeyParam = call.auth === "SecretKey" ? "SharedPtr<String const> secretKey, " : "";
+    var httpClientParam = call.entityRequired ? "" : "SharedPtr<HttpClient const> httpClient, ";
+
+%>
+    <%- staticModifier %>AsyncOp<<%- resultType %>> <%- call.name %>(<%- requestParam %><%- secretKeyParam %><%- httpClientParam %>const TaskQueue& queue)<%- constModifier %>;<%
+
+    // Eplicitly add LoginWithXUser API alongside Client/LoginWithXbox
+    if (call.url === "/Client/LoginWithXbox") { %>
+#if HC_PLATFORM == HC_PLATFORM_GDK
+    static AsyncOp<SharedPtr<Entity>> LoginWithXUser(const PFAuthenticationLoginWithXUserRequest& request, SharedPtr<HttpClient const> httpClient, const TaskQueue& queue);
+#endif<%
+    } // end if
+} // end for %>
 
 private:
-    SharedPtr<HttpClient const> m_httpClient;<%
-if (categorizedApi.otherCallsRequireSecretKey) { %>
-    SharedPtr<String const> m_secretKey;<%
-} else { %>
-    SharedPtr<AuthTokens const> m_tokens;<%
-} %>
+    SharedPtr<HttpClient const> m_httpClient;
+    SharedPtr<AuthTokens const> m_tokens;
 };
 
 }

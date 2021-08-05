@@ -58,7 +58,7 @@ Result<uint32_t> QoSSocket::PingServer(const char* address)
     // For QoS measurement purposes, consider a timeout an error
     if (latencyMs >= m_timeout)
     {
-        return E_PLAYFAB_INTERNAL_QOSTIMEOUTEXCEEDED;
+        return E_PF_INTERNAL_QOSTIMEOUTEXCEEDED;
     }
 
     // Expected QoS server response should have first two bytes set to 0

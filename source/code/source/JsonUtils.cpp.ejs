@@ -74,7 +74,7 @@ JsonValue ToJson(const String& string)
     return JsonValue{ string.data(), allocator };
 }
 
-JsonValue ToJson(const PlayFabJsonObject& jsonObject)
+JsonValue ToJson(const <%- prefix %>JsonObject& jsonObject)
 {
     JsonDocument document{ &allocator };
     document.Parse(jsonObject.stringValue);
@@ -206,7 +206,7 @@ void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const
     ObjectAddMember(jsonObject, name, vector.data(), static_cast<uint32_t>(vector.size()), convertToIso8601String);
 }
 
-void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const PlayFabDateTimeDictionaryEntry* associativeArray, uint32_t arrayCount, bool convertToIso8601String)
+void ObjectAddMember(JsonValue& jsonObject, JsonValue::StringRefType name, const <%- prefix %>DateTimeDictionaryEntry* associativeArray, uint32_t arrayCount, bool convertToIso8601String)
 {
     JsonValue member{ rapidjson::kObjectType };
     for (auto i = 0u; i < arrayCount; ++i)
@@ -237,7 +237,7 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, String& outp
     outputPtr = output.empty() ? nullptr : output.data();
 }
 
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, JsonObject& output, PlayFabJsonObject& outputPtr)
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, JsonObject& output, <%- prefix %>JsonObject& outputPtr)
 {
     auto iter = jsonObject.FindMember(name);
     if (iter != jsonObject.MemberEnd())

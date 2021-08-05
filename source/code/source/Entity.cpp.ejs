@@ -6,18 +6,18 @@
 namespace PlayFab
 {<% 
 var apiInitializationList = "";
-for(var apiName in categorizedApis) {
-    var api = categorizedApis[apiName];
-    if (api.otherCalls.length > 0 && !api.otherCallsRequireSecretKey) { 
-        var apiMemberName = apiName.charAt(0).toLowerCase() + apiName.slice(1) + "API";
-        apiInitializationList += "\n    " + apiMemberName + "{ m_httpClient, m_authTokens },";
+for(var featureGroupName in SDKFeatureGroups) {
+    if (featureGroupName === "Shared") {
+        continue;
     }
+    var featureGroup = SDKFeatureGroups[featureGroupName];
+    var apiMemberName = featureGroup.name.charAt(0).toLowerCase() + featureGroup.name.slice(1) + "API"; 
+    apiInitializationList += "\n    " + apiMemberName + "{ m_httpClient, m_authTokens },";
 } %>
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const LoginResult& result) :
+Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::LoginResult& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ MakeShared<AuthTokens>(result) },
-    eventManagerAPI{ m_httpClient, m_authTokens },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_loginContext{ std::move(loginContext) },
     m_playFabId{ result.playFabId },
@@ -30,10 +30,24 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext co
 {
 }
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const ClientModels::RegisterPlayFabUserResult& result) :
+Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::ServerLoginResult& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ MakeShared<AuthTokens>(result) },
-    eventManagerAPI{ m_httpClient, m_authTokens },
+    QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
+    m_loginContext{ std::move(loginContext) },
+    m_playFabId{ result.playFabId },
+    m_entityId{ AS_STRING(result.entityToken->entity->id) },
+    m_entityType{ AS_STRING(result.entityToken->entity->type) },
+    m_playerCombinedInfo{ result.infoResultPayload.has_value() ? MakeUnique<GetPlayerCombinedInfoResultPayload>(*result.infoResultPayload) : nullptr },
+    m_lastLoginTime{ result.lastLoginTime },
+    m_userSettings{ result.settingsForUser },
+    m_treatmentAssignment{ result.treatmentAssignment.has_value() ? MakeUnique<PlayFab::TreatmentAssignment>(*result.treatmentAssignment) : nullptr }
+{
+}
+
+Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::RegisterPlayFabUserResult& result) :
+    m_httpClient{ std::move(httpClient) },
+    m_authTokens{ MakeShared<AuthTokens>(result) },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_loginContext{ std::move(loginContext) },
     m_playFabId{ result.playFabId },
@@ -46,7 +60,6 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext co
 Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::GetEntityTokenResponse& result) :
     m_httpClient{ std::move(httpClient) },
     m_authTokens{ MakeShared<AuthTokens>(result) },
-    eventManagerAPI{ m_httpClient, m_authTokens },
     QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
     m_loginContext{ std::move(loginContext) },
     m_entityId{ AS_STRING(result.entity->id) },
@@ -55,7 +68,7 @@ Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext co
 }
 
 AsyncOp<SharedPtr<Entity>> Entity::GetEntityToken(
-    const PlayFabAuthenticationGetEntityTokenRequest& request,
+    const <%- prefix %>AuthenticationGetEntityTokenRequest& request,
     const TaskQueue& queue
 )
 {
@@ -144,7 +157,7 @@ time_t const* Entity::LastLoginTime() const
     return m_lastLoginTime.has_value() ? m_lastLoginTime.operator->() : nullptr;
 }
 
-UserSettings const* Entity::UserSettings() const
+AuthenticationModels::UserSettings const* Entity::UserSettings() const
 {
     return m_userSettings.has_value() ? m_userSettings.operator->() : nullptr;
 }
@@ -176,7 +189,7 @@ AsyncOp<void> Entity::RefreshLogin(const TaskQueue& queue)
         auto serviceResponse = result.ExtractPayload();
         if (serviceResponse.HttpCode == 200)
         {
-            LoginResult resultModel;
+            AuthenticationModels::LoginResult resultModel;
             resultModel.FromJson(serviceResponse.Data);
             m_authTokens->Refresh(resultModel);
         }

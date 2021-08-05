@@ -3,13 +3,12 @@
 #include "TestCase.h"
 #include <playfab/PlayFabGlobal.h>
 #include <playfab/PlayFabEntity.h>
-#include <playfab/PlayFabClientDataModels.h>
-#include "../../../code/source/<%- api.name %>/<%- api.name %>DataModels.h"
+#include "../../../code/source/<%- featureGroup.name %>/<%- featureGroup.name %>DataModels.h"
 
 namespace PlayFabUnit
 {
 
-class AutoGen<%- api.name %>Tests : public PlayFabApiTestCase
+class AutoGen<%- featureGroup.name %>Tests : public PlayFabApiTestCase
 {
 private: 
     static void Log(std::stringstream& ss);
@@ -18,13 +17,13 @@ private:
 <% for (var i = 0; i < prerequisiteApis.length; i++)
 {
     var call = prerequisiteApis[i];
-%>    void Prerequisite<%- api.name + call.name %>(TestContext& testContext);
+%>    void Prerequisite<%- featureGroup.name + call.name %>(TestContext& testContext);
 <% } %>
-<% for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
+<% for (var i = 0; i < featureGroup.calls.length; i++) 
 {
-    var call = categorizedApi.otherCalls[i];
-    var asyncName = "PlayFab" + api.name + call.name + "Async"; 
-%>    void Test<%- api.name + call.name %>(TestContext& testContext); 
+    var call = featureGroup.calls[i];
+    var asyncName = prefix + call.name + "Async"; 
+%>    void Test<%- featureGroup.name + call.name %>(TestContext& testContext); 
 <% } %>
 
 protected:
@@ -36,34 +35,36 @@ var hasPrereqValidateBeenDefinedMap = {};
 for (var i = 0; i < prerequisiteApis.length; i++) 
 {
     var call = prerequisiteApis[i];
-    if( !(call.request in hasPrereqFillBeenDefinedMap) && call.request != "void" ) {
-        hasPrereqFillBeenDefinedMap[call.request] = true;
-%>    static void LogPlayFabPrerequisite<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request, const char* prereqName );
-    static void FillPlayFabPrerequisite<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request );
-<% } if (!(call.result in hasPrereqValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") { 
-    hasPrereqValidateBeenDefinedMap[call.result] = true;
-%>    static HRESULT LogPlayFabPrerequisite<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result );
-    static HRESULT StorePlayFabPrerequisite<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result );
+    if(call.requestDatatype && !(call.requestDatatype.name in hasPrereqFillBeenDefinedMap)) {
+        hasPrereqFillBeenDefinedMap[call.requestDatatype.name] = true;
+        let requestNamespace = "PlayFab::" + (call.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
+%>    static void LogPrerequisite<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request, const char* prereqName );
+    static void FillPrerequisite<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request );
+<% } if (call.resultDatatype && !(call.resultDatatype.name in hasPrereqValidateBeenDefinedMap)) { 
+    hasPrereqValidateBeenDefinedMap[call.resultDatatype.name] = true;
+%>    static HRESULT LogPrerequisite<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result );
+    static HRESULT StorePrerequisite<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result );
 <% } } %>
 <% 
 var hasFillBeenDefinedMap = {};
 var hasValidateBeenDefinedMap = {};
-for (var i = 0; i < categorizedApi.otherCalls.length; i++) 
+for (var i = 0; i < featureGroup.calls.length; i++) 
 {
-    var call = categorizedApi.otherCalls[i];
-    if( !(call.request in hasFillBeenDefinedMap) && call.request != "void" ) {
-        hasFillBeenDefinedMap[call.request] = true;
-%>    static void LogPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request, const char* testName );
-    static void FillPlayFab<%- api.name + call.request %>( PlayFab::<%- api.name %>Models::<%- call.request %>* request );
-<% } if (!(call.result in hasValidateBeenDefinedMap) && call.result != "void" && call.url != "/Authentication/GetEntityToken") { 
-    hasValidateBeenDefinedMap[call.result] = true;
-%>    static HRESULT LogPlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result );
-    static HRESULT ValidatePlayFab<%- api.name %><%- call.result %>( PlayFab<%- api.name %><%- call.result %>* result );
+    var call = featureGroup.calls[i];
+    if(call.requestDatatype && !(call.requestDatatype.name in hasFillBeenDefinedMap) ) {
+        hasFillBeenDefinedMap[call.requestDatatype.name] = true;
+        let requestNamespace = "PlayFab::" + (call.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
+%>    static void Log<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request, const char* testName );
+    static void Fill<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request );
+<% } if (call.resultDatatype && !(call.resultDatatype.name in hasValidateBeenDefinedMap) ) { 
+    hasValidateBeenDefinedMap[call.resultDatatype.name] = true;
+%>    static HRESULT Log<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result );
+    static HRESULT Validate<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result );
 <% } } %>
 public:
-    PlayFabStateHandle stateHandle{ nullptr };
-    PlayFabEntityHandle entityHandle{ nullptr };
-    PlayFabGetPlayerCombinedInfoResultPayload const* playerCombinedInfo{ nullptr };
+    PFStateHandle stateHandle{ nullptr };
+    PFEntityHandle entityHandle{ nullptr };
+    PFGetPlayerCombinedInfoResultPayload const* playerCombinedInfo{ nullptr };
 
     void ClassSetUp() override;
     void ClassTearDown() override;

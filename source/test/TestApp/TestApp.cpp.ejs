@@ -13,14 +13,13 @@
 
 #include <httpClient/httpClient.h>
 #include "ApiTests.h" 
-#include "EventManagerTests.h"
 #include "EntityTests.h"
-<% for(var apiName in categorizedApis) 
+<% for(var featureGroupName in SDKFeatureGroups) 
 { 
-    var api = categorizedApis[apiName]; 
-    if (apiName != "Shared") { %>
-#include "AutoGenTests/AutoGen<%- apiName %>Tests.h" <%
-} } %>
+    if (featureGroupName === "Groups") { %>
+#include "AutoGenTests/AutoGen<%- featureGroupName %>Tests.h" <%
+    }
+} %>
 
 using namespace PlayFab;
 
@@ -92,18 +91,13 @@ PFTestTraceLevel TestApp::traceLevel = PFTestTraceLevel::Important;
         apiTests.SetTitleInfo(testTitleData);
         testRunner.Add(apiTests);
 
-        EventManagerTests eventManagerTests;
-        eventManagerTests.SetTitleInfo(testTitleData);
-        testRunner.Add(eventManagerTests);
-
 <% 
 var verNum = 0;
-for(var apiName in categorizedApis) 
-{     
+for(var featureGroupName in SDKFeatureGroups) 
+{
     verNum++;
-    var api = categorizedApis[apiName]; 
-    if (apiName == "Client" || apiName == "Groups") { %>
-        AutoGen<%- apiName %>Tests apiTests<%- verNum %>;
+    if (featureGroupName === "Groups") { %>
+        AutoGen<%- featureGroupName %>Tests apiTests<%- verNum %>;
         apiTests<%- verNum %>.SetTitleInfo(testTitleData);
         testRunner.Add(apiTests<%- verNum %>);
 <% } } %>

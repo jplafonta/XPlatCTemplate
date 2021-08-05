@@ -10,12 +10,12 @@ namespace Detail
 
 struct MemoryHooks
 {
-    PlayFabMemAllocFunction* alloc;
-    PlayFabMemFreeFunction* free;
+    <%- prefix %>MemAllocFunction* alloc;
+    <%- prefix %>MemFreeFunction* free;
 };
 
 MemoryHooks& GetMemoryHooks();
-HRESULT SetMemoryHooks(PlayFabMemAllocFunction* memAllocFunc, PlayFabMemFreeFunction* memFreeFunc);
+HRESULT SetMemoryHooks(<%- prefix %>MemAllocFunction* memAllocFunc, <%- prefix %>MemFreeFunction* memFreeFunc);
 
 }
 
