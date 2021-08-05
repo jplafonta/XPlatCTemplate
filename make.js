@@ -11,11 +11,18 @@ var globalPrefix = "PF";
 // categorized based on feature group. This structure will be used to generate the SDK.
 var SDKFeatureGroups = {};
 
-// By default calls/datatypes will be categorized into SDKFeatureGroups based on service "subgroup" (api.calls[*].subgroup).
-// featureGroupOverrides gives more control over the SDK feature groups we expose and which calls appear in which header file. Object will be
-// loaded from featureGroupOverrides.json. The overrides will processed in order calls->apis->subgroup (if a call matches multiple overrides, the
-// first match will be used).
-var featureGroupOverrides = {};
+// Object describing SDK Customizations. This structure allows overriding the SDK featureGroup and/or platform for api calls.
+//
+// By default calls / datatypes will be categorized into SDKFeatureGroups based on service "subgroup"(api.calls[*].subgroup).
+// customizations.featureGroupOverrides gives more control over the SDK feature groups we expose and which calls appear in which header file.
+// The overrides will processed in order calls->apis->subgroup (if a call matches multiple overrides, the first match will be used).
+//
+// By default, each api call will be enabled on all platforms. customizations.platformExclusions allows excluding individual calls, full service
+// apis, or full SDK feature groups on specific platforms. For example, if customizations.platformExclusions.apis.Admin = [HC_PLATFORM_GDK], the
+// entire Admin service API set will be exluded for HC_PLATFORM_GDK.
+//
+// customizations object loaded from customizations.json.
+var customizations = {};
 
 // Used to generate XML header doc comments. Loaded from XMLRefDocs.json
 var xmlRefDocs = {};
@@ -34,7 +41,7 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
         throw "The file: replacements.json was not properly formatted JSON";
     }
 
-    featureGroupOverrides = parseDataFile("FeatureGroupOverrides.json");
+    customizations = parseDataFile("customizations.json");
     xmlRefDocs = parseDataFile("XMLRefDocs.json");
     testStatusMap = parseDataFile("TestStatus.json");
 
@@ -88,6 +95,7 @@ function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
         prefix: prefix,
         globalPrefix: globalPrefix,
         prerequisiteApis: prerequisiteApis[featureGroup.name],
+        platformExclusions: customizations.platformExclusions,
         getBaseTypes: getBaseTypes,
         getPropertyDefinition: getPropertyDefinition,
         getPropertyFromJson: getPropertyFromJson,
@@ -436,6 +444,8 @@ function populateSDKFeatureGroups(apis) {
             }
 
             let featureGroupName = call.subgroup;
+            let featureGroupOverrides = customizations.featureGroupOverrides;
+
             if (featureGroupOverrides.calls.hasOwnProperty(call.name)) {
                 featureGroupName = featureGroupOverrides.calls[call.name];
             } else if (featureGroupOverrides.apis.hasOwnProperty(api.name)) {
