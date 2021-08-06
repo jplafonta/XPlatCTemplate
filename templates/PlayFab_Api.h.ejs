@@ -14,11 +14,50 @@
 extern "C"
 {
 <%
+function callExclusionMacroBegin(call) {
+    let excludedPlatforms = new Set();
+    if (platformExclusions.calls.hasOwnProperty(call.name)) {
+        for (let i = 0; i < platformExclusions.calls[call.name].length; i++) {
+            excludedPlatforms.add(platformExclusions.calls[call.name][i]);
+        }
+    }
+    let apiName = call.url.split("/")[1];
+    if (platformExclusions.apis.hasOwnProperty(apiName)) {
+        for (let i = 0; i < platformExclusions.apis[apiName].length; i++) {
+            excludedPlatforms.add(platformExclusions.apis[apiName][i]);
+        }
+    }
+    if (platformExclusions.subgroups.hasOwnProperty(call.subgroup)) {
+        for (let i = 0; i < platformExclusions.subgroups[call.subgroup].length; i++) {
+            excludedPlatforms.add(platformExclusions.subgroups[call.subgroup][i]);
+        }
+    }
+
+    if (excludedPlatforms.size == 0) {
+        return "";
+    }
+    var macro = "#if "
+    for (let platform of excludedPlatforms) {
+        if (macro !== "#if ") {
+            macro = macro + " && ";
+        }
+        macro = macro + "HC_PLATFORM != " + platform;
+    }
+    return macro + "\n";
+}
+
+function callExclusionMacroEnd(call){
+    if(callExclusionMacroBegin(call).length > 0) {
+        return "#endif\n";
+    }
+    return "";
+}
+
 for (var callIndex = 0; callIndex < featureGroup.calls.length; callIndex++) {
     var call = featureGroup.calls[callIndex]; 
     var contextHandleParam =  call.entityRequired ? globalPrefix + "EntityHandle entityHandle" : globalPrefix + "StateHandle stateHandle";
     var requestParam = call.requestDatatype ? "_In_ const " + call.requestDatatype.prefix + call.requestDatatype.name + "* request,\n    " : ""; %>
-/// <summary>
+<%- callExclusionMacroBegin(call) %>/// <summary>
 <%- getFormattedCallDescription(featureGroup.name, call) %>
 /// </summary><%
     if (call.entityRequired) { %>
@@ -125,6 +164,7 @@ HRESULT <%- prefix %><%- call.name %>GetResult(
     _Outptr_ <%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>** result
 ) noexcept;
 <%  } // end if
+%><%- callExclusionMacroEnd(call) %><%
 } // end for %>
 
 }
