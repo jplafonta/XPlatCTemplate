@@ -1,7 +1,7 @@
 #pragma once
 
 // Public SDK headers
-#include <playfab/PlayFab.h>
+#include <playfab/PFCore.h>
 
 // Include SDK lib precompiled header as well
 #include "stdafx.h"

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "QoSDataModels.h"
-#include "MultiplayerServer/MultiplayerServerApi.h"
-#include "PlayStream/PlayStreamApi.h"
+#include "MultiplayerServer/MultiplayerServer.h"
+#include "PlayStream/PlayStream.h"
 
 namespace PlayFab
 {

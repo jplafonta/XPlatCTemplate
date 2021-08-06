@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <playfab/PlayFabEntity.h>
+#include <PFEntity.h>
 #include <httpClient/async.h>
 
 extern "C"

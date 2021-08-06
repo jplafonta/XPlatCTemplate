@@ -1,6 +1,6 @@
 #include "TestAppPch.h"
 #include "TestContext.h"
-#include <playfab/PlayFabAuthenticationApi.h>
+#include <playfab/PFAuthentication.h>
 
 namespace PlayFabUnit
 {

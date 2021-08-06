@@ -30,7 +30,7 @@ for (var file in projectFiles.sourceFiles) {
     }
 } 
 for(var featureGroupName in SDKFeatureGroups) { %>
-    <ClInclude Include="$(PlayFabSourceDir)\include\playfab\PlayFab<%- featureGroupName %>DataModels.h">
+    <ClInclude Include="$(PlayFabSourceDir)\include\playfab\<%- prefix + featureGroupName %>DataModels.h">
       <Filter>C Public Includes\playfab</Filter>
     </ClInclude>
     <ClInclude Include="$(PlayFabSourceDir)\source\<%- featureGroupName %>\<%- featureGroupName %>DataModels.h">
@@ -40,16 +40,16 @@ for(var featureGroupName in SDKFeatureGroups) { %>
       <Filter>Source\<%- featureGroupName %></Filter>
     </ClCompile><%
     if (!(featureGroupName === "Shared")) { %>
-    <ClInclude Include="$(PlayFabSourceDir)\source\<%- featureGroupName %>\<%- featureGroupName %>Api.h">
+    <ClInclude Include="$(PlayFabSourceDir)\source\<%- featureGroupName %>\<%- featureGroupName %>.h">
       <Filter>Source\<%- featureGroupName %></Filter>
     </ClInclude>
-    <ClCompile Include="$(PlayFabSourceDir)\source\<%- featureGroupName %>\<%- featureGroupName %>Api.cpp">
+    <ClCompile Include="$(PlayFabSourceDir)\source\<%- featureGroupName %>\<%- featureGroupName %>.cpp">
       <Filter>Source\<%- featureGroupName %></Filter>
     </ClCompile>
-    <ClInclude Include="$(PlayFabSourceDir)\include\playfab\PlayFab<%- featureGroupName %>Api.h">
+    <ClInclude Include="$(PlayFabSourceDir)\include\playfab\<%- prefix + featureGroupName %>.h">
       <Filter>C Public Includes\playfab</Filter>
     </ClInclude>
-    <ClCompile Include="$(PlayFabSourceDir)\source\<%- featureGroupName %>\PlayFab<%- featureGroupName %>Api.cpp">
+    <ClCompile Include="$(PlayFabSourceDir)\source\<%- featureGroupName %>\<%- prefix + featureGroupName %>.cpp">
       <Filter>Source\<%- featureGroupName %></Filter>
     </ClCompile><%
     }

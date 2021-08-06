@@ -15,7 +15,8 @@
       "PlayStream Events": "PlayStream",
       "Shared Group Data": "Groups",
       "Title-Wide Data Management": "TitleDataManagement",
-      "Object": "Data"
+      "Object": "Data",
+      "File": "Data"
     }
   },
   "platformExclusions": {
