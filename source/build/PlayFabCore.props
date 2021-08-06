@@ -3,26 +3,24 @@
 
   <PropertyGroup Label="Paths">
     <PlayFabRoot>$(MSBuildThisFileDirectory)..\</PlayFabRoot>
-    <ExternalDir>$(PlayFabRoot)external</ExternalDir>
-    <PlayFabSourceDir>$(PlayFabRoot)code</PlayFabSourceDir>
-    <PlayFabTestDir>$(PlayFabRoot)test</PlayFabTestDir>
+    <PlayFabExternalDir>$(PlayFabRoot)external\</PlayFabExternalDir>
+    <PlayFabSourceDir>$(PlayFabRoot)code\</PlayFabSourceDir>
+    <PlayFabTestDir>$(PlayFabRoot)test\</PlayFabTestDir>
   </PropertyGroup>
 
   <!--Reuse libHttpClient platform detection logic-->
-  <Import Condition="'$(HCPlatform)' == ''" Project="$(ExternalDir)\libHttpClient\platform_select.props" />
+  <Import Condition="'$(HCPlatform)' == ''" Project="$(PlayFabExternalDir)\libHttpClient\platform_select.props" />
   <PropertyGroup>
-    <!--rename to XPlatCWin32 for consistency-->
-    <PlayFabPlatform Condition="'$(HCPlatform)' == 'Win32'">Windows</PlayFabPlatform>
-    <PlayFabPlatform Condition="'$(HCPlatform)' != 'Win32'">$(HCPlatform)</PlayFabPlatform>
-    <PlayFabProjectName>XPlatC$(PlayFabPlatform)</PlayFabProjectName>
+    <PlayFabPlatform>$(HCPlatform)</PlayFabPlatform>
+    <PlayFabProjectName>PlayFabCore.$(PlayFabPlatform)</PlayFabProjectName>
   </PropertyGroup>
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <!--Remove internal dirs from here-->
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(PlayFabSourceDir);$(PlayFabSourceDir)/include;$(PlayFabSourceDir)/source/playfab;$(PlayFabSourceDir)/source</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(PlayFabSourceDir)/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Lib>
+      <!-- Are these needed on all platforms? -->
       <AdditionalDependencies>ws2_32.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
@@ -36,7 +34,7 @@
 
   <!--RapidJSON dependency-->
   <PropertyGroup Label="RapidJson">
-    <RapidJsonSdkRoot>$(PlayFabRoot)External\rapidjson\</RapidJsonSdkRoot>
+    <RapidJsonSdkRoot>$(PlayFabExternalDir)\rapidjson\</RapidJsonSdkRoot>
     <RapidJsonSdkInclude>$(RapidJsonSdkRoot)include\</RapidJsonSdkInclude>
   </PropertyGroup>
 
@@ -48,5 +46,5 @@
   </ItemDefinitionGroup>
 
   <!--LibHttpClient dependency-->
-  <Import Project="$(ExternalDir)\libHttpClient\libHttpClient.props" />
+  <Import Project="$(PlayFabExternalDir)\libHttpClient\libHttpClient.props" />
 </Project>

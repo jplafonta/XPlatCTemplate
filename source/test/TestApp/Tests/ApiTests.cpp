@@ -2,7 +2,7 @@
 #include "TestContext.h"
 #include "ApiTests.h"
 #include "XAsyncHelper.h"
-#include "playfab/PlayFab.h"
+#include "playfab/PFCore.h"
 
 namespace PlayFabUnit
 {

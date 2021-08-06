@@ -2,7 +2,7 @@
 #include "TestContext.h"
 #include "EntityTests.h"
 #include "XAsyncHelper.h"
-#include <playfab/PlayFabAuthenticationApi.h>
+#include <playfab/PFAuthentication.h>
 
 namespace PlayFabUnit
 {

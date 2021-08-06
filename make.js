@@ -117,31 +117,31 @@ function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
     };
 
     // DataModels
-    var publicDataModelsHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_DataModels.h.ejs"));
-    writeFile(path.resolve(apiOutputDir, "code/include/playFab", "PlayFab" + featureGroup.name + "DataModels.h"), publicDataModelsHeader(locals));
+    var publicDataModelsHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/PFDataModels.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/include/playFab", globalPrefix + featureGroup.name + "DataModels.h"), publicDataModelsHeader(locals));
 
-    var internalDataModelsHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.h.ejs"));
+    var internalDataModelsHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/DataModels.h.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, featureGroup.name + "DataModels.h"), internalDataModelsHeader(locals));
 
-    var internalDataModels = getCompiledTemplate(path.resolve(sourceDir, "templates/_DataModels.cpp.ejs"));
+    var internalDataModels = getCompiledTemplate(path.resolve(sourceDir, "templates/DataModels.cpp.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, featureGroup.name + "DataModels.cpp"), internalDataModels(locals));
 
     // Currently don't need anything except data models for Shared API
     if (featureGroup.name !== "Shared") {
 
         // Internal APIs
-        var internalApisHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.h.ejs"));
-        writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, featureGroup.name + "Api.h"), internalApisHeader(locals));
+        var internalApisHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/Calls.h.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, featureGroup.name + ".h"), internalApisHeader(locals));
 
-        var internalApis = getCompiledTemplate(path.resolve(sourceDir, "templates/_Api.cpp.ejs"));
-        writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, featureGroup.name + "Api.cpp"), internalApis(locals));
+        var internalApis = getCompiledTemplate(path.resolve(sourceDir, "templates/Calls.cpp.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, featureGroup.name + ".cpp"), internalApis(locals));
 
         // Public APIs
-        var publicApisHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_Api.h.ejs"));
-        writeFile(path.resolve(apiOutputDir, "code/include/playfab", "PlayFab" + featureGroup.name + "Api.h"), publicApisHeader(locals));
+        var publicApisHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/PFCalls.h.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/include/playfab", globalPrefix + featureGroup.name + ".h"), publicApisHeader(locals));
 
-        var publicApis = getCompiledTemplate(path.resolve(sourceDir, "templates/PlayFab_Api.cpp.ejs"));
-        writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, "PlayFab" + featureGroup.name + "Api.cpp"), publicApis(locals));
+        var publicApis = getCompiledTemplate(path.resolve(sourceDir, "templates/PFCalls.cpp.ejs"));
+        writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, globalPrefix + featureGroup.name + ".cpp"), publicApis(locals));
 
         // Test files
         var testHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.h.ejs"));

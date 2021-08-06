@@ -7,12 +7,12 @@
     "Source\\QoS"
   ],
   "includeFiles": {
-    "include\\playfab\\PlayFab.h": "C Public Includes\\playfab",
-    "include\\playfab\\PlayFabEntity.h": "C Public Includes\\playfab",
-    "include\\playfab\\PlayFabErrors.h": "C Public Includes\\playfab",
-    "include\\playfab\\PlayFabGlobal.h": "C Public Includes\\playfab",
-    "include\\playfab\\PlayFabPal.h": "C Public Includes\\playfab",
-    "include\\playfab\\PlayFabQoSApi.h": "C Public Includes\\playfab"
+    "include\\playfab\\PFCore.h": "C Public Includes\\playfab",
+    "include\\playfab\\PFEntity.h": "C Public Includes\\playfab",
+    "include\\playfab\\PFErrors.h": "C Public Includes\\playfab",
+    "include\\playfab\\PFGlobal.h": "C Public Includes\\playfab",
+    "include\\playfab\\PFPal.h": "C Public Includes\\playfab",
+    "include\\playfab\\PFQoS.h": "C Public Includes\\playfab"
   },
   "sourceFiles": {
     "source\\ApiAsyncProviders.h": "Source",
@@ -51,11 +51,11 @@
     "source\\Trace.cpp": "Source",
     "source\\Trace.h": "Source",
     "source\\Types.h": "Source",
-    "source\\Api\\PlayFabEntity.cpp": "Source\\Api",
-    "source\\Api\\PlayFabGlobal.cpp": "Source\\Api",
-    "source\\QoS\\PlayFabQoSApi.cpp": "Source\\QoS",
-    "source\\QoS\\QoSApi.cpp": "Source\\QoS",
-    "source\\QoS\\QoSApi.h": "Source\\QoS",
+    "source\\Api\\PFEntity.cpp": "Source\\Api",
+    "source\\Api\\PFGlobal.cpp": "Source\\Api",
+    "source\\QoS\\PFQoS.cpp": "Source\\QoS",
+    "source\\QoS\\QoS.cpp": "Source\\QoS",
+    "source\\QoS\\QoS.h": "Source\\QoS",
     "source\\QoS\\QoSDataModels.cpp": "Source\\QoS",
     "source\\QoS\\QoSDataModels.h": "Source\\QoS",
     "source\\QoS\\QoSSocket.cpp": "Source\\QoS",

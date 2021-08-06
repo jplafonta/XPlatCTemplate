@@ -3,13 +3,13 @@
 #include <AuthTokens.h>
 #include <CallbackManager.h>
 #include <Authentication/AuthenticationDataModels.h>
-#include <QoS/QoSApi.h><%
+#include <QoS/QoS.h><%
 for(var featureGroupName in SDKFeatureGroups) {
     if (featureGroupName === "Shared") {
         continue;
     }
     var featureGroup = SDKFeatureGroups[featureGroupName]; %>
-#include <<%- featureGroup.name %>/<%- featureGroup.name %>Api.h><%
+#include <<%- featureGroup.name %>/<%- featureGroup.name %>.h><%
 } %>
 
 namespace PlayFab
