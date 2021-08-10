@@ -53,6 +53,10 @@ function callExclusionMacroEnd(call){
     return "";
 }
 
+// There are many Login methods for both Client and Server, but we only want to define a single GetLoginResult method for each
+var getClientLoginResultDeclared = false;
+var getServerLoginResultDeclared = false;
+
 for (var callIndex = 0; callIndex < featureGroup.calls.length; callIndex++) {
     var call = featureGroup.calls[callIndex]; 
     var contextHandleParam =  call.entityRequired ? globalPrefix + "EntityHandle entityHandle" : globalPrefix + "StateHandle stateHandle";
@@ -102,9 +106,63 @@ HRESULT <%- globalPrefix %>AuthenticationLoginWithXUserAsync(
 #endif
 <%  } // end if
 
-    if ((!call.resultDatatype) || call.entityReturned) { 
+    if (!call.resultDatatype) {
         // No Get Result method needed
-    } else if (isFixedSize(call.resultDatatype)) { %>
+    } else if (call.resultDatatype.name === "LoginResult") {
+        // Custom logic for Client Login Result
+        if (!getClientLoginResultDeclared) { 
+            getClientLoginResultDeclared = true; %>
+/// <symmary>
+/// Get the result from a <%- prefix %>ClientLogin* call.
+/// </symmary>
+/// <param name="async">XAsyncBlock for the async operation.</param>
+/// <param name="entityHandle">Entity handle which can be used to call other PlayFab APIs.</param>
+/// <returns>Result code for this API operation.</returns>
+/// <remarks>
+/// If the login attempt fails, entityHandle with be null. Otherwise, the handle must be closed with <%- globalPrefix %>EntityCloseHandle
+/// when it is no longer needed.
+/// </remarks>
+HRESULT <%- prefix %>ClientLoginGetResult(
+    _In_ XAsyncBlock* async,
+    _Out_ <%- globalPrefix %>EntityHandle* entityHandle
+) noexcept;
+<%      } // end if
+    } else if (call.resultDatatype.name === "ServerLoginResult") {
+        // Custom logic for Server Login result
+        if (!getServerLoginResultDeclared) {
+            getServerLoginResultDeclared = true; %>
+/// <symmary>
+/// Get the result from a <%- prefix %>ServerLogin* call.
+/// </symmary>
+/// <param name="async">XAsyncBlock for the async operation.</param>
+/// <param name="entityHandle">Entity handle which can be used to call other PlayFab APIs.</param>
+/// <returns>Result code for this API operation.</returns>
+/// <remarks>
+/// If the login attempt fails, entityHandle with be null. Otherwise, the handle must be closed with <%- globalPrefix %>EntityCloseHandle
+/// when it is no longer needed.
+/// </remarks>
+HRESULT <%- prefix %>ServerLoginGetResult(
+    _In_ XAsyncBlock* async,
+    _Out_ <%- globalPrefix %>EntityHandle* entityHandle
+) noexcept;
+<%      } // end if
+    } else if (call.entityReturned) {
+        /* Custom logic for all other calls that result in an Entity object*/ %>
+/// <symmary>
+/// Get the result from a <%- prefix %><%- call.name %>Async call.
+/// </symmary>
+/// <param name="async">XAsyncBlock for the async operation.</param>
+/// <param name="entityHandle">Entity handle which can be used to call other PlayFab APIs.</param>
+/// <returns>Result code for this API operation.</returns>
+/// <remarks>
+/// If the <%- prefix %><%- call.name %>Async call fails, entityHandle with be null. Otherwise, the handle must be closed with <%- globalPrefix %>EntityCloseHandle
+/// when it is no longer needed.
+/// </remarks>
+HRESULT <%- prefix %><%- call.name %>GetResult(
+    _In_ XAsyncBlock* async,
+    _Out_ <%- globalPrefix %>EntityHandle* entityHandle
+) noexcept;   
+<%  } else if (isFixedSize(call.resultDatatype)) { %>
 /// <summary>
 /// Gets the result of a successful <%- prefix %><%- call.name %>Async call.
 /// </summary>

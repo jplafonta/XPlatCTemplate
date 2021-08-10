@@ -1,4 +1,5 @@
 var path = require("path");
+const { fileURLToPath } = require("url");
 
 // Making resharper less noisy - These are defined in Generate.js
 if (typeof getCompiledTemplate === "undefined") getCompiledTemplate = function () { };
@@ -267,7 +268,7 @@ function curateServiceApis(apis) {
                 call.entityReturned = true;
                 call.resultDatatype.isInternalOnly = true;
 
-            } else if (call.result && (call.result.toLowerCase().endsWith("loginresult") || call.result === "RegisterPlayFabUserResult")) {
+            } else if (call.result && (call.resultDatatype.name.endsWith("LoginResult") || call.resultDatatype.name === "RegisterPlayFabUserResult")) {
                 call.entityReturned = true;
                 call.resultDatatype.isInternalOnly = true;
             }
@@ -1014,7 +1015,8 @@ function getSeeAlso(call) {
 
     var result = "See also ";
     for (var i in call.seeAlso) {
-        result += globalPrefix + call.seeAlso[i].replace(/"/g, "'").replace("/", "") + "Async";
+        // TODO add cref link and full API call name here
+        result += call.seeAlso[i].replace(/"/g, "'").replace("/", "") + "Async";
         if (i != call.seeAlso.length - 1) {
             result += ", ";
         }
@@ -1026,8 +1028,7 @@ function getSeeAlso(call) {
 function getCallDoc(featureGroupName, call) {
     var asyncName = globalPrefix + featureGroupName + call.name + "Async";
     if (asyncName in xmlRefDocs) {
-        var docForCall = xmlRefDocs[asyncName];
-        return docForCall;
+        return xmlRefDocs[asyncName];
     }
 
     var doc = {};
@@ -1050,24 +1051,37 @@ function getCallDoc(featureGroupName, call) {
     return doc;
 }
 
-function getFormattedCallDescription(apiName, call) {
-    return appendToXmlDocComment("///", getCallDoc(apiName, call).summary);
+function getFormattedCallDescription(featureGroupName, call) {
+    return appendToXmlDocComment("///", getCallDoc(featureGroupName, call).summary);
 }
 
 function getFormattedCallRemarks(featureGroupName, call) {
+    var formattedRemarks = "///";
+    
     var callDoc = getCallDoc(featureGroupName, call);
     if (callDoc.remarks !== undefined) {
-        return appendToXmlDocComment("///", callDoc.remarks);
+        formattedRemarks = appendToXmlDocComment(formattedRemarks, callDoc.remarks);
+        if (!formattedRemarks.endsWith(".")) {
+            formattedRemarks += ".";
+        }
+        // Leave a blank line before GetResult explanation
+        formattedRemarks += ("\n///\n///");
     }
-    else if (call.resultDatatype)
-    {
-        var getResultName = globalPrefix + featureGroupName + call.name + "GetResult";
-        return "/// If successful, call <see cref=\"" + getResultName + "\"/> to get the result."
-    }
-    else
-    {
-        return "/// Call <see cref=\"XAsyncGetStatus\"/> to get the status of the operation."
-    }
+
+    if (!call.resultDatatype) {
+        formattedRemarks = appendToXmlDocComment(formattedRemarks, "Call <see cref=\"XAsyncGetStatus\"/> to get the status of the operation.");
+    } else {
+        var getResultName = "";
+        if (call.resultDatatype.name === "LoginResult") {
+            getResultName = globalPrefix + featureGroupName + "ClientLoginGetResult";
+        } else if (call.resultDatatype.name === "ServerLoginResult") {
+            getResultName = globalPrefix + featureGroupName + "ServerLoginGetResult";
+        } else {
+            getResultName = globalPrefix + featureGroupName + call.name + "GetResult";
+        }
+        formattedRemarks = appendToXmlDocComment(formattedRemarks, "If successful, call <see cref=\"" + getResultName + "\"/> to get the result.");
+    } 
+    return formattedRemarks;
 }
 
 function jsonEscapeQuotes(input) {

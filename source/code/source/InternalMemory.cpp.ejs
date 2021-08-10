@@ -6,12 +6,12 @@ namespace Detail
 {
 
 // Default memory functions
-_Ret_maybenull_ _Post_writable_byte_size_(size) void* DefaultAlloc(size_t size, uint32_t /* tag */) noexcept
+_Ret_maybenull_ _Post_writable_byte_size_(size) void* DefaultAlloc(size_t size) noexcept
 {
     return operator new(size);
 }
 
-void DefaultFree(_In_ _Post_invalid_ void* pointer, uint32_t /* tag */) noexcept
+void DefaultFree(_In_ _Post_invalid_ void* pointer) noexcept
 {
     operator delete(pointer);
 }
@@ -49,11 +49,9 @@ HRESULT SetMemoryHooks(<%- prefix %>MemAllocFunction* memAllocFunc, <%- prefix %
 
 }
 
-constexpr uint32_t playFabMemoryTag = 3302021;
-
 void* Alloc(size_t size)
 {
-    void* pointer = Detail::GetMemoryHooks().alloc(size, playFabMemoryTag);
+    void* pointer = Detail::GetMemoryHooks().alloc(size);
 
     assert(pointer);
     return pointer;
@@ -63,7 +61,7 @@ void Free(void* pointer) noexcept
 {
     if (pointer)
     {
-        Detail::GetMemoryHooks().free(pointer, playFabMemoryTag);
+        Detail::GetMemoryHooks().free(pointer);
     }
 }
 
