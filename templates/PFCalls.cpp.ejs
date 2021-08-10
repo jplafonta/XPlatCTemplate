@@ -8,6 +8,11 @@
 using namespace PlayFab;
 using namespace PlayFab::<%- featureGroup.name %>Models;
 <% var apiMemberName = featureGroup.name.charAt(0).toLowerCase() + featureGroup.name.slice(1) + "API";
+
+// There are many Login methods for both Client and Server, but we only want to define a single GetLoginResult method for each
+var getClientLoginResultDefined = false;
+var getServerLoginResultDefined = false;
+
 for (var i = 0; i < featureGroup.calls.length; i++) {
     var call = featureGroup.calls[i]; 
     var contextHandleParam = call.entityRequired ? globalPrefix + "EntityHandle contextHandle" : globalPrefix + "StateHandle contextHandle";
@@ -55,9 +60,42 @@ HRESULT <%- globalPrefix %>AuthenticationLoginWithXUserAsync(
 #endif
 <%  } // end if
 
-    if ((!call.resultDatatype) || call.entityReturned) { 
+    if (!call.resultDatatype) { 
         // No Get Result method needed
-    } else if (isFixedSize(call.resultDatatype)) { %>
+    } else if (call.resultDatatype.name === "LoginResult") {
+        // Custom logic for Client Login Result
+        if (!getClientLoginResultDefined) { 
+            getClientLoginResultDefined = true; %>
+HRESULT <%- prefix %>ClientLoginGetResult(
+    _In_ XAsyncBlock* async,
+    _Out_ <%- globalPrefix %>EntityHandle* entityHandle
+) noexcept
+{
+    return XAsyncGetResult(async, nullptr, sizeof(<%- globalPrefix %>EntityHandle), entityHandle, nullptr);
+}
+<%      } // end if
+    } else if (call.resultDatatype.name === "ServerLoginResult") {
+        // Custom logic for Server Login result
+        if (!getServerLoginResultDefined) {
+            getServerLoginResultDefined = true; %>
+HRESULT <%- prefix %>ServerLoginGetResult(
+    _In_ XAsyncBlock* async,
+    _Out_ <%- globalPrefix %>EntityHandle* entityHandle
+) noexcept
+{
+    return XAsyncGetResult(async, nullptr, sizeof(<%- globalPrefix %>EntityHandle), entityHandle, nullptr);
+}            
+<%      } // end if
+    } else if (call.entityReturned) {
+        /* Custom logic for all other calls that result in an Entity object*/ %>
+HRESULT <%- prefix %><%- call.name %>GetResult(
+    _In_ XAsyncBlock* async,
+    _Out_ <%- globalPrefix %>EntityHandle* entityHandle
+) noexcept
+{
+    return XAsyncGetResult(async, nullptr, sizeof(<%- globalPrefix %>EntityHandle), entityHandle, nullptr);
+}
+<%  } else if (isFixedSize(call.resultDatatype)) { %>
 HRESULT <%- prefix %><%- call.name %>GetResult(
     _In_ XAsyncBlock* async,
     _Out_ <%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>* result

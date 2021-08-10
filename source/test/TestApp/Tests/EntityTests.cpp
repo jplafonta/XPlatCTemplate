@@ -16,7 +16,7 @@ struct AuthResult : public XAsyncResult
 
     HRESULT Get(XAsyncBlock* async) override
     {
-        RETURN_IF_FAILED(PFGetAuthResult(async, &entityHandle));
+        RETURN_IF_FAILED(PFAuthenticationClientLoginGetResult(async, &entityHandle));
 
         const char* playFabId;
         RETURN_IF_FAILED(PFEntityGetPlayFabId(entityHandle, &playFabId));
@@ -93,7 +93,7 @@ void EntityTests::TestManualTokenRefresh(TestContext& testContext)
         }
 
         XAsyncGetStatus(&async, true);
-        hr = PFGetAuthResult(&async, &authResult.entityHandle);
+        hr = PFAuthenticationClientLoginGetResult(&async, &authResult.entityHandle);
 
         if (FAILED(hr) || !&authResult.entityHandle)
         {

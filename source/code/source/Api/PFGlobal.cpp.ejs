@@ -13,7 +13,15 @@ STDAPI <%- prefix %>MemSetFunctions(
     RETURN_IF_FAILED(PlayFab::Detail::SetMemoryHooks(memAllocFunc, memFreeFunc));
 
     // Try to set the memory hooks for libHttpClient as well. If it has already be initialized, there is nothing we can do
-    HRESULT hr = HCMemSetFunctions(memAllocFunc, memFreeFunc);
+    HRESULT hr = HCMemSetFunctions([](size_t size, HCMemoryType)
+        {
+            return PlayFab::Alloc(size);
+        },
+        [](void* pointer, HCMemoryType)
+        {
+            return PlayFab::Free(pointer);
+        });
+
     if (FAILED(hr) && hr != E_HC_ALREADY_INITIALISED)
     {
         return hr;

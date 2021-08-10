@@ -210,7 +210,7 @@ void ApiTests::TestGetEntityTokenWithSecretKey(TestContext& testContext)
 
         HRESULT Get(XAsyncBlock* async) override
         {
-            return PFGetAuthResult(async, &newEntityHandle);
+            return PFAuthenticationGetEntityTokenGetResult(async, &newEntityHandle);
         }
 
         ~GetEntityTokenResult()
@@ -287,7 +287,7 @@ void ApiTests::ClassSetUp()
             hr = XAsyncGetStatus(&async, true);
             if (SUCCEEDED(hr))
             {
-                PFGetAuthResult(&async, &entityHandle);
+                PFAuthenticationClientLoginGetResult(&async, &entityHandle);
             }
         }
     }
