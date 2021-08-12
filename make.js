@@ -537,33 +537,6 @@ function setPrerequisiteCalls() {
 // Used by functions which return code snippets
 var tab = "    ";
 
-function addAuthHeader(apiCall) {
-    var output = "";
-    switch (apiCall.auth) {
-        case "EntityToken": {
-            output += ("\n" + tab + "auto& entityToken{ m_tokens->EntityToken() };\n" + tab + "if (!entityToken.token)\n" + tab + "{\n" + tab + "    return E_PF_NOENTITYTOKEN;\n" + tab + "}\n");
-            output += (tab + "headers.emplace(\"X-EntityToken\", entityToken.token);");
-            return output;
-        }
-        case "SessionTicket": {
-            output += ("\n" + tab + "auto sessionTicket{ m_tokens->SessionTicket() };\n" + tab + "if (sessionTicket.empty())\n" + tab + "{\n" + tab + "    return E_PF_NOSESSIONTICKET;\n" + tab + "}\n");
-            output += (tab + "headers.emplace(\"X-Authorization\", std::move(sessionTicket));");
-            return output;
-        }
-        case "SecretKey": {
-            output += ("\n" + tab + "if (secretKey == nullptr || secretKey->empty())\n" + tab + "{\n" + tab + "    return E_PF_NOSECRETKEY;\n" + tab + "}\n");
-            output += (tab + "headers.emplace(\"X-SecretKey\", *secretKey);");
-            return output;
-        }
-        case "None": {
-            return output;
-        }
-        default: {
-            throw Error("getAuthParams: Unknown auth type: " + apiCall.auth + " for " + apiCall.name);
-        }
-    }
-}
-
 // Returns whether the C++ model for a datatype is fixed size
 function isFixedSize(datatype) {
     for (var i = 0; i < datatype.properties.length; i++) {
