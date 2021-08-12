@@ -35,9 +35,9 @@ HRESULT <%- prefix %>EntityRegisterTokenRefreshedCallback(
     RETURN_HR_INVALIDARG_IF_NULL(callback);
     RETURN_HR_INVALIDARG_IF_NULL(token);
 
-    *token = entityHandle->entity->TokenRefreshedCallbacks.Register([callback, context](const EntityToken& newToken)
+    *token = entityHandle->entity->TokenRefreshedCallbacks.Register([callback, context](SharedPtr<EntityToken const> newToken)
         {
-            callback(&newToken, context);
+            callback(newToken.get(), context);
         });
 
     return S_OK;
@@ -66,18 +66,6 @@ HRESULT <%- prefix %>EntityGetEntityTokenAsync(
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
 
-HRESULT <%- prefix %>EntityGetPlayFabId(
-    _In_ <%- prefix %>EntityHandle entityHandle,
-    _Outptr_ const char** playFabId
-) noexcept
-{
-    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(playFabId);
-
-    *playFabId = entityHandle->entity->PlayFabId().data();
-    return S_OK;
-}
-
 HRESULT <%- prefix %>EntityGetEntityId(
     _In_ <%- prefix %>EntityHandle entityHandle,
     _Outptr_ const char** entityId
@@ -89,7 +77,6 @@ HRESULT <%- prefix %>EntityGetEntityId(
     *entityId = entityHandle->entity->EntityId().data();
     return S_OK;
 }
-
 
 HRESULT <%- prefix %>EntityGetEntityType(
     _In_ <%- prefix %>EntityHandle entityHandle,
@@ -111,54 +98,6 @@ HRESULT <%- prefix %>EntityGetCachedEntityToken(
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
     RETURN_HR_INVALIDARG_IF_NULL(entityToken);
 
-    *entityToken = &entityHandle->entity->EntityToken();
-    return S_OK;
-}
-
-HRESULT <%- prefix %>EntityGetPlayerCombinedInfo(
-    _In_ <%- prefix %>EntityHandle entityHandle,
-    _Outptr_result_maybenull_ const <%- prefix %>GetPlayerCombinedInfoResultPayload** playerCombinedInfo
-) noexcept
-{
-    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(playerCombinedInfo);
-
-    *playerCombinedInfo = entityHandle->entity->PlayerCombinedInfo(); 
-    return S_OK;
-}
-
-HRESULT <%- prefix %>EntityGetLastLoginTime(
-    _In_ <%- prefix %>EntityHandle entityHandle,
-    _Outptr_result_maybenull_ const time_t** lastLoginTime
-) noexcept
-{
-    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(lastLoginTime);
-
-    *lastLoginTime = entityHandle->entity->LastLoginTime();
-    return S_OK;
-}
-
-HRESULT <%- prefix %>EntityGetUserSettings(
-    _In_ <%- prefix %>EntityHandle entityHandle,
-    _Outptr_result_maybenull_ const <%- prefix %>AuthenticationUserSettings** userSettings
-) noexcept
-{
-    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(userSettings);
-
-    *userSettings = entityHandle->entity->UserSettings();
-    return S_OK;
-}
-
-HRESULT <%- prefix %>EntityGetTreatmentAssignment(
-    _In_ <%- prefix %>EntityHandle entityHandle,
-    _Outptr_result_maybenull_ const <%- prefix %>TreatmentAssignment** treatmentAssignment
-) noexcept 
-{
-    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(treatmentAssignment);
-
-    *treatmentAssignment = entityHandle->entity->TreatmentAssignment();
+    *entityToken = entityHandle->entity->EntityToken().get();
     return S_OK;
 }

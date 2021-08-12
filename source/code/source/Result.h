@@ -14,6 +14,7 @@ public:
     // Failed result (no payload)
     Result(HRESULT hr);
     Result(HRESULT hr, String&& errorMessage);
+    Result(HRESULT hr, const String& errorMessage);
 
     Result(const Result&) = default;
     Result(Result&&) = default;
@@ -43,6 +44,7 @@ public:
     // Failed result (no payload)
     Result(HRESULT hr);
     Result(HRESULT hr, String&& errorMessage);
+    Result(HRESULT hr, const String& errorMessage);
 
     Result(const Result&) = default;
     Result(Result&&) = default;
@@ -86,6 +88,13 @@ Result<T>::Result(HRESULT hr_) :
 template<typename T>
 Result<T>::Result(HRESULT hr_, String&& errorMessage_) :
     hr{ hr_ },
+    errorMessage{ std::move(errorMessage_) }
+{
+}
+
+template<typename T>
+Result<T>::Result(HRESULT hr_, const String& errorMessage_) :
+    hr{ hr_ },
     errorMessage{ errorMessage_ }
 {
 }
@@ -115,6 +124,12 @@ inline Result<void>::Result(HRESULT hr_) :
 }
 
 inline Result<void>::Result(HRESULT hr_, String&& errorMessage_) :
+    hr{ hr_ },
+    errorMessage{ std::move(errorMessage_) }
+{
+}
+
+inline Result<void>::Result(HRESULT hr_, const String& errorMessage_) :
     hr{ hr_ },
     errorMessage{ errorMessage_ }
 {
