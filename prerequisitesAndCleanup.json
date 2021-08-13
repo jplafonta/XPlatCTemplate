@@ -1,0 +1,126 @@
+{
+    "AcceptGroupApplication": {
+        "prerequisites": [ "GetGroup", "InviteToGroup" ],
+        "cleanup": []
+    },
+
+    "AcceptGroupInvitation": {
+        "prerequisites": [ "GetGroup", "ApplyToGroup" ],
+        "cleanup": []
+    },
+
+    "AddMembers": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": [ "RemoveMembers" ]
+    },
+
+    "ApplyToGroup": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": [ "RemoveGroupApplication" ]
+    },
+
+    "BlockEntity": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": [ "UnblockEntity" ]
+    },
+
+    "ChangeMemberRole": {
+        "prerequisites": [ "GetGroup", "CreateRole" ],
+        "cleanup": [ "DeleteRole" ]
+    },
+
+    "CreateGroup": {
+        "prerequisites": [],
+        "cleanup": [ "GetGroup", "DeleteGroup" ]
+    },
+
+    "CreateRole": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": [ "DeleteRole" ]
+    },
+
+    "DeleteGroup": {
+        "prerequisites": [ "CreateGroup" ],
+        "cleanup": []
+    },
+
+    "DeleteRole": {
+        "prerequisites": [ "GetGroup", "CreateRole" ],
+        "cleanup": []
+    },
+
+    "GetGroup": {
+        "prerequisites": [],
+        "cleanup": []
+    },
+
+    "InviteToGroup": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": [ "RemoveGroupInvitation" ]
+    },
+
+    "IsMember": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": []
+    },
+
+    "ListGroupApplications": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": []
+    },
+
+    "ListGroupBlocks": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": []
+    },
+
+    "ListGroupInvitations": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": []
+    },
+
+    "ListGroupMembers": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": []
+    },
+
+    "ListMembership": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": []
+    },
+
+    "ListMembershipOpportunities": {
+        "prerequisites": [ "GetGroup" ],
+        "cleanup": []
+    },
+
+    "RemoveGroupApplication": {
+        "prerequisites": [ "GetGroup", "ApplyToGroup" ],
+        "cleanup": []
+    },
+
+    "RemoveGroupInvitation": {
+        "prerequisites": [ "GetGroup", "InviteToGroup" ],
+        "cleanup": []
+    },
+
+    "RemoveMembers": {
+        "prerequisites": [ "GetGroup", "AddMembers" ],
+        "cleanup": []
+    },
+
+    "UnblockEntity": {
+        "prerequisites": [ "GetGroup", "BlockEntity" ],
+        "cleanup": []
+    },
+
+    "UpdateGroup": {
+        "prerequisites": [ "GetGroup", "UpdateGroup" ],
+        "cleanup": []
+    },
+
+    "UpdateRole": {
+        "prerequisites": [ "GetGroup", "UpdateRole" ],
+        "cleanup": []
+    }
+}

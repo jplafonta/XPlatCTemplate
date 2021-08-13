@@ -56,71 +56,51 @@ function debugLogCollection(varName, propName, property, prefix, apiName) {
 }
 %>namespace PlayFabUnit
 {
-
-<% 
-var hasPrereqFillBeenDefinedMap = {};
-var hasPrereqValidateBeenDefinedMap = {};
-for (var i = 0; i < prerequisiteApis.length; i++) 
-{
-    var call = prerequisiteApis[i];
-    var testName = "Test" + featureGroup.name + call.name;
-    let testStatusListStatus = testStatusMap[testName];
-    let passingWithDataTest = (testStatusListStatus == "PassingWithData");
-    let passingButNoDataTest = (testStatusListStatus == "PassingButNoData");
-    let failingTest = (testStatusListStatus == "Failing");
-    let crashingTest = (testStatusListStatus == "Crashing");
-    var addDebugMarker = (!passingWithDataTest);
-    if( call.requestDatatype && !(call.requestDatatype.name in hasPrereqFillBeenDefinedMap)) {  // call.name == "AcceptTrade"
-        hasPrereqFillBeenDefinedMap[call.requestDatatype] = true;
-        let requestNamespace = "PlayFab::" + (call.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
-%>void AutoGen<%- featureGroup.name %>Tests::FillPrerequisite<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request )
-{<% 
-    if (addDebugMarker) { %>
-    // TODO: debug <%- testStatusListStatus %> prereq<% } %>
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( <%- getRequestExample(featureGroup, call) %> );
-    request->FromJson(inputJson);
-}
-
-<% } if (call.resultDatatype && !(call.resultDatatype.name in hasPrereqValidateBeenDefinedMap)) {
-    hasPrereqValidateBeenDefinedMap[call.result] = true;
-%>HRESULT AutoGen<%- featureGroup.name %>Tests::StorePrerequisite<%- call.resultDatatype. prefix + call.resultDatatype.name %>( <%- call.resultDatatype. prefix + call.resultDatatype.name %>* result )
-{
-    // TODO: store required fields
-<%
-    for (var propIdx = 0; propIdx < call.resultDatatype.properties.length; propIdx++) 
-    {
-        var property = call.resultDatatype.properties[propIdx];
-        var isInternal = false;
-        var type = getPublicPropertyType(property, prefix);
-        var propName = getPropertyName(property, isInternal);
-%>    <%- "Data()->m_" + propName + " = result->" + propName + ";" %>
-<%
-        if (property.collection && !(type === "PlayFabJsonObject")) 
-        {
-%>    <%- "Data()->m_" + propName + "Count = result->" + propName + "Count;" %>
-<%
-        } // end if
-    } // end for %>
-    return S_OK;
-}
-
-<% } } %> 
 <% 
 var hasFillBeenDefinedMap = {};
 var hasValidateBeenDefinedMap = {};
 for (var i = 0; i < featureGroup.calls.length; i++) 
 {
     var call = featureGroup.calls[i];
+%>
+#pragma region <%- call.name %>
+
+<%
     var testName = "Test" + featureGroup.name + call.name;
     let testStatusListStatus = testStatusMap[testName];
     let passingWithDataTest = (testStatusListStatus == "PassingWithData");
-    let passingButNoDataTest = (testStatusListStatus == "PassingButNoData");
-    let failingTest = (testStatusListStatus == "Failing");
-    let crashingTest = (testStatusListStatus == "Crashing");
     var addDebugMarker = (!passingWithDataTest);
+
+    for (var j = 0; j < prerequisiteCalls[call.name].length; j++)
+    {
+        var prereqCall = prerequisiteCalls[call.name][j];
+
+        if(prereqCall.requestDatatype && !(call.name + "Prereq" + prereqCall.requestDatatype.name in hasFillBeenDefinedMap)) {  // prereqCall.name == "AcceptTrade"
+        hasFillBeenDefinedMap[call.name + "Prereq" + prereqCall.requestDatatype.name] = true;
+        let requestNamespace = "PlayFab::" + (prereqCall.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
+%>void AutoGen<%- featureGroup.name %>Tests::Fill<%- call.name %>Prerequisite<%- prereqCall.requestDatatype.name %>( <%- requestNamespace + prereqCall.requestDatatype.name %>* request )
+{
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( <%- getRequestExample(featureGroup, prereqCall) %> );
+    request->FromJson(inputJson);
+}
+
+<% } if (prereqCall.resultDatatype && !(call.name + prereqCall.resultDatatype.name in hasValidateBeenDefinedMap)) {
+    hasValidateBeenDefinedMap[call.name + prereqCall.resultDatatype.name] = true;
+    let resultNamespace = "PlayFab::" + (prereqCall.resultDatatype.isShared ? "" : featureGroup.name + "Models::");
+%>HRESULT AutoGen<%- featureGroup.name %>Tests::Store<%- call.name %>Prerequisite<%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>( <%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>* result )
+{
+    <%- resultNamespace + prereqCall.resultDatatype.name %> internalResult(*result);
+    testData.m_<%- prereqCall.resultDatatype.name %>.FromJson(internalResult.ToJson());
+
+    return S_OK;
+}
+
+<% } 
+    }
+
     if(call.requestDatatype && !(call.requestDatatype.name in hasFillBeenDefinedMap)) {  // call.name == "AcceptTrade"
-        hasFillBeenDefinedMap[call.request] = true;
+        hasFillBeenDefinedMap[call.requestDatatype.name] = true;
         let requestNamespace = "PlayFab::" + (call.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
 %>void AutoGen<%- featureGroup.name %>Tests::Fill<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request )
 {<% if (addDebugMarker) { %>
@@ -129,10 +109,10 @@ for (var i = 0; i < featureGroup.calls.length; i++)
     inputJson.Parse( <%- getRequestExample(featureGroup, call) %> );
     request->FromJson(inputJson);
 }
-
 <% } if (call.resultDatatype && !(call.resultDatatype.name in hasValidateBeenDefinedMap)) {
-    hasValidateBeenDefinedMap[call.result] = true;
-%>HRESULT AutoGen<%- featureGroup.name %>Tests::Validate<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result )
+    hasValidateBeenDefinedMap[call.resultDatatype.name] = true;
+%>
+HRESULT AutoGen<%- featureGroup.name %>Tests::Validate<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result )
 {
 <% for (var propIdx = 0; propIdx < call.resultDatatype.properties.length; propIdx++) 
     {
@@ -151,7 +131,35 @@ for (var i = 0; i < featureGroup.calls.length; i++)
     UNREFERENCED_PARAMETER(result);
     return S_OK;
 }
+<% } 
 
-<% } } %> 
+    for (var j = 0; j < cleanupCalls[call.name].length; j++)
+    {
+        var cleanupCall = cleanupCalls[call.name][j];
+
+        if(cleanupCall.requestDatatype && !(call.name + "Cleanup" + cleanupCall.requestDatatype.name in hasFillBeenDefinedMap)) {  // cleanupCall.name == "AcceptTrade"
+        hasFillBeenDefinedMap[call.name + "Cleanup" + cleanupCall.requestDatatype.name] = true;
+        let requestNamespace = "PlayFab::" + (cleanupCall.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
+%>
+void AutoGen<%- featureGroup.name %>Tests::Fill<%- call.name %>Cleanup<%- cleanupCall.requestDatatype.name %>( <%- requestNamespace + cleanupCall.requestDatatype.name %>* request )
+{
+    PlayFab::JsonDocument inputJson;
+    inputJson.Parse( <%- getRequestExample(featureGroup, cleanupCall) %> );
+    request->FromJson(inputJson);
+}
+<% } if (cleanupCall.resultDatatype && !(call.name + cleanupCall.resultDatatype.name in hasValidateBeenDefinedMap)) {
+    hasValidateBeenDefinedMap[call.name + cleanupCall.resultDatatype.name] = true;
+    let resultNamespace = "PlayFab::" + (cleanupCall.resultDatatype.isShared ? "" : featureGroup.name + "Models::");
+%>
+HRESULT AutoGen<%- featureGroup.name %>Tests::Store<%- call.name %>Cleanup<%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>( <%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>* result )
+{
+    <%- resultNamespace + cleanupCall.resultDatatype.name %> internalResult(*result);
+    testData.m_<%- cleanupCall.resultDatatype.name %>.FromJson(internalResult.ToJson());
+
+    return S_OK;
+}
+<% } } %>
+#pragma endregion
+<% } %> 
 
 }

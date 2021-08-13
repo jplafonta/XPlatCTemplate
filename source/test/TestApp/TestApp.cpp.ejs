@@ -52,8 +52,6 @@ PFTestTraceLevel TestApp::traceLevel = PFTestTraceLevel::Important;
         LogPut(message);
     }
 #endif
-    
-    std::unique_ptr<PFTestData> g_data;
 
     int TestApp::Main()
     {
@@ -61,7 +59,6 @@ PFTestTraceLevel TestApp::traceLevel = PFTestTraceLevel::Important;
         assert(SUCCEEDED(hr));
         HCSettingsSetTraceLevel(HCTraceLevel::Verbose);
         HCTraceSetTraceToDebugger(true);
-        g_data = std::make_unique<PFTestData>();
 
         // Load the TestTitleData
         TestTitleData testTitleData;
@@ -165,11 +162,6 @@ for(var featureGroupName in SDKFeatureGroups)
         }
 
         return !titleDataJson.HasParseError();
-    }
-
-    PFTestData* Data()
-    {
-        return g_data.get();
     }
 
 #if !defined(DISABLE_PLAYFABCLIENT_API)
