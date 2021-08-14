@@ -58,7 +58,7 @@ HRESULT <%- prefix %>TitlePlayerGetEntityHandle(
 ) noexcept;
 
 /// <summary>
-/// Get the PlayFabId (master_player_account Id) for the TitlePlayer.
+/// Get the PlayFabId for the TitlePlayer.
 /// </summary>
 /// <param name="titlePlayerHandle"><%- prefix %>TitlePlayerHandle returned from a login call.</param>
 /// <param name="playFabId">Returned pointer to the playFabId. Valid until the TitlePlayer object is cleaned up.</param>
@@ -66,6 +66,32 @@ HRESULT <%- prefix %>TitlePlayerGetEntityHandle(
 HRESULT <%- prefix %>TitlePlayerGetPlayFabId(
     _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
     _Outptr_ const char** playFabId
+) noexcept;
+
+/// <summary>
+/// Get the required buffer size for the TitlePlayer's Client SessionTicket.
+/// </summary>
+/// <param name="titlePlayerHandle"><%- prefix %>TitlePlayerHandle returned from a login call.</param>
+/// <param name='bufferSize'>The required size of the buffer in bytes needed to hold the SessionTicket.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT <%- prefix %>TitlePlayerGetCachedSessionTicketSize(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Out_ size_t* sessionTicketSize
+) noexcept;
+
+/// <summary>
+/// Get the TitlePlayer's cached Client SessionTicket.
+/// </summary>
+/// <param name="titlePlayerHandle"><%- prefix %>TitlePlayerHandle returned from a login call.</param>
+/// <param name='sessionTicketBufferSize'>The size of the provided SessionTicketBuffer, in bytes.</param>
+/// <param name='SessionTicketBuffer'>Buffer to write the Client SessionTicket into.</param>
+/// <param name='bufferUsed'>An optional pointer that contains the number of bytes written to the buffer.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT <%- prefix %>TitlePlayerGetCachedSessionTicket(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _In_ size_t sessionTicketBufferSize,
+    _Out_writes_bytes_to_opt_(sessionTicketSize, *bufferUsed) char* SessionTicketBuffer,
+    _Out_opt_ size_t* bufferUsed
 ) noexcept;
 
 /// <summary>

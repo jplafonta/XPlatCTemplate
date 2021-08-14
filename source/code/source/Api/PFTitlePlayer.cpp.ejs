@@ -47,6 +47,56 @@ HRESULT <%- prefix %>TitlePlayerGetPlayFabId(
     return S_OK;
 }
 
+HRESULT <%- prefix %>TitlePlayerGetCachedSessionTicketSize(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Out_ size_t* sessionTicketSize
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(sessionTicketSize);
+
+    auto sessionTicket = titlePlayerHandle->titlePlayer->SessionTicket();
+    assert(sessionTicket);
+    if (!sessionTicket)
+    {
+        return E_UNEXPECTED;
+    }
+
+    *sessionTicketSize = sessionTicket->size() + 1;
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetCachedSessionTicket(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _In_ size_t sessionTicketBufferSize,
+    _Out_writes_bytes_to_opt_(sessionTicketSize, *bufferUsed) char* sessionTicketBuffer,
+    _Out_opt_ size_t* bufferUsed
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(sessionTicketBuffer);
+
+    auto sessionTicket = titlePlayerHandle->titlePlayer->SessionTicket();
+    assert(sessionTicket);
+    if (!sessionTicket)
+    {
+        return E_UNEXPECTED;
+    }
+
+    if (sessionTicket->size() + 1 > sessionTicketBufferSize)
+    {
+        return E_INVALIDARG;
+    }
+
+    std::strcpy(sessionTicketBuffer, sessionTicket->data());
+    if (bufferUsed)
+    {
+        *bufferUsed = sessionTicket->size() + 1;
+    }
+   
+    return S_OK;
+}
+
 HRESULT <%- prefix %>TitlePlayerGetEntityId(
     _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
     _Outptr_ const char** entityId

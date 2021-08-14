@@ -53,6 +53,12 @@ struct AuthResult : public XAsyncResult
             return E_FAIL;
         }
 
+        size_t sessionTicketSize;
+        RETURN_IF_FAILED(PFTitlePlayerGetCachedSessionTicketSize(titlePlayerHandle, &sessionTicketSize));
+
+        std::vector<char> sessionTicket(sessionTicketSize);
+        RETURN_IF_FAILED(PFTitlePlayerGetCachedSessionTicket(titlePlayerHandle, sessionTicketSize, sessionTicket.data(), nullptr));
+
         PFGetPlayerCombinedInfoResultPayload const* playerCombinedInfo;
         RETURN_IF_FAILED(PFTitlePlayerGetPlayerCombinedInfo(titlePlayerHandle, &playerCombinedInfo));
 

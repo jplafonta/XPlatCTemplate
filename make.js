@@ -106,7 +106,6 @@ function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
         getCopyConstructorInitializationList: getCopyConstructorInitializationList,
         getMoveConstructorInitializationList: getMoveConstructorInitializationList,
         getCopyConstructorBody: getCopyConstructorBody,
-        addAuthHeader: addAuthHeader,
         isSerializable: isSerializable,
         isFixedSize: isFixedSize,
         getFormattedDatatypeDescription: getFormattedDatatypeDescription,
