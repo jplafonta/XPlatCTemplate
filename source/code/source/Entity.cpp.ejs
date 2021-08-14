@@ -30,7 +30,6 @@ String const& Entity::EntityId() const
 }
 
 String const& Entity::EntityType() const
-<<<<<<< HEAD
 {
     return m_type;
 }
@@ -47,24 +46,6 @@ SharedPtr<PlayFab::HttpClient const> Entity::HttpClient() const
 
 SharedPtr<QoS::QoSAPI const> Entity::QoSAPI() const
 {
-=======
-{
-    return m_type;
-}
-
-SharedPtr<PlayFab::EntityToken const> Entity::EntityToken() const
-{
-    return m_entityToken;
-}
-
-SharedPtr<PlayFab::HttpClient const> Entity::HttpClient() const
-{
-    return m_httpClient;
-}
-
-SharedPtr<QoS::QoSAPI const> Entity::QoSAPI() const
-{
->>>>>>> feedback3
     return m_qosAPI;
 }
 
@@ -74,14 +55,6 @@ AsyncOp<void> Entity::RefreshToken(const TaskQueue& queue)
     PFAuthenticationGetEntityTokenRequest request;
     return GetEntityToken(request, queue).Then([](Result<SharedPtr<Entity>> result)
     {
-<<<<<<< HEAD
-        if (Succeeded(result))
-        {
-            auto& entity{ result.Payload() };
-            entity->TokenRefreshedCallbacks.Invoke(entity->m_entityToken);
-        }
-=======
->>>>>>> feedback3
         return Result<void>{result.hr, String{ result.errorMessage }};
     });
 }
@@ -121,10 +94,7 @@ AsyncOp<SharedPtr<Entity>> Entity::GetEntityToken(
                 // If we requested an EntityToken for ourselves, update m_authTokens and return "this"
                 assert(sharedThis->m_type == AS_STRING(resultModel.entity->type));
                 sharedThis->m_entityToken = MakeShared<PlayFab::EntityToken>(resultModel);
-<<<<<<< HEAD
-=======
                 sharedThis->TokenRefreshedCallbacks.Invoke(sharedThis->m_entityToken);
->>>>>>> feedback3
                 return Result<SharedPtr<Entity>>{ std::move(sharedThis) };
             }
             else
