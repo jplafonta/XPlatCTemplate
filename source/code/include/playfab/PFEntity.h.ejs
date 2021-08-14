@@ -75,12 +75,14 @@ typedef void CALLBACK <%- prefix %>EntityTokenRefreshedCallback(
 /// Registers a <%- prefix %>TokenRefreshedCallback for an Entity.
 /// </summary>
 /// <param name="entityHandle">Entity handle for the entity.</param>
+/// <param name="queue">The async queue the callback should be invoked on.</param>
 /// <param name="callback">The callback, <see cref="<%- prefix %>EntityTokenRefreshedCallback"/>.</param>
 /// <param name="context">Optional pointer to data used by the callback.</param>
 /// <param name="token">The token for unregistering the callback.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT <%- prefix %>EntityRegisterTokenRefreshedCallback(
     _In_ <%- prefix %>EntityHandle entityHandle,
+    _In_ XTaskQueueHandle queue,
     _In_ <%- prefix %>EntityTokenRefreshedCallback* callback,
     _In_opt_ void* context,
     _Out_ <%- prefix %>RegistrationToken* token
@@ -108,13 +110,28 @@ HRESULT <%- prefix %>EntityUnregisterTokenRefreshedCallback(
 /// <param name="async">XAsyncBlock for the async operation.</param>
 /// <returns>Result code for this API operation.</returns>
 /// <remarks>
-/// If successful, call <see cref="<%- prefix %>GetAuthResult"/> to get the result. If the requested token was the calling Entity, the resulting handle
+/// If successful, call <see cref="<%- prefix %>EntityGetEntityTokenGetResult"/> to get the result. If the requested token was the calling Entity, the resulting handle
 /// will be a new handle to the same Entity object (it still must be closed by the caller when no longer needed). 
 /// </remarks>
 HRESULT <%- prefix %>EntityGetEntityTokenAsync(
     _In_ <%- prefix %>EntityHandle entityHandle,
     _In_ const <%- prefix %>AuthenticationGetEntityTokenRequest* request,
     _Inout_ XAsyncBlock* async
+) noexcept;
+
+/// <symmary>
+/// Get the result from a <%- prefix %>EntityGetEntityTokenAsync call.
+/// </symmary>
+/// <param name="async">XAsyncBlock for the async operation.</param>
+/// <param name="entityHandle">Entity handle which can be used to authenticate other PlayFab API calls.</param>
+/// <returns>Result code for this API operation.</returns>
+/// <remarks>
+/// If the <%- prefix %>EntityGetEntityTokenAsync call fails, entityHandle with be null. Otherwise, the handle must be closed with <%- prefix %>EntityCloseHandle
+/// when it is no longer needed.
+/// </remarks>
+HRESULT <%- prefix %>EntityGetEntityTokenGetResult(
+    _In_ XAsyncBlock* async,
+    _Out_ <%- prefix %>EntityHandle* entityHandle
 ) noexcept;
 
 /// <summary>
@@ -150,7 +167,5 @@ HRESULT <%- prefix %>EntityGetCachedEntityToken(
     _In_ <%- prefix %>EntityHandle entityHandle,
     _Outptr_ const <%- prefix %>EntityToken** entityToken
 ) noexcept;
-
-
 
 }

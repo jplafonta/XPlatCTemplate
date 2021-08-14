@@ -168,7 +168,7 @@ HRESULT <%- prefix %>ServerLoginGetResult(
 HRESULT <%- prefix %><%- call.name %>GetResult(
     _In_ XAsyncBlock* async,
     _Out_ <%- globalPrefix %><%- call.entityReturned %>Handle* entityHandle
-) noexcept;   
+) noexcept;
 <%  } else if (isFixedSize(call.resultDatatype)) { %>
 /// <summary>
 /// Gets the result of a successful <%- prefix %><%- call.name %>Async call.

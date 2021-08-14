@@ -65,7 +65,7 @@ HRESULT <%- prefix %>AdminInitialize(
     return <%- prefix %>GlobalState::Create(titleId, secretKey, backgroundQueue, stateHandle);
 }
 
-HRESULT <%- prefix %>CleanupAsync(
+HRESULT <%- prefix %>UninitializeAsync(
     _In_ <%- prefix %>StateHandle stateHandle,
     _In_ XAsyncBlock* async
 ) noexcept

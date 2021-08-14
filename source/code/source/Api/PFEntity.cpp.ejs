@@ -26,6 +26,7 @@ void <%- prefix %>EntityCloseHandle(
 
 HRESULT <%- prefix %>EntityRegisterTokenRefreshedCallback(
     _In_ <%- prefix %>EntityHandle entityHandle,
+    _In_ XTaskQueueHandle queue,
     _In_ <%- prefix %>EntityTokenRefreshedCallback* callback,
     _In_opt_ void* context,
     _Out_ <%- prefix %>RegistrationToken* token
@@ -35,7 +36,7 @@ HRESULT <%- prefix %>EntityRegisterTokenRefreshedCallback(
     RETURN_HR_INVALIDARG_IF_NULL(callback);
     RETURN_HR_INVALIDARG_IF_NULL(token);
 
-    *token = entityHandle->entity->TokenRefreshedCallbacks.Register([callback, context](SharedPtr<EntityToken const> newToken)
+    *token = entityHandle->entity->TokenRefreshedCallbacks.Register(queue, [callback, context](SharedPtr<EntityToken const> newToken)
         {
             callback(newToken.get(), context);
         });
@@ -64,6 +65,14 @@ HRESULT <%- prefix %>EntityGetEntityTokenAsync(
 
     auto provider = MakeAuthProvider(async, __FUNCTION__, std::bind(&Entity::GetEntityToken, entityHandle->entity.get(), *request, std::placeholders::_1));
     return Provider::Run(UniquePtr<Provider>(provider.release()));
+}
+
+HRESULT <%- prefix %>EntityGetEntityTokenGetResult(
+    _In_ XAsyncBlock* async,
+    _Out_ <%- prefix %>EntityHandle* entityHandle
+) noexcept
+{
+    return XAsyncGetResult(async, nullptr, sizeof(<%- prefix %>EntityHandle), entityHandle, nullptr);
 }
 
 HRESULT <%- prefix %>EntityGetEntityId(
