@@ -4,67 +4,64 @@
 #define AS_STRING(charPtr) (charPtr ? String{ charPtr } : String{})
 
 namespace PlayFab
-{<% 
-var apiInitializationList = "";
-for(var featureGroupName in SDKFeatureGroups) {
-    if (featureGroupName === "Shared") {
-        continue;
-    }
-    var featureGroup = SDKFeatureGroups[featureGroupName];
-    var apiMemberName = featureGroup.name.charAt(0).toLowerCase() + featureGroup.name.slice(1) + "API"; 
-    apiInitializationList += "\n    " + apiMemberName + "{ m_httpClient, m_authTokens },";
-} %>
+{
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::LoginResult& result) :
+Entity::Entity(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, const AuthenticationModels::EntityTokenResponse& result) :
     m_httpClient{ std::move(httpClient) },
-    m_authTokens{ MakeShared<AuthTokens>(result) },
-    QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
-    m_loginContext{ std::move(loginContext) },
-    m_playFabId{ result.playFabId },
-    m_entityId{ AS_STRING(result.entityToken->entity->id) },
-    m_entityType{ AS_STRING(result.entityToken->entity->type) },
-    m_playerCombinedInfo{ result.infoResultPayload.has_value() ? MakeUnique<GetPlayerCombinedInfoResultPayload>(*result.infoResultPayload) : nullptr },
-    m_lastLoginTime{ result.lastLoginTime },
-    m_userSettings{ result.settingsForUser },
-    m_treatmentAssignment{ result.treatmentAssignment.has_value() ? MakeUnique<PlayFab::TreatmentAssignment>(*result.treatmentAssignment) : nullptr }
+    m_qosAPI{ std::move(qosAPI) },
+    m_entityToken{ MakeShared<PlayFab::EntityToken>(result) },
+    m_id{ AS_STRING(result.entity->id) },
+    m_type{ AS_STRING(result.entity->type) }
 {
 }
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::ServerLoginResult& result) :
+Entity::Entity(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, const AuthenticationModels::GetEntityTokenResponse& result) :
     m_httpClient{ std::move(httpClient) },
-    m_authTokens{ MakeShared<AuthTokens>(result) },
-    QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
-    m_loginContext{ std::move(loginContext) },
-    m_playFabId{ result.playFabId },
-    m_entityId{ AS_STRING(result.entityToken->entity->id) },
-    m_entityType{ AS_STRING(result.entityToken->entity->type) },
-    m_playerCombinedInfo{ result.infoResultPayload.has_value() ? MakeUnique<GetPlayerCombinedInfoResultPayload>(*result.infoResultPayload) : nullptr },
-    m_lastLoginTime{ result.lastLoginTime },
-    m_userSettings{ result.settingsForUser },
-    m_treatmentAssignment{ result.treatmentAssignment.has_value() ? MakeUnique<PlayFab::TreatmentAssignment>(*result.treatmentAssignment) : nullptr }
+    m_qosAPI{ std::move(qosAPI) },
+    m_entityToken{ MakeShared<PlayFab::EntityToken>(result) },
+    m_id{ AS_STRING(result.entity->id) },
+    m_type{ AS_STRING(result.entity->type) }
 {
 }
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::RegisterPlayFabUserResult& result) :
-    m_httpClient{ std::move(httpClient) },
-    m_authTokens{ MakeShared<AuthTokens>(result) },
-    QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
-    m_loginContext{ std::move(loginContext) },
-    m_playFabId{ result.playFabId },
-    m_entityId{ AS_STRING(result.entityToken->entity->id) },
-    m_entityType{ AS_STRING(result.entityToken->entity->type) },
-    m_userSettings{ result.settingsForUser }
+String const& Entity::EntityId() const
 {
+    return m_id;
 }
 
-Entity::Entity(SharedPtr<HttpClient const> httpClient, SharedPtr<LoginContext const> loginContext, const AuthenticationModels::GetEntityTokenResponse& result) :
-    m_httpClient{ std::move(httpClient) },
-    m_authTokens{ MakeShared<AuthTokens>(result) },
-    QoSAPI{ m_httpClient, m_authTokens },<%- apiInitializationList %>
-    m_loginContext{ std::move(loginContext) },
-    m_entityId{ AS_STRING(result.entity->id) },
-    m_entityType{ AS_STRING(result.entity->type) }
+String const& Entity::EntityType() const
 {
+    return m_type;
+}
+
+SharedPtr<PlayFab::EntityToken const> Entity::EntityToken() const
+{
+    return m_entityToken;
+}
+
+SharedPtr<PlayFab::HttpClient const> Entity::HttpClient() const
+{
+    return m_httpClient;
+}
+
+SharedPtr<QoS::QoSAPI const> Entity::QoSAPI() const
+{
+    return m_qosAPI;
+}
+
+AsyncOp<void> Entity::RefreshToken(const TaskQueue& queue)
+{
+    // GetEntityToken for 'this' entity
+    PFAuthenticationGetEntityTokenRequest request;
+    return GetEntityToken(request, queue).Then([](Result<SharedPtr<Entity>> result)
+    {
+        if (Succeeded(result))
+        {
+            auto& entity{ result.Payload() };
+            entity->TokenRefreshedCallbacks.Invoke(entity->m_entityToken);
+        }
+        return Result<void>{result.hr, String{ result.errorMessage }};
+    });
 }
 
 AsyncOp<SharedPtr<Entity>> Entity::GetEntityToken(
@@ -72,25 +69,15 @@ AsyncOp<SharedPtr<Entity>> Entity::GetEntityToken(
     const TaskQueue& queue
 )
 {
-    UnorderedMap<String, String> headers;
-
-    auto& entityToken{ m_authTokens->EntityToken() };
-    auto sessionTicket{ m_authTokens->SessionTicket() };
-
-    if (entityToken.token)
+    if (!m_entityToken)
     {
-        headers.emplace("X-EntityToken", entityToken.token);
-    }
-    else if (!sessionTicket.empty())
-    {
-        headers.emplace("X-Authorization", std::move(sessionTicket));
-    }
-    else
-    {
-        // Entity should always have at least one non-empty AuthToken
+        // Entity token should never be null
         assert(false);
         return E_UNEXPECTED;
     }
+
+    UnorderedMap<String, String> headers;
+    headers.emplace("X-EntityToken", m_entityToken->token);
 
     return m_httpClient->MakePostRequest(
         "/Authentication/GetEntityToken",
@@ -107,17 +94,17 @@ AsyncOp<SharedPtr<Entity>> Entity::GetEntityToken(
             AuthenticationModels::GetEntityTokenResponse resultModel;
             resultModel.FromJson(serviceResponse.Data);
 
-            if (sharedThis->m_entityId == AS_STRING(resultModel.entity->id))
+            if (sharedThis->m_id == AS_STRING(resultModel.entity->id))
             {
                 // If we requested an EntityToken for ourselves, update m_authTokens and return "this"
-                assert(sharedThis->m_entityType == AS_STRING(resultModel.entity->type));
-                sharedThis->m_authTokens->Refresh(resultModel);
+                assert(sharedThis->m_type == AS_STRING(resultModel.entity->type));
+                sharedThis->m_entityToken = MakeShared<PlayFab::EntityToken>(resultModel);
                 return Result<SharedPtr<Entity>>{ std::move(sharedThis) };
             }
             else
             {
                 // Otherwise create and return a new Entity object
-                return MakeShared<Entity>(sharedThis->m_httpClient, MakeShared<LoginContext>("/Authentication/GetEntityToken"), std::move(resultModel));
+                return MakeShared<Entity>(sharedThis->m_httpClient, sharedThis->m_qosAPI, std::move(resultModel));
             }
         }
         else
@@ -127,114 +114,38 @@ AsyncOp<SharedPtr<Entity>> Entity::GetEntityToken(
     });
 }
 
-String const& Entity::PlayFabId() const
+EntityToken::EntityToken(const AuthenticationModels::EntityTokenResponse& tokenResponse) :
+    <%- prefix %>EntityToken{},
+    m_token{ AS_STRING(tokenResponse.entityToken) },
+    m_expiration{ tokenResponse.tokenExpiration ? *tokenResponse.tokenExpiration : StdExtra::optional<time_t>{} }
 {
-    return m_playFabId;
+    token = m_token.empty() ? nullptr : m_token.data();
+    expiration = m_expiration ? m_expiration.operator->() : nullptr;
 }
 
-String const& Entity::EntityId() const
+EntityToken::EntityToken(const AuthenticationModels::GetEntityTokenResponse& tokenResponse) :
+    <%- prefix %>EntityToken{},
+    m_token{ tokenResponse.entityToken },
+    m_expiration{ tokenResponse.tokenExpiration }
 {
-    return m_entityId;
+    token = m_token.empty() ? nullptr : m_token.data();
+    expiration = m_expiration ? m_expiration.operator->() : nullptr;
 }
 
-String const& Entity::EntityType() const
+EntityToken::EntityToken(const EntityToken& src) :
+    m_token{ src.m_token },
+    m_expiration{ src.m_expiration }
 {
-    return m_entityType;
+    token = m_token.empty() ? nullptr : m_token.data();
+    expiration = m_expiration ? m_expiration.operator->() : nullptr;
 }
 
-PlayFab::EntityToken const& Entity::EntityToken() const
+EntityToken::EntityToken(EntityToken&& src) :
+    <%- prefix %>EntityToken{ src },
+    m_token{ std::move(src.m_token) },
+    m_expiration{ src.m_expiration }
 {
-    return m_authTokens->EntityToken();
-}
-
-GetPlayerCombinedInfoResultPayload const* Entity::PlayerCombinedInfo() const
-{
-    return m_playerCombinedInfo.get();
-}
-
-time_t const* Entity::LastLoginTime() const
-{
-    return m_lastLoginTime.has_value() ? m_lastLoginTime.operator->() : nullptr;
-}
-
-AuthenticationModels::UserSettings const* Entity::UserSettings() const
-{
-    return m_userSettings.has_value() ? m_userSettings.operator->() : nullptr;
-}
-
-TreatmentAssignment const* Entity::TreatmentAssignment() const
-{
-    return m_treatmentAssignment.get();
-}
-
-AsyncOp<void> Entity::RefreshLogin(const TaskQueue& queue)
-{
-    SharedPtr<Entity> sharedThis{ shared_from_this() };
-
-    return m_loginContext->GetRequestBody(queue.DeriveWorkerQueue()).Then([sharedThis, this, queue = TaskQueue{ queue }](Result<JsonValue> requestBodyResult) -> AsyncOp<ServiceResponse>
-    {
-        RETURN_IF_FAILED(requestBodyResult.hr);
-
-        return m_httpClient->MakePostRequest(
-            m_loginContext->RequestPath(),
-            m_loginContext->RequestHeaders(),
-            requestBodyResult.Payload(),
-            queue
-        );
-
-    }).Then([sharedThis, this](Result<ServiceResponse> result)->Result<void>
-    {
-        RETURN_IF_FAILED(result.hr);
-
-        auto serviceResponse = result.ExtractPayload();
-        if (serviceResponse.HttpCode == 200)
-        {
-            AuthenticationModels::LoginResult resultModel;
-            resultModel.FromJson(serviceResponse.Data);
-            m_authTokens->Refresh(resultModel);
-        }
-        else
-        {
-            return Result<void>{ ServiceErrorToHR(serviceResponse.ErrorCode), std::move(serviceResponse.ErrorMessage) };
-        }
-        return S_OK;
-    });
-}
-
-LoginContext::LoginContext(const char* requestPath)
-    : m_path{ requestPath }
-{
-}
-
-LoginContext::LoginContext(const char* requestPath, JsonValue&& requestBody)
-    : m_path{ requestPath },
-    m_requestBody{ std::move(requestBody) }
-{
-}
-
-LoginContext::LoginContext(const char* requestPath, JsonValue&& requestBody, UnorderedMap<String, String> requestHeaders)
-    : m_path{ requestPath },
-    m_requestBody{ std::move(requestBody) },
-    m_requestHeaders{ std::move(requestHeaders) }
-{
-}
-
-const char* LoginContext::RequestPath() const
-{
-    return m_path.data();
-}
-
-AsyncOp<JsonValue> LoginContext::GetRequestBody(const TaskQueue& queue) const
-{
-    UNREFERENCED_PARAMETER(queue); // No async work to be done in base LoginContext
-    JsonValue requestBodyCopy;
-    JsonUtils::FromJson(m_requestBody, requestBodyCopy);
-    return Result<JsonValue>{ std::move(requestBodyCopy) };
-}
-
-const UnorderedMap<String, String>& LoginContext::RequestHeaders() const
-{
-    return m_requestHeaders;
+    expiration = m_expiration ? m_expiration.operator->() : nullptr;
 }
 
 }

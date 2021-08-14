@@ -1,19 +1,16 @@
 #pragma once
 
 #include "<%- featureGroup.name %>DataModels.h"
-#include "AuthTokens.h"
-#include "HttpClient.h"
-#include "TaskQueue.h"
+#include "TitlePlayer.h"
+#include "GlobalState.h"
 
 namespace PlayFab
 {
 
-class Entity;
-
 class <%- featureGroup.name %>API
 {
 public:
-    <%- featureGroup.name %>API(SharedPtr<HttpClient const> httpClient, SharedPtr<AuthTokens const> tokens);
+    <%- featureGroup.name %>API() = delete;
     <%- featureGroup.name %>API(const <%- featureGroup.name %>API& source) = delete;
     <%- featureGroup.name %>API& operator=(const <%- featureGroup.name %>API& source) = delete;
     ~<%- featureGroup.name %>API() = default;
@@ -21,12 +18,10 @@ public:
     // ------------ Generated API calls<%
 for (var i = 0; i < featureGroup.calls.length; i++) {
     var call = featureGroup.calls[i];
-    var staticModifier = call.entityRequired ? "" : "static ";
-    var constModifier = call.entityRequired ? " const" : "";
 
     var resultType = "void";
     if (call.entityReturned) {
-        resultType = "SharedPtr<Entity>";
+        resultType = "SharedPtr<" + call.entityReturned + ">";
     } else if (call.resultDatatype) {
         if (call.resultDatatype.isShared) {
             resultType = call.resultDatatype.name;
@@ -34,24 +29,18 @@ for (var i = 0; i < featureGroup.calls.length; i++) {
             resultType = featureGroup.name + "Models::" + call.resultDatatype.name;
         }
     }
+    var contextParam = call.entityRequired ? "SharedPtr<" + call.entityRequired + "> entity, " : "SharedPtr<GlobalState const> state, ";
     var requestParam = call.requestDatatype ? "const " + call.requestDatatype.prefix + call.requestDatatype.name + "& request, " : ""; 
-    var secretKeyParam = call.auth === "SecretKey" ? "SharedPtr<String const> secretKey, " : "";
-    var httpClientParam = call.entityRequired ? "" : "SharedPtr<HttpClient const> httpClient, ";
-
 %>
-    <%- staticModifier %>AsyncOp<<%- resultType %>> <%- call.name %>(<%- requestParam %><%- secretKeyParam %><%- httpClientParam %>const TaskQueue& queue)<%- constModifier %>;<%
+    static AsyncOp<<%- resultType %>> <%- call.name %>(<%- contextParam %><%- requestParam %>const TaskQueue& queue);<%
 
     // Eplicitly add LoginWithXUser API alongside Client/LoginWithXbox
     if (call.url === "/Client/LoginWithXbox") { %>
 #if HC_PLATFORM == HC_PLATFORM_GDK
-    static AsyncOp<SharedPtr<Entity>> LoginWithXUser(const PFAuthenticationLoginWithXUserRequest& request, SharedPtr<HttpClient const> httpClient, const TaskQueue& queue);
+    static AsyncOp<SharedPtr<TitlePlayer>> LoginWithXUser(SharedPtr<GlobalState> state, const <%- globalPrefix %>AuthenticationLoginWithXUserRequest& request, const TaskQueue& queue);
 #endif<%
     } // end if
 } // end for %>
-
-private:
-    SharedPtr<HttpClient const> m_httpClient;
-    SharedPtr<AuthTokens const> m_tokens;
 };
 
 }

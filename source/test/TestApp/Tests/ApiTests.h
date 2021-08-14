@@ -34,6 +34,7 @@ protected:
 
 public:
     PFStateHandle stateHandle{ nullptr };
+    PFTitlePlayerHandle titlePlayerHandle{ nullptr };
     PFEntityHandle entityHandle{ nullptr };
 
     void ClassSetUp() override;

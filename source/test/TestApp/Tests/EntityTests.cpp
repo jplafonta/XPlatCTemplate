@@ -11,40 +11,70 @@ struct AuthResult : public XAsyncResult
 {
     ~AuthResult()
     {
+        PFTitlePlayerCloseHandle(titlePlayerHandle);
         PFEntityCloseHandle(entityHandle);
     }
 
     HRESULT Get(XAsyncBlock* async) override
     {
-        RETURN_IF_FAILED(PFAuthenticationClientLoginGetResult(async, &entityHandle));
-
-        const char* playFabId;
-        RETURN_IF_FAILED(PFEntityGetPlayFabId(entityHandle, &playFabId));
-
-        const char* entityId;
-        RETURN_IF_FAILED(PFEntityGetEntityId(entityHandle, &entityId));
-
-        const char* entityType;
-        RETURN_IF_FAILED(PFEntityGetEntityType(entityHandle, &entityType));
-
-        const PFEntityToken* entityToken;
-        RETURN_IF_FAILED(PFEntityGetCachedEntityToken(entityHandle, &entityToken));
-
-        PFGetPlayerCombinedInfoResultPayload const* playerCombinedInfo;
-        RETURN_IF_FAILED(PFEntityGetPlayerCombinedInfo(entityHandle, &playerCombinedInfo));
-
-        time_t const* lastLoginTime;
-        RETURN_IF_FAILED(PFEntityGetLastLoginTime(entityHandle, &lastLoginTime));
-
-        PFAuthenticationUserSettings const* userSettings;
-        RETURN_IF_FAILED(PFEntityGetUserSettings(entityHandle, &userSettings));
-
-        PFTreatmentAssignment const* treatmentAssignment;
-        RETURN_IF_FAILED(PFEntityGetTreatmentAssignment(entityHandle, &treatmentAssignment));
+        RETURN_IF_FAILED(PFAuthenticationClientLoginGetResult(async, &titlePlayerHandle));
+        RETURN_IF_FAILED(PFTitlePlayerGetEntityHandle(titlePlayerHandle, &entityHandle));
 
         return S_OK;
     }
 
+    HRESULT Validate() override
+    {
+        const char* playFabId;
+        RETURN_IF_FAILED(PFTitlePlayerGetPlayFabId(titlePlayerHandle, &playFabId));
+
+        const char* entityIdFromTitlePlayer;
+        RETURN_IF_FAILED(PFTitlePlayerGetEntityId(titlePlayerHandle, &entityIdFromTitlePlayer));
+
+        const char* entityIdFromEntity;
+        RETURN_IF_FAILED(PFEntityGetEntityId(entityHandle, &entityIdFromEntity));
+
+        if (std::strcmp(entityIdFromEntity, entityIdFromTitlePlayer))
+        {
+            return E_FAIL;
+        }
+
+        const char* entityType;
+        RETURN_IF_FAILED(PFEntityGetEntityType(entityHandle, &entityType));
+
+        const PFEntityToken* entityTokenFromTitlePlayer;
+        RETURN_IF_FAILED(PFTitlePlayerGetCachedEntityToken(titlePlayerHandle, &entityTokenFromTitlePlayer));
+
+        const PFEntityToken* entityTokenFromEntity;
+        RETURN_IF_FAILED(PFEntityGetCachedEntityToken(entityHandle, &entityTokenFromEntity));
+
+        if (std::strcmp(entityTokenFromEntity->token, entityTokenFromTitlePlayer->token))
+        {
+            return E_FAIL;
+        }
+
+        size_t sessionTicketSize;
+        RETURN_IF_FAILED(PFTitlePlayerGetCachedSessionTicketSize(titlePlayerHandle, &sessionTicketSize));
+
+        std::vector<char> sessionTicket(sessionTicketSize);
+        RETURN_IF_FAILED(PFTitlePlayerGetCachedSessionTicket(titlePlayerHandle, sessionTicketSize, sessionTicket.data(), nullptr));
+
+        PFGetPlayerCombinedInfoResultPayload const* playerCombinedInfo;
+        RETURN_IF_FAILED(PFTitlePlayerGetPlayerCombinedInfo(titlePlayerHandle, &playerCombinedInfo));
+
+        time_t const* lastLoginTime;
+        RETURN_IF_FAILED(PFTitlePlayerGetLastLoginTime(titlePlayerHandle, &lastLoginTime));
+
+        PFAuthenticationUserSettings const* userSettings;
+        RETURN_IF_FAILED(PFTitlePlayerGetUserSettings(titlePlayerHandle, &userSettings));
+
+        PFTreatmentAssignment const* treatmentAssignment;
+        RETURN_IF_FAILED(PFTitlePlayerGetTreatmentAssignment(titlePlayerHandle, &treatmentAssignment));
+
+        return S_OK;
+    }
+
+    PFTitlePlayerHandle titlePlayerHandle{ nullptr };
     PFEntityHandle entityHandle{ nullptr };
 };
 
@@ -93,13 +123,15 @@ void EntityTests::TestManualTokenRefresh(TestContext& testContext)
         }
 
         XAsyncGetStatus(&async, true);
-        hr = PFAuthenticationClientLoginGetResult(&async, &authResult.entityHandle);
+        hr = PFAuthenticationClientLoginGetResult(&async, &authResult.titlePlayerHandle);
 
-        if (FAILED(hr) || !&authResult.entityHandle)
+        if (FAILED(hr) || !authResult.titlePlayerHandle)
         {
             testContext.Fail("PlayFabGetAuthResult", hr);
             return;
         }
+
+        PFTitlePlayerGetEntityHandle(authResult.titlePlayerHandle, &authResult.entityHandle);
 
         const PFEntityToken* entityToken;
         PFEntityGetCachedEntityToken(authResult.entityHandle, &entityToken);

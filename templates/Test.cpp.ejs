@@ -93,10 +93,13 @@ void AutoGen<%- featureGroup.name %>Tests::ClassSetUp()
             assert(SUCCEEDED(hr));
             if (SUCCEEDED(hr))
             {
-                hr = PFAuthenticationClientLoginGetResult(&async, &entityHandle);
-                assert(SUCCEEDED(hr) && entityHandle != nullptr);
+                hr = PFAuthenticationClientLoginGetResult(&async, &titlePlayerHandle);
+                assert(SUCCEEDED(hr) && titlePlayerHandle);
 
-                hr = PFEntityGetPlayerCombinedInfo(entityHandle, &playerCombinedInfo);
+                hr = PFTitlePlayerGetEntityHandle(titlePlayerHandle, &entityHandle);
+                assert(SUCCEEDED(hr) && entityHandle);
+
+                hr = PFTitlePlayerGetPlayerCombinedInfo(titlePlayerHandle, &playerCombinedInfo);
                 assert(SUCCEEDED(hr));
             }
         }
@@ -105,6 +108,7 @@ void AutoGen<%- featureGroup.name %>Tests::ClassSetUp()
 
 void AutoGen<%- featureGroup.name %>Tests::ClassTearDown()
 {
+    PFTitlePlayerCloseHandle(titlePlayerHandle);
     PFEntityCloseHandle(entityHandle);
 
     XAsyncBlock async{};
@@ -130,7 +134,15 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
 <% for (var i = 0; i < prerequisiteApis.length; i++)
 {
     var call = prerequisiteApis[i];
-    var contextHandleParam = call.entityRequired ? "entityHandle" : "stateHandle";
+    var contextHandleParam = "stateHandle";
+    if (call.entityRequired)
+    {
+        if (call.entityRequired === "TitlePlayer") {
+            contextHandleParam = "titlePlayerHandle";
+        } else {
+            contextHandleParam = "entityHandle";
+        }
+    }
     var asyncName = prefix + call.name + "Async"; 
     var prereqName =  "Prerequisite" + featureGroup.name + call.name;
 %>void AutoGen<%- featureGroup.name %>Tests::<%- prereqName %>(TestContext& prereqContext)
@@ -190,7 +202,15 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
 <% for (var i = 0; i < featureGroup.calls.length; i++) 
 {
     var call = featureGroup.calls[i];
-    var contextHandleParam = call.entityRequired ? "entityHandle" : "stateHandle";
+    var contextHandleParam = "stateHandle";
+    if (call.entityRequired)
+    {
+        if (call.entityRequired === "TitlePlayer") {
+            contextHandleParam = "titlePlayerHandle";
+        } else {
+            contextHandleParam = "entityHandle";
+        }
+    }
     var asyncName = prefix + call.name + "Async"; 
     var testName =  "Test" + featureGroup.name + call.name;
 %>void AutoGen<%- featureGroup.name %>Tests::<%- testName %>(TestContext& testContext)

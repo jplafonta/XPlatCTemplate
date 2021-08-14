@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "QoS.h"
 #include "QoSSocket.h"
-#include <MultiplayerServer/MultiplayerServerDataModels.h>
-#include <PlayStream/PlayStreamDataModels.h>
+#include <MultiplayerServer/MultiplayerServer.h>
+#include <PlayStream/PlayStream.h>
 
 using namespace PlayFab::MultiplayerServerModels;
 using namespace PlayFab::PlayStreamModels;
@@ -12,22 +12,16 @@ namespace PlayFab
 namespace QoS
 {
 
-QoSAPI::QoSAPI(SharedPtr<HttpClient const> httpClient, SharedPtr<AuthTokens const> tokens) :
-    m_playStreamApi{ httpClient, tokens },
-    m_multiplayerServerApi{ httpClient, tokens }
-{
-}
-
-AsyncOp<Measurements> QoSAPI::GetMeasurements(uint32_t pingIterations, uint32_t timeoutMs, const TaskQueue& queue) const
+AsyncOp<Measurements> QoSAPI::GetMeasurements(SharedPtr<Entity> entity, uint32_t pingIterations, uint32_t timeoutMs, const TaskQueue& queue) const
 {
     TaskQueue workerQueue{ queue.DeriveWorkerQueue() };
 
-    return GetServers(workerQueue).Then([this, pingIterations, timeoutMs, workerQueue](Result<void> result) -> AsyncOp<Measurements>
+    return GetServers(entity, workerQueue).Then([this, pingIterations, timeoutMs, workerQueue](Result<void> result) -> AsyncOp<Measurements>
     {
         RETURN_IF_FAILED(result.hr);
         return PingServers(pingIterations, timeoutMs, workerQueue);
     }
-    ).Then([this, workerQueue](Result<Measurements> result)
+    ).Then([this, entity, workerQueue](Result<Measurements> result)
     {
         // Upload result to PlayFab
         JsonValue eventJson{ rapidjson::kObjectType };
@@ -64,7 +58,7 @@ AsyncOp<Measurements> QoSAPI::GetMeasurements(uint32_t pingIterations, uint32_t 
         request.events = events.data();
         request.eventsCount = static_cast<uint32_t>(events.size());
 
-        return m_playStreamApi.WriteTelemetryEvents(request, workerQueue).Then([qosResult = std::move(result) ](Result<WriteEventsResponse> result)
+        return PlayStreamAPI::WriteTelemetryEvents(entity, request, workerQueue).Then([qosResult = std::move(result) ](Result<WriteEventsResponse> result)
         {
             // Wait for WriteTelemetryEvents to complete prior to returning result to client. Although though they won't 
             // see that result, we don't want to continue work in the background in case they want to close the XTaskQueue
@@ -76,7 +70,7 @@ AsyncOp<Measurements> QoSAPI::GetMeasurements(uint32_t pingIterations, uint32_t 
     });
 }
 
-AsyncOp<void> QoSAPI::GetServers(const TaskQueue& queue) const
+AsyncOp<void> QoSAPI::GetServers(SharedPtr<Entity> entity, const TaskQueue& queue) const
 {
     if (!m_servers.empty())
     {
@@ -85,7 +79,7 @@ AsyncOp<void> QoSAPI::GetServers(const TaskQueue& queue) const
     }
 
     ListQosServersForTitleRequest request{};
-    return m_multiplayerServerApi.ListQosServersForTitle(request, queue).Then([this](Result<ListQosServersForTitleResponse> result)
+    return MultiplayerServerAPI::ListQosServersForTitle(entity, request, queue).Then([this](Result<ListQosServersForTitleResponse> result)
     {
         if (Succeeded(result))
         {

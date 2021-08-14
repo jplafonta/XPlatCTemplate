@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "HttpClient.h"
 #include "JsonUtils.h"
+#include "Entity.h"
+#include "TitlePlayer.h"
 #include "SdkVersion.h"
 
 namespace PlayFab
@@ -30,6 +32,32 @@ private:
     TaskQueue const m_queue;
     HCCallHandle m_callHandle{ nullptr };
     XAsyncBlock m_asyncBlock{};
+    SharedPtr<AsyncOpContext<ServiceResponse>> m_asyncContext;
+};
+
+// Base class for EntityApiRequestOperation and ClassicApiRequestOperation
+class RequestWithRetryOperation
+{
+public:
+    virtual ~RequestWithRetryOperation() = default;
+
+protected:
+    RequestWithRetryOperation(SharedPtr<Entity> entity, String&& url, UnorderedMap<String, String>&& headers, JsonValue&& body, const TaskQueue& queue);
+
+    static AsyncOp<ServiceResponse> Run(UniquePtr<RequestWithRetryOperation> operation);
+
+    virtual void UpdateAuthHeader() = 0;
+
+    SharedPtr<Entity> m_entity;
+    UnorderedMap<String, String> m_headers;
+
+private:
+    void MakeRequest(bool retry);
+    void Complete(Result<ServiceResponse>&& result);
+
+    String m_url;
+    JsonValue m_body;
+    TaskQueue m_queue;
     SharedPtr<AsyncOpContext<ServiceResponse>> m_asyncContext;
 };
 
@@ -64,6 +92,93 @@ AsyncOp<ServiceResponse> HttpClient::MakePostRequest(
 ) const
 {
     return HCHttpCall::Perform(GetUrl(path).data(), headers, requestBody, queue);
+}
+
+AsyncOp<ServiceResponse> HttpClient::MakeEntityRequest(
+    SharedPtr<Entity> entity,
+    const char* path,
+    UnorderedMap<String, String>&& headers,
+    JsonValue&& requestBody,
+    const TaskQueue& queue
+) const
+{
+    class EntityRequestOperation : public RequestWithRetryOperation
+    {
+    public:
+        static AsyncOp<ServiceResponse> Begin(SharedPtr<Entity> entity, String&& url, UnorderedMap<String, String>&& headers, JsonValue&& body, const TaskQueue& queue)
+        {
+            auto ptr{ Allocator<EntityRequestOperation>{}.allocate(1) };
+            new (ptr) EntityRequestOperation{ std::move(entity), std::move(url), std::move(headers), std::move(body), queue };
+
+            return RequestWithRetryOperation::Run(UniquePtr<RequestWithRetryOperation>{ ptr });
+        }
+
+    private:
+        EntityRequestOperation(SharedPtr<Entity> entity, String&& url, UnorderedMap<String, String>&& headers, JsonValue&& body, const TaskQueue& queue)
+            : RequestWithRetryOperation{ entity, std::move(url), std::move(headers), std::move(body), std::move(queue) }
+        {
+        }
+
+        void UpdateAuthHeader() override
+        {
+            if (m_headers.find(kEntityTokenHeaderName) != m_headers.end())
+            {
+                m_headers[kEntityTokenHeaderName] = m_entity->EntityToken()->token;
+            }
+            else
+            {
+                assert(false);
+                TRACE_ERROR("EntityToken header missing from PlayFab Entity API request");
+            }
+        }
+    };
+
+    return EntityRequestOperation::Begin(std::move(entity), GetUrl(path), std::move(headers), std::move(requestBody), queue);
+}
+
+AsyncOp<ServiceResponse> HttpClient::MakeClassicRequest(
+    SharedPtr<TitlePlayer> titlePlayer,
+    const char* path,
+    UnorderedMap<String, String>&& headers,
+    JsonValue&& requestBody,
+    const TaskQueue& queue
+) const
+{
+    class ClassicRequestOperation : public RequestWithRetryOperation
+    {
+    public:
+        static AsyncOp<ServiceResponse> Begin(SharedPtr<TitlePlayer> titlePlayer, String&& url, UnorderedMap<String, String>&& headers, JsonValue&& body, const TaskQueue& queue)
+        {
+            auto ptr{ Allocator<ClassicRequestOperation>{}.allocate(1) };
+            new (ptr) ClassicRequestOperation{ std::move(titlePlayer), std::move(url), std::move(headers), std::move(body), queue };
+
+            return RequestWithRetryOperation::Run(UniquePtr<RequestWithRetryOperation>{ ptr });
+        }
+
+    private:
+        ClassicRequestOperation(SharedPtr<TitlePlayer> titlePlayer, String&& url, UnorderedMap<String, String>&& headers, JsonValue&& body, const TaskQueue& queue)
+            : RequestWithRetryOperation{ titlePlayer, std::move(url), std::move(headers), std::move(body), std::move(queue) },
+            m_titlePlayer{ std::move(titlePlayer) }
+        {
+        }
+
+        void UpdateAuthHeader() override
+        {
+            if (m_headers.find(kSessionTicketHeaderName) != m_headers.end())
+            {
+                m_headers[kSessionTicketHeaderName] = *m_titlePlayer->SessionTicket();
+            }
+            else
+            {
+                assert(false);
+                TRACE_ERROR("ClientSessionTicket header missing from PlayFab Classic API request");
+            }
+        }
+
+        SharedPtr<TitlePlayer> m_titlePlayer;
+    };
+
+    return ClassicRequestOperation::Begin(std::move(titlePlayer), GetUrl(path), std::move(headers), std::move(requestBody), queue);
 }
 
 HCHttpCall::HCHttpCall(const TaskQueue& queue) :
@@ -199,6 +314,68 @@ void HCHttpCall::HCPerformComplete(XAsyncBlock* async)
     {
         asyncOpContext->Complete(std::current_exception());
     }
+}
+
+RequestWithRetryOperation::RequestWithRetryOperation(SharedPtr<Entity> entity, String&& url, UnorderedMap<String, String>&& headers, JsonValue&& body, const TaskQueue& queue) :
+    m_entity{ std::move(entity) },
+    m_headers{ std::move(headers) },
+    m_url{ url },
+    m_body{ std::move(body) },
+    m_queue{ queue.DeriveWorkerQueue() },
+    m_asyncContext{ MakeShared<AsyncOpContext<ServiceResponse>>() }
+{
+}
+
+AsyncOp<ServiceResponse> RequestWithRetryOperation::Run(UniquePtr<RequestWithRetryOperation> operation)
+{
+    operation->MakeRequest(true);
+    auto asyncContext{ operation->m_asyncContext };
+
+    // Release the operation. Will be cleaned up in RequestWithRetryOperation::Complete.
+    operation.release();
+
+    return asyncContext;
+}
+
+void RequestWithRetryOperation::MakeRequest(bool retry)
+{
+    HCHttpCall::Perform(m_url.data(), m_headers, m_body, m_queue).Finally([this, retry](Result<ServiceResponse> result)
+    {
+        // Check if the result meets conditions for auth retry
+        auto hr = Succeeded(result) ? ServiceErrorToHR(result.Payload().ErrorCode) : result.hr;
+
+        if (retry && (hr == HTTP_E_STATUS_DENIED || /* REST error code (401) */
+            hr == E_PF_INTERNAL_EXPIREDAUTHTOKEN || /* PlayFab error code for EntityToken expired */
+            hr == E_PF_NOTAUTHENTICATED) /* PlayFab error code for SessionTicket expired */)
+        {
+            m_entity->RefreshToken(m_queue).Finally([this](Result<void> refreshResult)
+            {
+                if (Failed(refreshResult))
+                {
+                    TRACE_INFORMATION("Unable to refresh expired auth token. Passing along error to caller");
+                    this->Complete(Result<ServiceResponse>{ refreshResult.hr, refreshResult.errorMessage });
+                }
+                else
+                {
+                    // Update our auth headers and retry
+                    this->UpdateAuthHeader();
+                    this->MakeRequest(false);
+                }
+            });
+        }
+        else
+        {
+            // Conditions for retry not met, pass along result
+            this->Complete(std::move(result));
+        }
+    });
+}
+
+void RequestWithRetryOperation::Complete(Result<ServiceResponse>&& result)
+{
+    // Reclaim operation, it will be released after completing AsyncOpContext
+    UniquePtr<RequestWithRetryOperation> reclaim{ this };
+    m_asyncContext->Complete(std::move(result));
 }
 
 ServiceResponse::ServiceResponse(const ServiceResponse& src) :

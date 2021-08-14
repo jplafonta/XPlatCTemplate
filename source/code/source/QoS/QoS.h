@@ -1,8 +1,8 @@
 #pragma once
 
 #include "QoSDataModels.h"
-#include "MultiplayerServer/MultiplayerServer.h"
-#include "PlayStream/PlayStream.h"
+#include "Entity.h"
+#include "TaskQueue.h"
 
 namespace PlayFab
 {
@@ -13,15 +13,14 @@ namespace QoS
 class QoSAPI
 {
 public:
-    QoSAPI(SharedPtr<HttpClient const> httpClient, SharedPtr<AuthTokens const> tokens);
+    QoSAPI() = default;
+    QoSAPI(const QoSAPI&) = delete;
+    ~QoSAPI() = default;
 
-    AsyncOp<Measurements> GetMeasurements(uint32_t pingIterations, uint32_t timeoutMs, const TaskQueue& queue) const;
+    AsyncOp<Measurements> GetMeasurements(SharedPtr<Entity> entity, uint32_t pingIterations, uint32_t timeoutMs, const TaskQueue& queue) const;
 
 private:
-    PlayStreamAPI const m_playStreamApi;
-    MultiplayerServerAPI const m_multiplayerServerApi;
-
-    AsyncOp<void> GetServers(const TaskQueue& queue) const;
+    AsyncOp<void> GetServers(SharedPtr<Entity> entity, const TaskQueue& queue) const;
     AsyncOp<Measurements> PingServers(uint32_t pingIterations, uint32_t timeoutMs, const TaskQueue& queue) const;
 
 private:
