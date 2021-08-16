@@ -1,0 +1,170 @@
+#include "stdafx.h"
+#include <playfab/PFTitlePlayer.h>
+#include "TitlePlayer.h"
+
+using namespace PlayFab;
+
+HRESULT <%- prefix %>TitlePlayerDuplicateHandle(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Out_ <%- prefix %>TitlePlayerHandle* duplicatedHandle
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(duplicatedHandle);
+
+    *duplicatedHandle = MakeUnique<PFTitlePlayer>(*titlePlayerHandle).release();
+    return S_OK;
+}
+
+void <%- prefix %>TitlePlayerCloseHandle(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle
+) noexcept
+{
+    UniquePtr<PFTitlePlayer>{ titlePlayerHandle };
+}
+
+HRESULT <%- prefix %>TitlePlayerGetEntityHandle(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Out_ <%- prefix %>EntityHandle* entityHandle
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+
+    *entityHandle = MakeUnique<PFEntity>(titlePlayerHandle->titlePlayer).release();
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetPlayFabId(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Outptr_ const char** playFabId
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(playFabId);
+
+    *playFabId = titlePlayerHandle->titlePlayer->PlayFabId().data();
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetCachedSessionTicketSize(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Out_ size_t* sessionTicketSize
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(sessionTicketSize);
+
+    auto sessionTicket = titlePlayerHandle->titlePlayer->SessionTicket();
+    assert(sessionTicket);
+    if (!sessionTicket)
+    {
+        return E_UNEXPECTED;
+    }
+
+    *sessionTicketSize = sessionTicket->size() + 1;
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetCachedSessionTicket(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _In_ size_t sessionTicketBufferSize,
+    _Out_writes_bytes_to_opt_(sessionTicketSize, *bufferUsed) char* sessionTicketBuffer,
+    _Out_opt_ size_t* bufferUsed
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(sessionTicketBuffer);
+
+    auto sessionTicket = titlePlayerHandle->titlePlayer->SessionTicket();
+    assert(sessionTicket);
+    if (!sessionTicket)
+    {
+        return E_UNEXPECTED;
+    }
+
+    if (sessionTicket->size() + 1 > sessionTicketBufferSize)
+    {
+        return E_INVALIDARG;
+    }
+
+    std::strcpy(sessionTicketBuffer, sessionTicket->data());
+    if (bufferUsed)
+    {
+        *bufferUsed = sessionTicket->size() + 1;
+    }
+   
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetEntityId(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Outptr_ const char** entityId
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(entityId);
+
+    *entityId = titlePlayerHandle->titlePlayer->EntityId().data();
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetCachedEntityToken(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Outptr_ const <%- prefix %>EntityToken** entityToken
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(entityToken);
+
+    *entityToken = titlePlayerHandle->titlePlayer->EntityToken().get();
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetPlayerCombinedInfo(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Outptr_result_maybenull_ const <%- prefix %>GetPlayerCombinedInfoResultPayload** playerCombinedInfo
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(playerCombinedInfo);
+
+    *playerCombinedInfo = titlePlayerHandle->titlePlayer->PlayerCombinedInfo(); 
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetLastLoginTime(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Outptr_result_maybenull_ const time_t** lastLoginTime
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(lastLoginTime);
+
+    *lastLoginTime = titlePlayerHandle->titlePlayer->LastLoginTime();
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetUserSettings(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Outptr_result_maybenull_ const <%- prefix %>AuthenticationUserSettings** userSettings
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(userSettings);
+
+    *userSettings = titlePlayerHandle->titlePlayer->UserSettings();
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetTreatmentAssignment(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Outptr_result_maybenull_ const <%- prefix %>TreatmentAssignment** treatmentAssignment
+) noexcept 
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(treatmentAssignment);
+
+    *treatmentAssignment = titlePlayerHandle->titlePlayer->TreatmentAssignment();
+    return S_OK;
+}

@@ -102,10 +102,13 @@ void AutoGen<%- featureGroup.name %>Tests::ClassSetUp()
             assert(SUCCEEDED(hr));
             if (SUCCEEDED(hr))
             {
-                hr = PFAuthenticationClientLoginGetResult(&async, &entityHandle);
-                assert(SUCCEEDED(hr) && entityHandle != nullptr);
+                hr = PFAuthenticationClientLoginGetResult(&async, &titlePlayerHandle);
+                assert(SUCCEEDED(hr) && titlePlayerHandle);
 
-                hr = PFEntityGetPlayerCombinedInfo(entityHandle, &playerCombinedInfo);
+                hr = PFTitlePlayerGetEntityHandle(titlePlayerHandle, &entityHandle);
+                assert(SUCCEEDED(hr) && entityHandle);
+
+                hr = PFTitlePlayerGetPlayerCombinedInfo(titlePlayerHandle, &playerCombinedInfo);
                 assert(SUCCEEDED(hr));
             }
         }
@@ -114,10 +117,11 @@ void AutoGen<%- featureGroup.name %>Tests::ClassSetUp()
 
 void AutoGen<%- featureGroup.name %>Tests::ClassTearDown()
 {
+    PFTitlePlayerCloseHandle(titlePlayerHandle);
     PFEntityCloseHandle(entityHandle);
 
     XAsyncBlock async{};
-    HRESULT hr = PFCleanupAsync(stateHandle, &async);
+    HRESULT hr = PFUninitializeAsync(stateHandle, &async);
     assert(SUCCEEDED(hr));
 
     hr = XAsyncGetStatus(&async, true);
@@ -146,7 +150,15 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
     for (var j = 0; j < prerequisiteCalls[call.name].length; j++)
     {
         var prereqCall = prerequisiteCalls[call.name][j];
-        var prereqContextHandleParam = call.entityRequired ? "entityHandle" : "stateHandle";
+        var prereqContextHandleParam = "stateHandle";
+        if (prereqCall.entityRequired)
+        {
+            if (prereqCall.entityRequired === "TitlePlayer") {
+                contextHandleParam = "titlePlayerHandle";
+            } else {
+                contextHandleParam = "entityHandle";
+            }
+        }
         var prereqAsyncName = prefix + prereqCall.name + "Async"; 
         var prereqName =  "Test" + featureGroup.name + call.name + "Prerequisite" + prereqCall.name;
 %>void AutoGen<%- featureGroup.name %>Tests::<%- prereqName %>(TestContext& testContext)
@@ -203,7 +215,15 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
 } 
 <% }
 
-    var contextHandleParam = call.entityRequired ? "entityHandle" : "stateHandle";
+    var contextHandleParam = "stateHandle";
+    if (call.entityRequired)
+    {
+        if (call.entityRequired === "TitlePlayer") {
+            contextHandleParam = "titlePlayerHandle";
+        } else {
+            contextHandleParam = "entityHandle";
+        }
+    }
     var asyncName = prefix + call.name + "Async"; 
     var testName =  "Test" + featureGroup.name + call.name;
 %>void AutoGen<%- featureGroup.name %>Tests::<%- testName %>(TestContext& testContext)

@@ -22,7 +22,7 @@ void ApiTests::TestApiStaticSizeResult(TestContext& testContext)
 
     auto async = std::make_unique<XAsyncHelper<GetTimeResult>>(testContext);
 
-    HRESULT hr = PFTitleDataManagementClientGetTimeAsync(entityHandle, &async->asyncBlock);
+    HRESULT hr = PFTitleDataManagementClientGetTimeAsync(titlePlayerHandle, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabClientGetTimeAsync", hr);
@@ -66,6 +66,7 @@ void ApiTests::TestApiSerializableResult(TestContext& testContext)
 
     PFSharedGroupsCreateSharedGroupRequest request{ groupId.data() };
     HRESULT hr = PFSharedGroupsClientCreateSharedGroupAsync(entityHandle, &request, &async->asyncBlock);
+
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabClientCreateSharedGroupAsync", hr);
@@ -96,7 +97,7 @@ void ApiTests::TestApiResultHandle(TestContext& testContext)
     auto async = std::make_unique<XAsyncHelper<GetPlayerProfileResult>>(testContext);
 
     PFAccountManagementGetPlayerProfileRequest request{};
-    HRESULT hr = PFAccountManagementClientGetPlayerProfileAsync(entityHandle, &request, &async->asyncBlock);
+    HRESULT hr = PFAccountManagementClientGetPlayerProfileAsync(titlePlayerHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabClientGetPlayerProfileAsync", hr);
@@ -287,7 +288,8 @@ void ApiTests::ClassSetUp()
             hr = XAsyncGetStatus(&async, true);
             if (SUCCEEDED(hr))
             {
-                PFAuthenticationClientLoginGetResult(&async, &entityHandle);
+                PFAuthenticationClientLoginGetResult(&async, &titlePlayerHandle);
+                PFTitlePlayerGetEntityHandle(titlePlayerHandle, &entityHandle);
             }
         }
     }
@@ -295,10 +297,11 @@ void ApiTests::ClassSetUp()
 
 void ApiTests::ClassTearDown()
 {
+    PFTitlePlayerCloseHandle(titlePlayerHandle);
     PFEntityCloseHandle(entityHandle);
 
     XAsyncBlock async{};
-    HRESULT hr = PFCleanupAsync(stateHandle, &async);
+    HRESULT hr = PFUninitializeAsync(stateHandle, &async);
     assert(SUCCEEDED(hr));
 
     hr = XAsyncGetStatus(&async, true);

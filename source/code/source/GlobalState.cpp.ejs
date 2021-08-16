@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "GlobalState.h"
 #include "AsyncProvider.h"
+#include "QoS/QoS.h"
 #include <httpClient/httpClient.h>
 
 using namespace PlayFab;
@@ -11,6 +12,7 @@ namespace PlayFab
 GlobalState::GlobalState(String&& titleId, _In_opt_z_ const char* secretKey, _In_opt_ XTaskQueueHandle backgroundQueue) :
     m_httpClient{ MakeShared<PlayFab::HttpClient>(std::move(titleId)) },
     m_secretKey{ secretKey ? MakeShared<String>(secretKey) : nullptr },
+    m_qosAPI{ MakeShared<QoS::QoSAPI>() },
     m_backgroundQueue{ backgroundQueue }
 {
 }
@@ -23,6 +25,11 @@ SharedPtr<HttpClient const> GlobalState::HttpClient() const
 SharedPtr<String const> GlobalState::SecretKey() const
 {
     return m_secretKey;
+}
+
+SharedPtr<QoS::QoSAPI const> GlobalState::QoSAPI() const
+{
+    return m_qosAPI;
 }
 
 } // namespace PlayFab
