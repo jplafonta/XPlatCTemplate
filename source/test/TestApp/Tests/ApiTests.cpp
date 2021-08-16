@@ -65,7 +65,7 @@ void ApiTests::TestApiSerializableResult(TestContext& testContext)
     groupId = uniqueGroupId.str();
 
     PFSharedGroupsCreateSharedGroupRequest request{ groupId.data() };
-    HRESULT hr = PFSharedGroupsClientCreateSharedGroupAsync(entityHandle, &request, &async->asyncBlock);
+    HRESULT hr = PFSharedGroupsClientCreateSharedGroupAsync(titlePlayerHandle, &request, &async->asyncBlock);
 
     if (FAILED(hr))
     {

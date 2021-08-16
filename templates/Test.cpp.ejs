@@ -154,9 +154,9 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
         if (prereqCall.entityRequired)
         {
             if (prereqCall.entityRequired === "TitlePlayer") {
-                contextHandleParam = "titlePlayerHandle";
+                prereqContextHandleParam = "titlePlayerHandle";
             } else {
-                contextHandleParam = "entityHandle";
+                prereqContextHandleParam = "entityHandle";
             }
         }
         var prereqAsyncName = prefix + prereqCall.name + "Async"; 
@@ -282,7 +282,15 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
     for (var j = 0; j < cleanupCalls[call.name].length; j++)
     {
         var cleanupCall = cleanupCalls[call.name][j];
-        var cleanupContextHandleParam = cleanupCall.entityRequired ? "entityHandle" : "stateHandle";
+        var cleanupContextHandleParam = "stateHandle";
+        if (cleanupCall.entityRequired)
+        {
+            if (cleanupCall.entityRequired === "TitlePlayer") {
+                cleanupContextHandleParam = "titlePlayerHandle";
+            } else {
+                cleanupContextHandleParam = "entityHandle";
+            }
+        }
         var cleanupAsyncName = prefix + cleanupCall.name + "Async"; 
         var cleanupName =  "Test" + featureGroup.name + call.name + "Cleanup" + cleanupCall.name;
 %>void AutoGen<%- featureGroup.name %>Tests::<%- cleanupName %>(TestContext& testContext)

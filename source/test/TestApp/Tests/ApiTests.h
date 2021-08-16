@@ -3,6 +3,7 @@
 #include "TestCase.h"
 #include <playfab/PFGlobal.h>
 #include <playfab/PFEntity.h>
+#include <playfab/PFTitlePlayer.h>
 
 namespace PlayFabUnit
 {
