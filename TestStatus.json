@@ -158,15 +158,15 @@
   "TestGroupsAcceptGroupInvitation": "Failing",
   "TestGroupsAddMembers": "Failing",
   "TestGroupsApplyToGroup": "Failing",
-  "TestGroupsBlockEntity": "Failing",
-  "TestGroupsChangeMemberRole": "Failing",
+  "TestGroupsBlockEntity": "PassingWithData",
+  "TestGroupsChangeMemberRole": "PassingWithData",
   "TestGroupsCreateGroup": "PassingWithData",
   "TestGroupsCreateRole": "PassingWithData",
   "TestGroupsDeleteGroup": "PassingWithData",
   "TestGroupsDeleteRole": "PassingWithData",
   "TestGroupsGetGroup": "PassingWithData",
   "TestGroupsInviteToGroup": "Failing",
-  "TestGroupsIsMember": "Failing",
+  "TestGroupsIsMember": "PassingWithData",
   "TestGroupsListGroupApplications": "PassingWithData",
   "TestGroupsListGroupBlocks": "PassingWithData",
   "TestGroupsListGroupInvitations": "PassingWithData",
@@ -176,8 +176,8 @@
   "TestGroupsRemoveGroupApplication": "Failing",
   "TestGroupsRemoveGroupInvitation": "Failing",
   "TestGroupsRemoveMembers": "Failing",
-  "TestGroupsUnblockEntity": "Failing",
-  "TestGroupsUpdateGroup": "Failing",
-  "TestGroupsUpdateRole": "Failing"
+  "TestGroupsUnblockEntity": "PassingWithData",
+  "TestGroupsUpdateGroup": "PassingWithData",
+  "TestGroupsUpdateRole": "PassingWithData"
 
 }
