@@ -14,53 +14,97 @@ private:
     static void Log(std::stringstream& ss);
     static HRESULT LogHR(HRESULT hr);
 
-<% for (var i = 0; i < prerequisiteApis.length; i++)
-{
-    var call = prerequisiteApis[i];
-%>    void Prerequisite<%- featureGroup.name + call.name %>(TestContext& testContext);
-<% } %>
 <% for (var i = 0; i < featureGroup.calls.length; i++) 
 {
     var call = featureGroup.calls[i];
-    var asyncName = prefix + call.name + "Async"; 
-%>    void Test<%- featureGroup.name + call.name %>(TestContext& testContext); 
-<% } %>
 
+    for (var j = 0; j < prerequisiteCalls[call.name].length; j++)
+    {
+        var prereqCall = prerequisiteCalls[call.name][j];
+    %>    void Test<%- featureGroup.name + call.name %>Prerequisite<%- prereqCall.name %>(TestContext& testContext);
+<%
+    }
+
+    var asyncName = prefix + call.name + "Async"; 
+%>    void Test<%- featureGroup.name + call.name %>(TestContext& testContext);
+<%
+
+    for (var j = 0; j < cleanupCalls[call.name].length; j++)
+    {
+        var cleanupCall = cleanupCalls[call.name][j];
+    %>    void Test<%- featureGroup.name + call.name %>Cleanup<%- cleanupCall.name %>(TestContext& testContext);
+<%
+    }
+%>
+<%
+} %>
 protected:
     void AddTests();
 
 <% 
-var hasPrereqFillBeenDefinedMap = {};
-var hasPrereqValidateBeenDefinedMap = {};
-for (var i = 0; i < prerequisiteApis.length; i++) 
-{
-    var call = prerequisiteApis[i];
-    if(call.requestDatatype && !(call.requestDatatype.name in hasPrereqFillBeenDefinedMap)) {
-        hasPrereqFillBeenDefinedMap[call.requestDatatype.name] = true;
-        let requestNamespace = "PlayFab::" + (call.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
-%>    static void LogPrerequisite<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request, const char* prereqName );
-    static void FillPrerequisite<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request );
-<% } if (call.resultDatatype && !(call.resultDatatype.name in hasPrereqValidateBeenDefinedMap)) { 
-    hasPrereqValidateBeenDefinedMap[call.resultDatatype.name] = true;
-%>    static HRESULT LogPrerequisite<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result );
-    static HRESULT StorePrerequisite<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result );
-<% } } %>
-<% 
 var hasFillBeenDefinedMap = {};
 var hasValidateBeenDefinedMap = {};
+var storedResponseTypes = [];
 for (var i = 0; i < featureGroup.calls.length; i++) 
 {
     var call = featureGroup.calls[i];
-    if(call.requestDatatype && !(call.requestDatatype.name in hasFillBeenDefinedMap) ) {
+
+    for (var j = 0; j < prerequisiteCalls[call.name].length; j++)
+    {
+        var prereqCall = prerequisiteCalls[call.name][j];
+        
+        if (prereqCall.requestDatatype && !(call.name + prereqCall.requestDatatype.name in hasFillBeenDefinedMap) ) {
+            hasFillBeenDefinedMap[call.name + prereqCall.requestDatatype.name] = true;
+            let requestNamespace = "PlayFab::" + (prereqCall.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
+    %>    static void Fill<%- call.name %>Prerequisite<%- prereqCall.requestDatatype.name %>( <%- requestNamespace + prereqCall.requestDatatype.name %>* request );
+<%      } if (prereqCall.resultDatatype && !(call.name + prereqCall.resultDatatype.name in hasValidateBeenDefinedMap) ) { 
+        hasValidateBeenDefinedMap[call.name + prereqCall.resultDatatype.name] = true;
+        if (!(storedResponseTypes.some(elem => elem.name === prereqCall.resultDatatype.name))) storedResponseTypes.push(prereqCall.resultDatatype);
+    %>    static HRESULT Store<%- call.name %>Prerequisite<%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>( <%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>* result );
+<% } }
+
+    if (call.requestDatatype && !(call.requestDatatype.name in hasFillBeenDefinedMap) ) {
         hasFillBeenDefinedMap[call.requestDatatype.name] = true;
         let requestNamespace = "PlayFab::" + (call.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
 %>    static void Log<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request, const char* testName );
     static void Fill<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request );
-<% } if (call.resultDatatype && !(call.resultDatatype.name in hasValidateBeenDefinedMap) ) { 
+<%  } if (call.resultDatatype && !(call.resultDatatype.name in hasValidateBeenDefinedMap) ) { 
     hasValidateBeenDefinedMap[call.resultDatatype.name] = true;
 %>    static HRESULT Log<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result );
     static HRESULT Validate<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result );
+<% } 
+
+    for (var j = 0; j < cleanupCalls[call.name].length; j++)
+    {
+        var cleanupCall = cleanupCalls[call.name][j];
+        
+        if (cleanupCall.requestDatatype && !(call.name + cleanupCall.requestDatatype.name in hasFillBeenDefinedMap) ) {
+            hasFillBeenDefinedMap[call.name + cleanupCall.requestDatatype.name] = true;
+            let requestNamespace = "PlayFab::" + (cleanupCall.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
+    %>    static void Fill<%- call.name %>Cleanup<%- cleanupCall.requestDatatype.name %>( <%- requestNamespace + cleanupCall.requestDatatype.name %>* request );
+<%      } if (cleanupCall.resultDatatype && !(call.name + cleanupCall.resultDatatype.name in hasValidateBeenDefinedMap) ) { 
+        hasValidateBeenDefinedMap[call.name + cleanupCall.resultDatatype.name] = true;
+        if (!(storedResponseTypes.some(elem => elem.name === prereqCall.resultDatatype.name))) storedResponseTypes.push(prereqCall.resultDatatype);
+    %>    static HRESULT Store<%- call.name %>Cleanup<%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>( <%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>* result );
 <% } } %>
+<% } 
+%>    struct <%- featureGroup.name %>TestData
+    {
+        ~<%- featureGroup.name %>TestData()
+        {
+
+        }
+
+<%
+    for (const responseType of storedResponseTypes)
+    {
+        let responseNamespace = "PlayFab::" + (prereqCall.resultDatatype.isShared ? "" : featureGroup.name + "Models::");
+%>        <%- responseNamespace + responseType.name %> m_<%- responseType.name %>;
+<%  } 
+%>    };
+
+    static <%- featureGroup.name %>TestData testData;
+
 public:
     PFStateHandle stateHandle{ nullptr };
     PFTitlePlayerHandle titlePlayerHandle{ nullptr };

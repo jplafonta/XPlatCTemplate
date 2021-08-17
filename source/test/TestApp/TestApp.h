@@ -66,16 +66,4 @@ namespace PlayFabUnit
         // is likely to be very different on all of them.
         static bool LoadTitleDataJson(std::shared_ptr<char*>& testDataJsonPtr, size_t& testDataJsonLen);
     };
-
-    struct PFTestData
-    {
-        ~PFTestData()
-        {
-
-        }
-
-        std::string m_groupId;
-    };
-
-    PFTestData* Data();
 }

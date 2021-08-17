@@ -29,7 +29,8 @@ var customizations = {};
 var xmlRefDocs = {};
 
 // Test related data structures
-var prerequisiteApis = {};
+var prerequisiteCalls = {};
+var cleanupCalls = {};
 var propertyReplacements = {};
 var testStatusMap = {};
 
@@ -43,6 +44,7 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     }
 
     customizations = parseDataFile("customizations.json");
+    prereqsAndCleanupMap = parseDataFile("prerequisitesAndCleanup.json");
     xmlRefDocs = parseDataFile("XMLRefDocs.json");
     testStatusMap = parseDataFile("TestStatus.json");
 
@@ -53,11 +55,12 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     populateSDKFeatureGroups(apis);
 
     // Configure test prerequisites
-    setPrerequisiteCalls(apis);
+    setPrerequisiteAndCleanupCalls(apis);
 
     var locals = {
         apis: apis,
-        prerequisiteApis: prerequisiteApis,
+        prerequisiteCalls: prerequisiteCalls,
+        cleanupCalls: cleanupCalls,
         prefix: globalPrefix,
         SDKFeatureGroups: SDKFeatureGroups,
         projectFiles: parseProjectFiles("project_files.json"),
@@ -95,7 +98,8 @@ function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
         featureGroup: featureGroup,
         prefix: prefix,
         globalPrefix: globalPrefix,
-        prerequisiteApis: prerequisiteApis[featureGroup.name],
+        prerequisiteCalls: prerequisiteCalls,
+        cleanupCalls: cleanupCalls,
         platformExclusions: customizations.platformExclusions,
         getBaseTypes: getBaseTypes,
         getPropertyDefinition: getPropertyDefinition,
@@ -516,17 +520,21 @@ function populateSDKFeatureGroups(apis) {
     }
 }
 
-function setPrerequisiteCalls() {
+function setPrerequisiteAndCleanupCalls() {
     for (let featureGroupName in SDKFeatureGroups) {
-        var featureGroup = SDKFeatureGroups[featureGroupName];
-        prerequisiteApis[featureGroupName] = [];
+        for (const call of SDKFeatureGroups[featureGroupName].calls) {
+            prerequisiteCalls[call.name] = [];
+            cleanupCalls[call.name] = [];
 
-        if (featureGroupName == "Groups") {
-            prerequisiteApis[featureGroupName].push(featureGroup.calls.find(elem => elem.name === "CreateGroup"));
-            prerequisiteApis[featureGroupName].push(featureGroup.calls.find(elem => elem.name === "GetGroup"));
-            prerequisiteApis[featureGroupName].push(featureGroup.calls.find(elem => elem.name === "ApplyToGroup"));
-            prerequisiteApis[featureGroupName].push(featureGroup.calls.find(elem => elem.name === "InviteToGroup"));
-            prerequisiteApis[featureGroupName].push(featureGroup.calls.find(elem => elem.name === "BlockEntity"));
+            if (prereqsAndCleanupMap.hasOwnProperty(call.name)) {
+                for (const prereqName of prereqsAndCleanupMap[call.name].prerequisites) {
+                    prerequisiteCalls[call.name].push(SDKFeatureGroups[featureGroupName].calls.find(elem => elem.name === prereqName));
+                }
+                
+                for (const cleanupName of prereqsAndCleanupMap[call.name].cleanup) {
+                    cleanupCalls[call.name].push(SDKFeatureGroups[featureGroupName].calls.find(elem => elem.name === cleanupName));
+                }
+            }
         }
     }
 }

@@ -37,15 +37,15 @@ void ApiTests::TestApiSerializableResult(TestContext& testContext)
 
     struct CreateSharedGroupResult : public XAsyncResult
     {
-        PFGroupsCreateSharedGroupResult* result;
+        PFSharedGroupsCreateSharedGroupResult* result;
 
         HRESULT Get(XAsyncBlock* async) override
         {
             size_t requiredBufferSize;
-            RETURN_IF_FAILED(PFGroupsClientCreateSharedGroupGetResultSize(async, &requiredBufferSize));
+            RETURN_IF_FAILED(PFSharedGroupsClientCreateSharedGroupGetResultSize(async, &requiredBufferSize));
 
             resultBuffer.resize(requiredBufferSize);
-            return PFGroupsClientCreateSharedGroupGetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr);
+            return PFSharedGroupsClientCreateSharedGroupGetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr);
         }
 
         HRESULT Validate() override
@@ -64,8 +64,9 @@ void ApiTests::TestApiSerializableResult(TestContext& testContext)
     uniqueGroupId << "GroupId_" << time(nullptr);
     groupId = uniqueGroupId.str();
 
-    PFGroupsCreateSharedGroupRequest request{ groupId.data() };
-    HRESULT hr = PFGroupsClientCreateSharedGroupAsync(titlePlayerHandle, &request, &async->asyncBlock);
+    PFSharedGroupsCreateSharedGroupRequest request{ groupId.data() };
+    HRESULT hr = PFSharedGroupsClientCreateSharedGroupAsync(titlePlayerHandle, &request, &async->asyncBlock);
+
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabClientCreateSharedGroupAsync", hr);
