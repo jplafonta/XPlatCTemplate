@@ -156,7 +156,7 @@
   "TestSharedGroupsServerUpdateSharedGroupData": "Failing",
   "TestGroupsAcceptGroupApplication": "Failing",
   "TestGroupsAcceptGroupInvitation": "Failing",
-  "TestGroupsAddMembers": "Failing",
+  "TestGroupsAddMembers": "PassingWithData",
   "TestGroupsApplyToGroup": "Failing",
   "TestGroupsBlockEntity": "PassingWithData",
   "TestGroupsChangeMemberRole": "PassingWithData",
@@ -175,7 +175,7 @@
   "TestGroupsListMembershipOpportunities": "PassingButNoData",
   "TestGroupsRemoveGroupApplication": "Failing",
   "TestGroupsRemoveGroupInvitation": "Failing",
-  "TestGroupsRemoveMembers": "Failing",
+  "TestGroupsRemoveMembers": "PassingWithData",
   "TestGroupsUnblockEntity": "PassingWithData",
   "TestGroupsUpdateGroup": "PassingWithData",
   "TestGroupsUpdateRole": "PassingWithData"

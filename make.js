@@ -45,6 +45,7 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
 
     customizations = parseDataFile("customizations.json");
     prereqsAndCleanupMap = parseDataFile("prerequisitesAndCleanup.json");
+    testTokenOverrideMap = parseDataFile("testTokenOverrides.json");
     xmlRefDocs = parseDataFile("XMLRefDocs.json");
     testStatusMap = parseDataFile("TestStatus.json");
 
@@ -59,8 +60,6 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
 
     var locals = {
         apis: apis,
-        prerequisiteCalls: prerequisiteCalls,
-        cleanupCalls: cleanupCalls,
         prefix: globalPrefix,
         SDKFeatureGroups: SDKFeatureGroups,
         projectFiles: parseProjectFiles("project_files.json"),
@@ -100,6 +99,7 @@ function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
         globalPrefix: globalPrefix,
         prerequisiteCalls: prerequisiteCalls,
         cleanupCalls: cleanupCalls,
+        testTokenOverrideMap: testTokenOverrideMap,
         platformExclusions: customizations.platformExclusions,
         getBaseTypes: getBaseTypes,
         getPropertyDefinition: getPropertyDefinition,
