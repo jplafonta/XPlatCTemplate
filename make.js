@@ -45,7 +45,7 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
 
     customizations = parseDataFile("customizations.json");
     prereqsAndCleanupMap = parseDataFile("prerequisitesAndCleanup.json");
-    testTokenOverrideMap = parseDataFile("testTokenOverrides.json");
+    callingEntityOverrides = parseDataFile("callingEntityOverrides.json");
     xmlRefDocs = parseDataFile("XMLRefDocs.json");
     testStatusMap = parseDataFile("TestStatus.json");
 
@@ -99,7 +99,7 @@ function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
         globalPrefix: globalPrefix,
         prerequisiteCalls: prerequisiteCalls,
         cleanupCalls: cleanupCalls,
-        testTokenOverrideMap: testTokenOverrideMap,
+        callingEntityOverrides: callingEntityOverrides,
         platformExclusions: customizations.platformExclusions,
         getBaseTypes: getBaseTypes,
         getPropertyDefinition: getPropertyDefinition,

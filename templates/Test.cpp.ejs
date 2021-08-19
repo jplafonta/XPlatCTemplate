@@ -177,9 +177,9 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
                 prereqContextHandleParam = "entityHandle";
             }
         }
-        if (prereqCall.name in testTokenOverrideMap)
+        if (prereqCall.name in callingEntityOverrides)
         {
-            prereqContextHandleParam = testTokenOverrideMap[prereqCall.name];
+            prereqContextHandleParam = callingEntityOverrides[prereqCall.name];
         }
         var prereqAsyncName = prefix + prereqCall.name + "Async"; 
         var prereqName =  "Test" + featureGroup.name + call.name + "Prerequisite" + prereqCall.name;
@@ -246,10 +246,10 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
             contextHandleParam = "entityHandle";
         }
     }
-        if (call.name in testTokenOverrideMap)
-        {
-            contextHandleParam = testTokenOverrideMap[call.name];
-        }
+    if (call.name in callingEntityOverrides)
+    {
+        contextHandleParam = callingEntityOverrides[call.name];
+    }
     var asyncName = prefix + call.name + "Async"; 
     var testName =  "Test" + featureGroup.name + call.name;
 %>void AutoGen<%- featureGroup.name %>Tests::<%- testName %>(TestContext& testContext)
@@ -317,9 +317,9 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
                 cleanupContextHandleParam = "entityHandle";
             }
         }
-        if (cleanupCall.name in testTokenOverrideMap)
+        if (cleanupCall.name in callingEntityOverrides)
         {
-            cleanupContextHandleParam = testTokenOverrideMap[cleanupCall.name];
+            cleanupContextHandleParam = callingEntityOverrides[cleanupCall.name];
         }
         var cleanupAsyncName = prefix + cleanupCall.name + "Async"; 
         var cleanupName =  "Test" + featureGroup.name + call.name + "Cleanup" + cleanupCall.name;
