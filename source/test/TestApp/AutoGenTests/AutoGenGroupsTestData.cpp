@@ -42,7 +42,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillAcceptGroupApplicationRequest(PlayFab::GroupsModels::AcceptGroupApplicationRequest* request)
     {
-        // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
         inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
@@ -96,7 +95,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillAcceptGroupInvitationRequest(PlayFab::GroupsModels::AcceptGroupInvitationRequest* request)
     {
-        // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
         inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
@@ -133,7 +131,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillAddMembersRequest(PlayFab::GroupsModels::AddMembersRequest* request)
     {
-        // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"FED18FB0293BA445\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
         inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
@@ -169,7 +166,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillApplyToGroupRequest(PlayFab::GroupsModels::ApplyToGroupRequest* request)
     {
-        // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
         inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
@@ -250,7 +246,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillChangeMemberRoleRequest(PlayFab::GroupsModels::ChangeMemberRoleRequest* request)
     {
-        // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"OriginRoleId\": \"members\", \"DestinationRoleId\": \"testrole\", \"Members\": [ {  \"Id\": \"6037570B9CA839BF\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
         inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
@@ -423,7 +418,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillDeleteRoleRequest(PlayFab::GroupsModels::DeleteRoleRequest* request)
     {
-        // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"example\"}");
         inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
@@ -436,7 +430,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
     {
-        // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
         request->FromJson(inputJson);
@@ -478,7 +471,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillInviteToGroupRequest(PlayFab::GroupsModels::InviteToGroupRequest* request)
     {
-        // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"33D5E873FB4D8629\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
         inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
@@ -757,7 +749,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillListMembershipOpportunitiesRequest(PlayFab::GroupsModels::ListMembershipOpportunitiesRequest* request)
     {
-        // TODO: debug PassingButNoData test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{}");
         request->FromJson(inputJson);
@@ -820,7 +811,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillRemoveGroupApplicationRequest(PlayFab::GroupsModels::RemoveGroupApplicationRequest* request)
     {
-        // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
         inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
@@ -865,7 +855,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillRemoveGroupInvitationRequest(PlayFab::GroupsModels::RemoveGroupInvitationRequest* request)
     {
-        // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
         inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
@@ -902,7 +891,6 @@ namespace PlayFabUnit
 
     void AutoGenGroupsTests::FillRemoveMembersRequest(PlayFab::GroupsModels::RemoveMembersRequest* request)
     {
-        // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"FED18FB0293BA445\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
         inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
