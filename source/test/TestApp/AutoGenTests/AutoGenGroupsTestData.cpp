@@ -24,17 +24,18 @@ namespace PlayFabUnit
         return S_OK;
     }
 
-    void AutoGenGroupsTests::FillAcceptGroupApplicationPrerequisiteInviteToGroupRequest(PlayFab::GroupsModels::InviteToGroupRequest* request)
+    void AutoGenGroupsTests::FillAcceptGroupApplicationPrerequisiteApplyToGroupRequest(PlayFab::GroupsModels::ApplyToGroupRequest* request)
     {
         PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"awesomepeople\", \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
-    HRESULT AutoGenGroupsTests::StoreAcceptGroupApplicationPrerequisitePFGroupsInviteToGroupResponse(PFGroupsInviteToGroupResponse* result)
+    HRESULT AutoGenGroupsTests::StoreAcceptGroupApplicationPrerequisitePFGroupsApplyToGroupResponse(PFGroupsApplyToGroupResponse* result)
     {
-        PlayFab::GroupsModels::InviteToGroupResponse internalResult(*result);
-        testData.m_InviteToGroupResponse.FromJson(internalResult.ToJson());
+        PlayFab::GroupsModels::ApplyToGroupResponse internalResult(*result);
+        testData.m_ApplyToGroupResponse.FromJson(internalResult.ToJson());
 
         return S_OK;
     }
@@ -44,6 +45,17 @@ namespace PlayFabUnit
         // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
+        inputJson["Entity"]["Id"].SetString(testData.m_ApplyToGroupResponse.entity->key->id, inputJson.GetAllocator());
+        request->FromJson(inputJson);
+    }
+
+    void AutoGenGroupsTests::FillAcceptGroupApplicationCleanupRemoveMembersRequest(PlayFab::GroupsModels::RemoveMembersRequest* request)
+    {
+        PlayFab::JsonDocument inputJson;
+        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
+        inputJson["Members"][0]["Id"].SetString(testData.m_ApplyToGroupResponse.entity->key->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
@@ -66,17 +78,18 @@ namespace PlayFabUnit
         return S_OK;
     }
 
-    void AutoGenGroupsTests::FillAcceptGroupInvitationPrerequisiteApplyToGroupRequest(PlayFab::GroupsModels::ApplyToGroupRequest* request)
+    void AutoGenGroupsTests::FillAcceptGroupInvitationPrerequisiteInviteToGroupRequest(PlayFab::GroupsModels::InviteToGroupRequest* request)
     {
         PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
+        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"33D5E873FB4D8629\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
-    HRESULT AutoGenGroupsTests::StoreAcceptGroupInvitationPrerequisitePFGroupsApplyToGroupResponse(PFGroupsApplyToGroupResponse* result)
+    HRESULT AutoGenGroupsTests::StoreAcceptGroupInvitationPrerequisitePFGroupsInviteToGroupResponse(PFGroupsInviteToGroupResponse* result)
     {
-        PlayFab::GroupsModels::ApplyToGroupResponse internalResult(*result);
-        testData.m_ApplyToGroupResponse.FromJson(internalResult.ToJson());
+        PlayFab::GroupsModels::InviteToGroupResponse internalResult(*result);
+        testData.m_InviteToGroupResponse.FromJson(internalResult.ToJson());
 
         return S_OK;
     }
@@ -86,6 +99,16 @@ namespace PlayFabUnit
         // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
+        request->FromJson(inputJson);
+    }
+
+    void AutoGenGroupsTests::FillAcceptGroupInvitationCleanupRemoveMembersRequest(PlayFab::GroupsModels::RemoveMembersRequest* request)
+    {
+        PlayFab::JsonDocument inputJson;
+        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
+        inputJson["Members"][0]["Id"].SetString(testData.m_InviteToGroupResponse.invitedEntity->key->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
@@ -149,6 +172,7 @@ namespace PlayFabUnit
         // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
@@ -165,7 +189,8 @@ namespace PlayFabUnit
     void AutoGenGroupsTests::FillApplyToGroupCleanupRemoveGroupApplicationRequest(PlayFab::GroupsModels::RemoveGroupApplicationRequest* request)
     {
         PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"33D5E873FB4D8629\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
@@ -455,7 +480,8 @@ namespace PlayFabUnit
     {
         // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"awesomepeople\", \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"33D5E873FB4D8629\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
@@ -474,7 +500,8 @@ namespace PlayFabUnit
     void AutoGenGroupsTests::FillInviteToGroupCleanupRemoveGroupInvitationRequest(PlayFab::GroupsModels::RemoveGroupInvitationRequest* request)
     {
         PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"33D5E873FB4D8629\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
@@ -712,12 +739,27 @@ namespace PlayFabUnit
         return S_OK;
     }
 
+    void AutoGenGroupsTests::FillListMembershipOpportunitiesPrerequisiteApplyToGroupRequest(PlayFab::GroupsModels::ApplyToGroupRequest* request)
+    {
+        PlayFab::JsonDocument inputJson;
+        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
+        request->FromJson(inputJson);
+    }
+
+    HRESULT AutoGenGroupsTests::StoreListMembershipOpportunitiesPrerequisitePFGroupsApplyToGroupResponse(PFGroupsApplyToGroupResponse* result)
+    {
+        PlayFab::GroupsModels::ApplyToGroupResponse internalResult(*result);
+        testData.m_ApplyToGroupResponse.FromJson(internalResult.ToJson());
+
+        return S_OK;
+    }
+
     void AutoGenGroupsTests::FillListMembershipOpportunitiesRequest(PlayFab::GroupsModels::ListMembershipOpportunitiesRequest* request)
     {
         // TODO: debug PassingButNoData test
         PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
+        inputJson.Parse("{}");
         request->FromJson(inputJson);
     }
 
@@ -730,6 +772,15 @@ namespace PlayFabUnit
 
         UNREFERENCED_PARAMETER(result);
         return S_OK;
+    }
+
+    void AutoGenGroupsTests::FillListMembershipOpportunitiesCleanupRemoveGroupApplicationRequest(PlayFab::GroupsModels::RemoveGroupApplicationRequest* request)
+    {
+        PlayFab::JsonDocument inputJson;
+        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
+        inputJson["Entity"]["Id"].SetString(testData.m_ApplyToGroupResponse.entity->key->id, inputJson.GetAllocator());
+        request->FromJson(inputJson);
     }
 
 #pragma endregion
@@ -755,6 +806,7 @@ namespace PlayFabUnit
     {
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
@@ -771,6 +823,8 @@ namespace PlayFabUnit
         // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
+        inputJson["Entity"]["Id"].SetString(testData.m_ApplyToGroupResponse.entity->key->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
@@ -796,7 +850,8 @@ namespace PlayFabUnit
     void AutoGenGroupsTests::FillRemoveGroupInvitationPrerequisiteInviteToGroupRequest(PlayFab::GroupsModels::InviteToGroupRequest* request)
     {
         PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"awesomepeople\", \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"33D5E873FB4D8629\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
@@ -813,6 +868,8 @@ namespace PlayFabUnit
         // TODO: debug Failing test
         PlayFab::JsonDocument inputJson;
         inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
+        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
+        inputJson["Entity"]["Id"].SetString(testData.m_InviteToGroupResponse.invitedEntity->key->id, inputJson.GetAllocator());
         request->FromJson(inputJson);
     }
 
