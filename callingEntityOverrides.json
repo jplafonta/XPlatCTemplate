@@ -1,3 +1,6 @@
 {
-    "AddMembers": "titleEntityHandle"
+    "AcceptGroupInvitation": "entityHandle2",
+    "AddMembers": "titleEntityHandle",
+    "ApplyToGroup": "entityHandle2",
+    "ListMembershipOpportunities": "entityHandle2"
 }

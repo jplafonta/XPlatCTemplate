@@ -1,12 +1,12 @@
 {
     "AcceptGroupApplication": {
-        "prerequisites": [ "GetGroup", "InviteToGroup" ],
-        "cleanup": []
+        "prerequisites": [ "GetGroup", "ApplyToGroup" ],
+        "cleanup": [ "RemoveMembers" ]
     },
 
     "AcceptGroupInvitation": {
-        "prerequisites": [ "GetGroup", "ApplyToGroup" ],
-        "cleanup": []
+        "prerequisites": [ "GetGroup", "InviteToGroup" ],
+        "cleanup": [ "RemoveMembers" ]
     },
 
     "AddMembers": {
@@ -90,8 +90,8 @@
     },
 
     "ListMembershipOpportunities": {
-        "prerequisites": [ "GetGroup" ],
-        "cleanup": []
+        "prerequisites": [ "GetGroup", "ApplyToGroup" ],
+        "cleanup": [ "RemoveGroupApplication" ]
     },
 
     "RemoveGroupApplication": {
