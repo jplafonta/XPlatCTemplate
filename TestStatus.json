@@ -178,6 +178,14 @@
   "TestGroupsRemoveMembers": "PassingWithData",
   "TestGroupsUnblockEntity": "PassingWithData",
   "TestGroupsUpdateGroup": "PassingWithData",
-  "TestGroupsUpdateRole": "PassingWithData"
+  "TestGroupsUpdateRole": "PassingWithData",
+  "TestDataAbortFileUploads": "PassingWithData",
+  "TestDataDeleteFiles": "Failing",
+  "TestDataFinalizeFileUploads": "Failing",
+  "TestDataGetFiles": "PassingWithData",
+  "TestDataInitiateFileUploads": "Failing",
+  "TestDataGetObjects": "PassingWithData",
+  "TestDataSetObjects": "Failing"
+
 
 }

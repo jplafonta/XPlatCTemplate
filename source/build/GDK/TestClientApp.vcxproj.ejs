@@ -173,7 +173,7 @@ for (var file in projectFiles.TestClientAppFiles) {
     <ClCompile Include="$(PlayFabTestDir)\TestApp\GDK\DeviceResources.cpp" />
     <ClCompile Include="$(PlayFabTestDir)\TestApp\GDK\TestAppGDK.cpp" /><%
 for(var featureGroupName in SDKFeatureGroups) { 
-    if (featureGroupName === "Groups") {  %>
+    if ([ "Groups", "Data" ].includes(featureGroupName)) {  %>
     <ClInclude Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- featureGroupName %>Tests.h" />
     <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- featureGroupName %>TestData.cpp" />
     <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- featureGroupName %>TestLog.cpp" />

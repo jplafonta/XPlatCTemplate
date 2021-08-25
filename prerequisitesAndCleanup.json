@@ -1,4 +1,39 @@
 {
+    "AbortFileUploads": {
+        "prerequisites": [ "InitiateFileUploads" ],
+        "cleanup": []
+    },
+
+    "DeleteFiles": {
+        "prerequisites": [ "InitiateFileUploads", "FinalizeFileUploads" ],
+        "cleanup": []
+    },
+
+    "FinalizeFileUploads": {
+        "prerequisites": [ "InitiateFileUploads" ],
+        "cleanup": [ "DeleteFiles" ]
+    },
+
+    "GetFiles": {
+        "prerequisites": [],
+        "cleanup": []
+    },
+
+    "GetObjects": {
+        "prerequisites": [],
+        "cleanup": []
+    },
+
+    "InitiateFileUploads": {
+        "prerequisites": [],
+        "cleanup": [ "AbortFileUploads" ]
+    },
+
+    "SetObjects": {
+        "prerequisites": [ "SetObjects" ],
+        "cleanup": []
+    },
+
     "AcceptGroupApplication": {
         "prerequisites": [ "GetGroup", "ApplyToGroup" ],
         "cleanup": [ "RemoveMembers" ]
