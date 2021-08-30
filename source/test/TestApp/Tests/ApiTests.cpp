@@ -135,6 +135,7 @@ void ApiTests::TestApiEntityToken(TestContext& testContext)
     async.release();
 }
 
+#if HC_PLATFORM != HC_PLATFORM_GDK
 void ApiTests::TestApiSecretKey(TestContext& testContext)
 {
     struct GetTitleDataResult : public XAsyncResult
@@ -158,6 +159,7 @@ void ApiTests::TestApiSecretKey(TestContext& testContext)
     }
     async.release();
 }
+#endif
 
 void ApiTests::TestApiNoAuth(TestContext& testContext)
 {
@@ -262,7 +264,9 @@ void ApiTests::AddTests()
     AddTest("TestApiResultHandle", &ApiTests::TestApiResultHandle);
     //AddTest("TestApiSessionTicket", &ApiTests::TestApiSessionTicket);
     AddTest("TestApiEntityToken", &ApiTests::TestApiEntityToken);
+#if HC_PLATFORM != HC_PLATFORM_GDK
     AddTest("TestApiSecretKey", &ApiTests::TestApiSecretKey);
+#endif
     //AddTest("TestApiNoAuth", &ApiTests::TestApiNoAuth);
     AddTest("TestGetEntityTokenWithAuthContext", &ApiTests::TestGetEntityTokenWithAuthContext);
     AddTest("TestGetEntityTokenWithSecretKey", &ApiTests::TestGetEntityTokenWithSecretKey);
