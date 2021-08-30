@@ -202,9 +202,8 @@ AsyncOp<SharedPtr<TitlePlayer>> AuthenticationAPI::LoginWithXUser(
     RETURN_IF_FAILED(wrapUserHandleResult.hr);
 
     auto loginContext = MakeShared<XUserLoginContext>(wrapUserHandleResult.ExtractPayload(), request);
-    auto httpClient = state->HttpClient();
 
-    return loginContext->GetRequestBody(queue.DeriveWorkerQueue()).Then([ httpClient, queue = TaskQueue{ queue }, loginContext](Result<JsonValue> requestBodyResult) -> AsyncOp<ServiceResponse>
+    return loginContext->GetRequestBody(queue.DeriveWorkerQueue()).Then([ httpClient{ state->HttpClient() }, queue = TaskQueue{ queue }, loginContext](Result<JsonValue> requestBodyResult) -> AsyncOp<ServiceResponse>
     {
         RETURN_IF_FAILED(requestBodyResult.hr);
 
@@ -215,7 +214,7 @@ AsyncOp<SharedPtr<TitlePlayer>> AuthenticationAPI::LoginWithXUser(
             queue
         );
 
-    }).Then([ httpClient, loginContext ](Result<ServiceResponse> result) -> Result<SharedPtr<Entity>>
+    }).Then([ state, loginContext ](Result<ServiceResponse> result) -> Result<SharedPtr<TitlePlayer>>
     {
         RETURN_IF_FAILED(result.hr);
 
@@ -224,7 +223,7 @@ AsyncOp<SharedPtr<TitlePlayer>> AuthenticationAPI::LoginWithXUser(
         {
             LoginResult resultModel;
             resultModel.FromJson(serviceResponse.Data);
-            return MakeShared<TitlePlayer>(httpClient, loginContext, std::move(resultModel));
+            return MakeShared<TitlePlayer>(state->HttpClient(), state->QoSAPI(), loginContext, std::move(resultModel));
         }
         else
         {

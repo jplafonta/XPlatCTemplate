@@ -33,8 +33,8 @@ fi
 popd
 
 pushd "external/libHttpClient"
-git checkout 0b86f1e2b01ebe3f6e8e60ed6d7a41da3645b5bf
-git reset --hard 0b86f1e2b01ebe3f6e8e60ed6d7a41da3645b5bf
+git checkout fd3593cf7fe19791148b7be219c6e2babd028ef2
+git reset --hard fd3593cf7fe19791148b7be219c6e2babd028ef2
 if [ $? != 0 ]
 then
     exit $?
