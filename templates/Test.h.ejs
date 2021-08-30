@@ -84,7 +84,7 @@ for (var i = 0; i < featureGroup.calls.length; i++)
     %>    static void Fill<%- call.name %>Cleanup<%- cleanupCall.requestDatatype.name %>( <%- requestNamespace + cleanupCall.requestDatatype.name %>* request );
 <%      } if (cleanupCall.resultDatatype && !(call.name + cleanupCall.resultDatatype.name in hasValidateBeenDefinedMap) ) { 
         hasValidateBeenDefinedMap[call.name + cleanupCall.resultDatatype.name] = true;
-        if (!(storedResponseTypes.some(elem => elem.name === prereqCall.resultDatatype.name))) storedResponseTypes.push(prereqCall.resultDatatype);
+        if (!(storedResponseTypes.some(elem => elem.name === cleanupCall.resultDatatype.name))) storedResponseTypes.push(cleanupCall.resultDatatype);
     %>    static HRESULT Store<%- call.name %>Cleanup<%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>( <%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>* result );
 <% } } %>
 <% } 
