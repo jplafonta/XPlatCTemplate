@@ -1,10 +1,11 @@
 #include "stdafx.h"
 #include "TitlePlayer.h"
-
-using namespace PlayFab::AuthenticationModels;
+#include "JsonUtils.h"
 
 namespace PlayFab
 {
+
+using namespace Authentication;
 
 TitlePlayer::TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, const LoginResult& result)
     : Entity{ std::move(httpClient), std::move(qosAPI), *result.entityToken },
@@ -61,7 +62,7 @@ AsyncOp<void> TitlePlayer::RefreshToken(const TaskQueue& queue)
         auto serviceResponse = result.ExtractPayload();
         if (serviceResponse.HttpCode == 200)
         {
-            AuthenticationModels::LoginResult loginResult;
+            LoginResult loginResult;
             loginResult.FromJson(serviceResponse.Data);
 
             // Update EntityToken and SessionTicket
@@ -106,7 +107,7 @@ time_t const* TitlePlayer::LastLoginTime() const
     return m_lastLoginTime.has_value() ? m_lastLoginTime.operator->() : nullptr;
 }
 
-AuthenticationModels::UserSettings const* TitlePlayer::UserSettings() const
+UserSettings const* TitlePlayer::UserSettings() const
 {
     return m_userSettings.has_value() ? m_userSettings.operator->() : nullptr;
 }

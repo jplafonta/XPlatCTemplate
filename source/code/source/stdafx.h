@@ -32,7 +32,7 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/error/en.h>
 
-#include "StdOptional.h"
+#include <playfab/cpp/StdOptional.h>
 #include "ResultMacros.h"
 #include "InternalMemory.h"
 #include "Types.h"

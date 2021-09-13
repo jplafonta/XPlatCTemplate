@@ -5,7 +5,11 @@
 #include "GlobalState.h"
 
 namespace PlayFab
-{
+{<%
+if (!(featureGroup.name === "Shared")) { %>
+namespace <%- featureGroup.name %>
+{<%
+} %>
 
 class <%- featureGroup.name %>API
 {
@@ -23,14 +27,10 @@ for (var i = 0; i < featureGroup.calls.length; i++) {
     if (call.entityReturned) {
         resultType = "SharedPtr<" + call.entityReturned + ">";
     } else if (call.resultDatatype) {
-        if (call.resultDatatype.isShared) {
-            resultType = call.resultDatatype.name;
-        } else {
-            resultType = featureGroup.name + "Models::" + call.resultDatatype.name;
-        }
+        resultType = call.resultDatatype.name;
     }
     var contextParam = call.entityRequired ? "SharedPtr<" + call.entityRequired + "> entity, " : "SharedPtr<GlobalState const> state, ";
-    var requestParam = call.requestDatatype ? "const " + call.requestDatatype.prefix + call.requestDatatype.name + "& request, " : ""; 
+    var requestParam = call.requestDatatype ? "const " + call.requestDatatype.name + "& request, " : ""; 
 %>
     static AsyncOp<<%- resultType %>> <%- call.name %>(<%- contextParam %><%- requestParam %>const TaskQueue& queue);<%
 
@@ -42,5 +42,7 @@ for (var i = 0; i < featureGroup.calls.length; i++) {
     } // end if
 } // end for %>
 };
-
-}
+<% if (!(featureGroup.name === "Shared")) { %>
+} // namespace <%- featureGroup.name %><%
+} %>
+} // namespace PlayFab

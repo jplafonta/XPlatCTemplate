@@ -76,36 +76,6 @@ void ApiTests::TestApiSerializableResult(TestContext& testContext)
     async.release();
 }
 
-void ApiTests::TestApiResultHandle(TestContext& testContext)
-{
-    struct GetPlayerProfileResult : public XAsyncResult
-    {
-        PFAccountManagementGetPlayerProfileResult* result{ nullptr };
-
-        HRESULT Get(XAsyncBlock* async) override
-        {
-            return PFAccountManagementClientGetPlayerProfileGetResult(async, &resultHandle, &result);
-        }
-
-        HRESULT Validate() override
-        {
-            // Any fields we can easily validate here?
-            return S_OK;
-        }
-    };
-
-    auto async = std::make_unique<XAsyncHelper<GetPlayerProfileResult>>(testContext);
-
-    PFAccountManagementGetPlayerProfileRequest request{};
-    HRESULT hr = PFAccountManagementClientGetPlayerProfileAsync(titlePlayerHandle, &request, &async->asyncBlock);
-    if (FAILED(hr))
-    {
-        testContext.Fail("PlayFabClientGetPlayerProfileAsync", hr);
-        return;
-    }
-    async.release();
-}
-
 void ApiTests::TestApiSessionTicket(TestContext& /*testContext*/)
 {
     // Above API calls are using SessionTicket for auth, so just skipping this
@@ -119,7 +89,11 @@ void ApiTests::TestApiEntityToken(TestContext& testContext)
 
         HRESULT Get(XAsyncBlock* async) override
         {
-            return PFAccountManagementGetProfileGetResult(async, &resultHandle, &result);
+            size_t requiredBufferSize;
+            RETURN_IF_FAILED(PFAccountManagementGetProfileGetResultSize(async, &requiredBufferSize));
+
+            resultBuffer.resize(requiredBufferSize);
+            return PFAccountManagementGetProfileGetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr);
         }
     };
 
@@ -144,7 +118,11 @@ void ApiTests::TestApiSecretKey(TestContext& testContext)
 
         HRESULT Get(XAsyncBlock* async) override
         {
-            return PFTitleDataManagementAdminGetTitleDataGetResult(async, &resultHandle, &result);
+            size_t requiredBufferSize;
+            RETURN_IF_FAILED(PFTitleDataManagementAdminGetTitleDataGetResultSize(async, &requiredBufferSize));
+
+            resultBuffer.resize(requiredBufferSize);
+            return PFTitleDataManagementAdminGetTitleDataGetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr);
         }
     };
 
@@ -242,13 +220,17 @@ void ApiTests::TestGetQoSMeasurements(TestContext& testContext)
 
         HRESULT Get(XAsyncBlock* async) override
         {
-            return PFQoSGetMeasurementsGetResult(async, &resultHandle, &qosMeasurements);
+            size_t requiredBufferSize;
+            RETURN_IF_FAILED(PFQoSGetMeasurementsGetResultSize(async, &requiredBufferSize));
+
+            resultBuffer.resize(requiredBufferSize);
+            return PFQoSGetMeasurementsGetResult(async, resultBuffer.size(), resultBuffer.data(), &qosMeasurements, nullptr);
         }
     };
 
     auto async = std::make_unique<XAsyncHelper<QoSMeasurements>>(testContext);
 
-    HRESULT hr = PFQoSGetMeasurmentsAsync(entityHandle, 30, 250, &async->asyncBlock);
+    HRESULT hr = PFQoSGetMeasurementsAsync(entityHandle, 30, 250, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabAuthenticationGetEntityTokenAsync", hr);
@@ -261,7 +243,6 @@ void ApiTests::AddTests()
 {
     AddTest("TestApiStaticSizeResult", &ApiTests::TestApiStaticSizeResult);
     AddTest("TestApiSerializableResult", &ApiTests::TestApiSerializableResult);
-    AddTest("TestApiResultHandle", &ApiTests::TestApiResultHandle);
     //AddTest("TestApiSessionTicket", &ApiTests::TestApiSessionTicket);
     AddTest("TestApiEntityToken", &ApiTests::TestApiEntityToken);
 #if HC_PLATFORM != HC_PLATFORM_GDK

@@ -7,9 +7,11 @@ if (featureGroup.name === "Authentication") { %>
 } %>
 
 namespace PlayFab
-{
-
-using namespace <%- featureGroup.name %>Models;
+{<%
+if (!(featureGroup.name === "Shared")) { %>
+namespace <%- featureGroup.name %>
+{<%
+} %>
 
 <%
 function validateToken(call) {
@@ -81,8 +83,8 @@ for (var i = 0; i < featureGroup.calls.length; i++) {
             httpRequestMethod = "entity->HttpClient()->MakeClassicRequest";
         }
     }
-    var requestParam = call.requestDatatype ? "const " + call.requestDatatype.prefix + call.requestDatatype.name + "& request,\n    " : ""; 
-    var requestBody = call.requestDatatype ? "JsonValue requestBody{ JsonUtils::ToJson(request) };" : "JsonValue requestBody{ rapidjson::kNullType };";
+    var requestParam = call.requestDatatype ? "const " + call.requestDatatype.name + "& request,\n    " : ""; 
+    var requestBody = call.requestDatatype ? "JsonValue requestBody{ request.ToJson() };" : "JsonValue requestBody{ rapidjson::kNullType };";
     var entityParam = call.entityRequired ? "entity,\n        " : "";
 
 %>
@@ -233,6 +235,9 @@ AsyncOp<SharedPtr<TitlePlayer>> AuthenticationAPI::LoginWithXUser(
 }
 #endif
 <% } // end if
-} // end for  %>
+} // end for
 
-}
+if (!(featureGroup.name === "Shared")) { %>
+} // namespace <%- featureGroup.name %><%
+} %>
+} // namespace PlayFab

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <playfab/PF<%- featureGroup.name %>DataModels.h><%
+#include <playfab/cpp/<%- globalPrefix %><%- featureGroup.name %>DataModelWrappers.h><%
 if (!(featureGroup.name === "Shared")) { %>
 #include <Shared/SharedDataModels.h><%
 } %>
@@ -9,59 +9,71 @@ if (!(featureGroup.name === "Shared")) { %>
 namespace PlayFab
 {<%
 if (!(featureGroup.name === "Shared")) { %>
-namespace <%- featureGroup.name %>Models
+namespace <%- featureGroup.name %>
 {<%
 } %>
 
 // <%- featureGroup.name %> Classes<%
 for (var typeIndex = 0; typeIndex < featureGroup.sortedClasses.length; typeIndex++) {
     var datatype = featureGroup.sortedClasses[typeIndex]; 
-    var propertyVisibility = datatype.isInternalOnly ? "public" : "private"; %>
-struct <%- datatype.name %> : <%- getBaseTypes(datatype) %>
-{
-    <%- datatype.name %>();<%
-    if (canDefaultCopyConstructor(datatype)) { %>
-    <%- datatype.name %>(const <%- datatype.name %>&) = default;
-    <%- datatype.name %>(<%- datatype.name %>&&) = default;<%
-    } else { %>
-    <%- datatype.name %>(const <%- datatype.name %>& src);
-    <%- datatype.name %>(<%- datatype.name %>&& src);<%
-    } // end if
-    if (!datatype.isInternalOnly){ %>
-    <%- datatype.name %>(const <%- prefix %><%- datatype.name %>& src);<%
-    } // endif %>
-    <%- datatype.name %>& operator=(const <%- datatype.name %>&) = delete;
-    ~<%- datatype.name %>() = default;
+    var CModelName = datatype.prefix + datatype.name;
+    var propertyVisibility = datatype.isInternalOnly ? "public" : "private";
 
-    void FromJson(const JsonValue& input) override;
+    var baseClasses = "";
+    if (!datatype.isInternalOnly) {
+        baseClasses = " : public Wrappers::" + CModelName + "Wrapper<Allocator>";
+        if (datatype.isInput) {
+            baseClasses += (", public InputModel");
+        }
+        if (datatype.isOutput) {
+            baseClasses += (", public OutputModel<" + CModelName + ">");
+        }
+    }
+%>
+class <%- datatype.name %><%- baseClasses %>
+{
+public:<%
+    if (!datatype.isInternalOnly) { %>
+    using ModelWrapperType = typename Wrappers::<%- CModelName %>Wrapper<Allocator>;
+    using ModelWrapperType::ModelType;<%
+        if (featureGroup.dictionaryEntryTypes.hasOwnProperty(datatype.name)) { %>
+    using DictionaryEntryType = ModelWrapperType::DictionaryEntryType;<%
+        } %>
+
+    // Constructors
+    using ModelWrapperType::ModelWrapperType;
+<%  } // end if 
+
+    if (datatype.isInput) { %>
+    // InputModel
     JsonValue ToJson() const override;
-<%  if (isSerializable(datatype)) { %>
-    size_t SerializedSize() const override;
-    void Serialize(void* buffer, size_t bufferSize) const override;
-<%  } // end if %>
-<%- propertyVisibility %>:<%
-    for (var propertyIndex = 0; propertyIndex < datatype.properties.length; propertyIndex++) {
-        var property = datatype.properties[propertyIndex];
+    static JsonValue ToJson(const <%- CModelName %>& input);
+<%  } // end if
+    if (datatype.isOutput && !datatype.isInternalOnly) { %>
+    // OutputModel
+    void FromJson(const JsonValue& input) override;
+    size_t RequiredBufferSize() const override;
+    Result<<%- CModelName %> const*> Copy(ModelBuffer& buffer) const override;
+
+    static size_t RequiredBufferSize(const <%- CModelName %>& model);
+    static HRESULT Copy(const <%- CModelName %>& input, <%- CModelName %>& output, ModelBuffer& buffer);<%
+    } // end if 
+    if (datatype.isInternalOnly) { %>
+    void FromJson(const JsonValue& input);<%
+    } // end if 
+
+    if (datatype.isInternalOnly) { %>
+<%      for (var propertyIndex = 0; propertyIndex < datatype.properties.length; propertyIndex++) {
+            var property = datatype.properties[propertyIndex];
 %><%- getPropertyDefinition(datatype, property, true) %><%
-    } // end for %>
+        } // end for
+    } // endif %>
 };
 <% } // end for 
+
 if (!(featureGroup.name === "Shared")) { %>
-} // namespace <%- featureGroup.name %>Models<%
+} // namespace <%- featureGroup.name %><%
 } %>
-
-namespace JsonUtils
-{
-// Serialization methods for public models
-<% for (var typeIndex = 0; typeIndex < featureGroup.sortedClasses.length; typeIndex++) { 
-    var datatype = featureGroup.sortedClasses[typeIndex]; 
-    if (datatype.isInternalOnly) {
-        continue;
-    } %>
-template<> inline JsonValue ToJson<>(const <%- datatype.prefix %><%- datatype.name %>& input);<%
-} // end for %>
-} // namespace JsonUtils
-
 // EnumRange definitions used for Enum (de)serialization<%
 for (var typeIndex = 0; typeIndex < featureGroup.datatypes.length; typeIndex++) { 
     var datatype = featureGroup.datatypes[typeIndex];

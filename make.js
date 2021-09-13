@@ -101,28 +101,29 @@ function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
         cleanupCalls: cleanupCalls,
         callingEntityOverrides: callingEntityOverrides,
         platformExclusions: customizations.platformExclusions,
-        getBaseTypes: getBaseTypes,
+        requiresDynamicStorage: requiresDynamicStorage,
         getPropertyDefinition: getPropertyDefinition,
-        getPropertyFromJson: getPropertyFromJson,
-        addPropertyToJson: addPropertyToJson,
+        getWrapperPropertyType: getWrapperPropertyType,
+        getWrapperPropertyDefinition: getWrapperPropertyDefinition,
         getPropertyName: getPropertyName,
         canDefaultCopyConstructor: canDefaultCopyConstructor,
-        getCopyConstructorInitializationList: getCopyConstructorInitializationList,
-        getMoveConstructorInitializationList: getMoveConstructorInitializationList,
-        getCopyConstructorBody: getCopyConstructorBody,
-        isSerializable: isSerializable,
+        getWrapConstructorInitializationList: getWrapConstructorInitializationList,
         isFixedSize: isFixedSize,
         getFormattedDatatypeDescription: getFormattedDatatypeDescription,
         getFormattedCallDescription: getFormattedCallDescription,
         getFormattedCallRemarks: getFormattedCallRemarks,
         getRequestExample: getRequestExample,
         getPublicPropertyType: getPublicPropertyType,
+        getDictionaryEntryType: getDictionaryEntryType,
         testStatusMap: testStatusMap,
     };
 
     // DataModels
     var publicDataModelsHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/PFDataModels.h.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/include/playFab", globalPrefix + featureGroup.name + "DataModels.h"), publicDataModelsHeader(locals));
+
+    var publicDataModelWrappers = getCompiledTemplate(path.resolve(sourceDir, "templates/PFDataModelWrappers.h.ejs"));
+    writeFile(path.resolve(apiOutputDir, "code/include/playFab/cpp", globalPrefix + featureGroup.name + "DataModelWrappers.h"), publicDataModelWrappers(locals));
 
     var internalDataModelsHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/DataModels.h.ejs"));
     writeFile(path.resolve(apiOutputDir, "code/source/" + featureGroup.name, featureGroup.name + "DataModels.h"), internalDataModelsHeader(locals));
@@ -197,7 +198,8 @@ function parseDataFile(filename) {
 // - Prune datatypes from apis[*].datatypes which are empty classes and update any references to them
 // - Add a reference to the 'datatype' object for each 'call' object in apis[*].calls. This allows us to skip looking up the datatype by name later
 // - Add a reference to the 'datatype' object for each 'property' object in apis[*].datatypes.*.properties.
-// - Annotate each 'call' in apis[*].calls with "entityReturned=true" or "entityRequired=true" if the call returns/requires an SDK Entity object
+// - Annotate each 'call' in apis[*].calls with "entityReturned=*" or "entityRequired=*" if the call returns/requires an SDK Entity object
+// - Annotate each 'datatype' with "isInput=true" if it is used as input to a call and "isOutput=true" if it is returned from a call
 function curateServiceApis(apis) {
 
     for (var apiIndex = 0; apiIndex < apis.length; apiIndex++) {
@@ -205,16 +207,16 @@ function curateServiceApis(apis) {
         var datatypes = api.datatypes;
 
         // Prune datatypes which are empty classes
-        for (typename in datatypes) {
-            datatype = datatypes[typename];
+        for (var typename in datatypes) {
+            var datatype = datatypes[typename];
             if (datatype.properties && datatype.properties.length === 0) {
                 delete datatypes[typename];
             }
         }
 
         // Update datatype.properties
-        for (var typename in datatypes) {
-            var datatype = datatypes[typename];
+        for (typename in datatypes) {
+            datatype = datatypes[typename];
             if (datatype.properties) {
                 for (var propertyIndex = datatype.properties.length - 1; propertyIndex >= 0; propertyIndex--) {
                     var property = datatype.properties[propertyIndex];
@@ -320,7 +322,7 @@ function doTypesMatch(type1, type2) {
             }
         }
 
-        // At this point we can consider the types equivalent, reconcile property optional
+        // At this point we can consider the types equivalent, reconcile property optionalness, isInput, isOutput
         for (let i = 0; i < type1.properties.length; i++) {
             let property1 = type1.properties[i];
             let property2 = type2.properties[i];
@@ -433,7 +435,7 @@ function getOrCreateFeatureGroup(name) {
 function populateSDKFeatureGroups(apis) {
 
     // Create special "Shared" feature group manually. It will hold datatypes which are referenced in multiple SDKFeatureGroups.
-    getOrCreateFeatureGroup("Shared");
+    let sharedFeatureGroup = getOrCreateFeatureGroup("Shared");
 
     for (var apiIndex = 0; apiIndex < apis.length; apiIndex++) {
         var api = apis[apiIndex];
@@ -473,11 +475,39 @@ function populateSDKFeatureGroups(apis) {
         }
     }
 
-    // populate featuresGroups.*.sortedClasses and SDKFeatureGroups.*.dictionaryEntryTypes
+    // populate SDKFeatureGroups.*.sortedClasses and SDKFeatureGroups.*.dictionaryEntryTypes
     for (var featureGroupName in SDKFeatureGroups) {
         var featureGroup = SDKFeatureGroups[featureGroupName]
         var sortedClasses = featureGroup.sortedClasses;
         var addedTypes = new Set();
+
+        // Add isInput/isOutput annotations
+        var addAnnotation = function (datatype, annotation) {
+            if (datatype.hasOwnProperty(annotation)) {
+                return;
+            }
+            datatype[annotation] = true;
+            if (datatype.properties) {
+                for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
+                    var property = datatype.properties[propIdx];
+                    if (featureGroup.datatypes.hasOwnProperty(property.actualtype)) {
+                        addAnnotation(featureGroup.datatypes[property.actualtype], annotation);
+                    } else if (sharedFeatureGroup.datatypes.hasOwnProperty(property.actualtype)) {
+                        addAnnotation(sharedFeatureGroup.datatypes[property.actualtype], annotation);
+                    }
+                }
+            }
+        };
+
+        for (let typeKey in featureGroup.datatypes) {
+            datatype = featureGroup.datatypes[typeKey];
+            if (datatype.isRequest) {
+                addAnnotation(datatype, "isInput")
+            }
+            if (datatype.isResult) {
+                addAnnotation(datatype, "isOutput")
+            }
+        }
 
         var addType = function (datatype) {
             if (addedTypes.has(datatype.name) || datatype.isenum) {
@@ -554,56 +584,19 @@ function isFixedSize(datatype) {
     return true;
 }
 
-// Returns whether the C++ model for a datatype can be (trivially) serialized into a byte buffer
-function isSerializable(datatype) {
-    // For now, calling a datatype serializable if the only extra memory it needs is for Strings. This avoids have to deal with
-    // alignment issues, nested classes, and collections.
-    // Might be possible to relax these requirements if we really wanted to.
+// function getDictionaryEntryTypeFromValueType(valueType) {
+//     var types = {
+//         "String": "String", "const char*": "String", "bool": "Bool", "int16_t": "Int16", "uint16_t": "Uint16", "int32_t": "Int32", "uint32_t": "Uint32",
+//         "int64_t": "int64_t", "uint64_t": "int64_t", "float": "float", "double": "double", "time_t": "DateTime"
+//     };
 
-    for (var i = 0; i < datatype.properties.length; i++) {
-        var property = datatype.properties[i];
-        if (requiresDynamicStorage(property)) {
-            if (!(property.actualtype === "String" && !property.collection)) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-function getBaseTypes(datatype) {
-    var baseTypes = "";
-
-    if (!datatype.isInternalOnly) {
-        baseTypes = "public " + datatype.prefix + datatype.name + ", ";
-    }
-
-    if (isSerializable(datatype) || isFixedSize(datatype)) {
-        baseTypes += "public SerializableModel";
-    } else {
-        baseTypes += "public BaseModel";
-    }
-
-    if (datatype.className.toLowerCase().endsWith("response") || datatype.className.toLowerCase().endsWith("result")) {
-        baseTypes += ", public ApiResult";
-    }
-
-    return baseTypes;
-}
-
-function getDictionaryEntryTypeFromValueType(valueType) {
-    var types = {
-        "String": "String", "const char*": "String", "bool": "Bool", "int16_t": "Int16", "uint16_t": "Uint16", "int32_t": "Int32", "uint32_t": "Uint32",
-        "int64_t": "int64_t", "uint64_t": "int64_t", "float": "float", "double": "double", "time_t": "DateTime"
-    };
-
-    if (valueType in types) {
-        return globalPrefix + types[valueType] + "DictionaryEntry";
-    } else {
-        // valueType should already be prefixed appropriately
-        return valueType + "DictionaryEntry";
-    }
-}
+//     if (valueType in types) {
+//         return globalPrefix + types[valueType] + "DictionaryEntry";
+//     } else {
+//         // valueType should already be prefixed appropriately
+//         return valueType + "DictionaryEntry";
+//     }
+// }
 
 function requiresDynamicStorage(property) {
     // An internal property is needed if the public property requires dynamic storage.
@@ -614,6 +607,19 @@ function requiresDynamicStorage(property) {
         return false;
     }
     return true;
+}
+
+function getDictionaryEntryType(property) {
+    var dictionaryEntryTypes = {
+        "String": "String", "Boolean": "Bool", "int16": "Int16", "uint16": "Uint16", "int32": "Int32", "uint32": "Uint32",
+        "int64": "Int64", "uint64": "Uint64", "float": "Float", "double": "Double", "time_t": "DateTime"
+    };
+
+    if (property.actualtype in dictionaryEntryTypes) {
+        return globalPrefix + dictionaryEntryTypes[property.actualtype] + "DictionaryEntry";
+    } else {
+        return property.datatype.prefix + property.datatype.name + "DictionaryEntry";
+    }
 }
 
 function getInternalPropertyType(property) {
@@ -641,21 +647,9 @@ function getInternalPropertyType(property) {
     // Modify type depending on collection & optional attributes. 
     if (!(property.actualtype === "object")) {
         if (property.collection === "map") {
-            if (property.isclass) {
-                return "AssociativeArrayModel<" + getDictionaryEntryTypeFromValueType(property.datatype.prefix + type) + ", " + type + ">";
-            } else if (type === "String") {
-                return "AssociativeArrayModel<" + globalPrefix + "StringDictionaryEntry, String>";
-            } else {
-                return "AssociativeArrayModel<" + getDictionaryEntryTypeFromValueType(type) + ", void>";
-            }
+            return "Map<String, " + type + ">";
         } else if (property.collection === "array") {
-            if (property.isclass) {
-                return "PointerArrayModel<" + property.datatype.prefix + type + ", " + type + ">";
-            } else if (type === "String") {
-                return "PointerArrayModel<char, String>";
-            } else {
-                return "Vector<" + type + ">";
-            }
+            return "Vector<" + type + ">";
         } else if (property.optional) {
             // Types which aren't nullable will be wrapped by StdExtra::optional.
             // String is an exception here - empty will represent not set(might want to revisit this design)
@@ -668,7 +662,7 @@ function getInternalPropertyType(property) {
     return type;
 }
 
-function getPublicPropertyType(property, addConsts) {
+function getPublicPropertyType(property, addConsts = true) {
     var type = "";
 
     // Service types that can be mapped directly to C types
@@ -695,7 +689,7 @@ function getPublicPropertyType(property, addConsts) {
         if (!(property.actualtype === "object")) {
             if (property.collection === "map") {
                 // array of dictionary entries
-                return getDictionaryEntryTypeFromValueType(type);
+                return getDictionaryEntryType(property);
             } else if (property.collection === "array") {
                 if (property.isclass) {
                     // array of pointers
@@ -720,7 +714,7 @@ function getPublicPropertyType(property, addConsts) {
         if (!(property.actualtype === "object")) {
             if (property.collection === "map") {
                 // array of dictionary entries
-                return "struct " + getDictionaryEntryTypeFromValueType(type) + " const*";
+                return "struct " + getDictionaryEntryType(property) + " const*";
             } else if (property.collection === "array") {
                 if (property.isclass) {
                     // array of pointers
@@ -744,7 +738,58 @@ function getPublicPropertyType(property, addConsts) {
     return type;
 }
 
-function getPropertyName(property, isPrivate) {
+function getWrapperPropertyType(property) {
+    var type = "";
+
+    // Service types that can be mapped directly to C++ types
+    var types = {
+        "String": "String", "Boolean": "bool", "int16": "int16_t", "uint16": "uint16_t", "int32": "int32_t", "uint32": "uint32_t",
+        "int64": "int64_t", "uint64": "uint64_t", "float": "float", "double": "double", "DateTime": "time_t", "object": "JsonObject<Alloc>"
+    };
+
+    if (property.actualtype in types) {
+        type = types[property.actualtype];
+    } else if (property.datatype) {
+        if (property.isclass) {
+            type = property.datatype.prefix + property.datatype.name + "Wrapper<Alloc>";
+        } else if (property.isenum) {
+            type = property.datatype.prefix + property.datatype.name
+        }
+    } else {
+        throw Error("Unrecognized property type " + property.actualtype);
+    }
+
+    // Modify type depending on collection & optional attributes. 
+    if (!(property.actualtype === "object")) {
+        if (property.collection === "map") {
+            if (property.isclass) {
+                return "ModelDictionaryEntryVector<" + type + ", Alloc>";
+            } else if (type === "String") {
+                return "StringDictionaryEntryVector<Alloc>";
+            } else {
+                return "DictionaryEntryVector<" + getDictionaryEntryType(property) + ", Alloc>";
+            }
+        } else if (property.collection === "array") {
+            if (property.isclass) {
+                return "ModelVector<" + type + ", Alloc>";
+            } else if (type === "String") {
+                return "CStringVector<Alloc>";
+            } else {
+                return "Vector<" + type + ">";
+            }
+        } else if (property.optional) {
+            // Types which aren't nullable will be wrapped by StdExtra::optional.
+            // String is an exception here - empty will represent not set(might want to revisit this design)
+            if (!(type === "String" || type === "JsonObject<Alloc>")) {
+                return "StdExtra::optional<" + type + ">";
+            }
+        }
+    }
+
+    return type;
+}
+
+function getPropertyName(property, isPrivate, camelCase = true) {
     var name = property.name;
 
     // Don't allow property name to be a C++ reserved word
@@ -752,11 +797,13 @@ function getPropertyName(property, isPrivate) {
         name = "playfab" + name;
     }
 
-    // GameCore design guideline is to use camelcase for property names (service is using Pascal case)
-    name = name.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function (match, index) {
-        if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
-        return index === 0 ? match.toLowerCase() : match.toUpperCase();
-    });
+    if (camelCase)
+    {
+        name = name.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function (match, index) {
+            if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
+            return index === 0 ? match.toLowerCase() : match.toUpperCase();
+        });
+    }
 
     // Special case for some property names
     if (name.startsWith("pSN")) {
@@ -767,6 +814,10 @@ function getPropertyName(property, isPrivate) {
         name = "I" + name.slice(1);
     } else if (name.startsWith("oS")) {
         name = "O" + name.slice(1);
+    } else if (name.startsWith("rSA")) {
+        name = "R" + name.slice(1);
+    } else if (name.startsWith("uRL")) {
+        name = "U" + name.slice(1);
     }
 
     return isPrivate ? "m_" + name : name;
@@ -809,6 +860,17 @@ function getPropertyDefinition(datatype, property, isInternal) {
         output += "\n";
     }
 
+    return output;
+}
+
+function getWrapperPropertyDefinition(property){
+    var output = "";
+
+    if (requiresDynamicStorage(property)) {
+        var type = getWrapperPropertyType(property);
+        var propName = getPropertyName(property, true);
+        output += ("\n" + tab + type + " " + propName + ";");
+    }
     return output;
 }
 
@@ -869,6 +931,33 @@ function canDefaultCopyConstructor(datatype) {
     return true;
 }
 
+function getWrapConstructorInitializationList(datatype) {
+    var output = "ModelWrapper<" + datatype.prefix + datatype.name + ", Alloc>{ model }";
+    var conjunction = ",\n" + tab + tab;
+
+    for (var i = 0; i < datatype.properties.length; i++) {
+        var property = datatype.properties[i];
+        if (requiresDynamicStorage(property)) {
+            var wrapperPropName = getPropertyName(property, true);
+            var CPropName = getPropertyName(property, false);
+            var wrapperPropType = getWrapperPropertyType(property);
+
+            if (property.actualtype === "object") {
+                output += (conjunction + wrapperPropName + "{ model." + CPropName + " }");
+            } else if (property.collection) {
+                output += (conjunction + wrapperPropName + "{ model." + CPropName + ", model." + CPropName + " + model." + CPropName + "Count }");
+            } else if (property.actualtype === "String") {
+                output += (conjunction + wrapperPropName + "{ SafeString(model." + CPropName + ") }");
+            } else if (property.optional) {
+                output += (conjunction + wrapperPropName + "{ model." + CPropName + " ? " + wrapperPropType + "{ *model." + CPropName + " } : StdExtra::nullopt }");
+            } else {
+                output += (conjunction + wrapperPropName + "{ *model." + CPropName + " }");
+            }
+        }
+    }
+    return output;
+}
+
 function getCopyConstructorInitializationList(datatype) {
     var output = "";
     var conjunction = " :\n" + tab;
@@ -911,23 +1000,26 @@ function getMoveConstructorInitializationList(datatype) {
 
 function getCopyConstructorBody(datatype) {
     var output = "";
+    var conjunction = "\n" + tab + tab;
+
     for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
         var property = datatype.properties[propIdx];
         if (requiresDynamicStorage(property) && !datatype.isInternalOnly) {
-            var publicPropName = getPropertyName(property, false);
-            var privatePropName = getPropertyName(property, true);
-            var internalPropertyType = getInternalPropertyType(property);
+            var wrapperPropName = getPropertyName(property, true);
+            var CPropName = getPropertyName(property, false)
 
-            if (internalPropertyType === "JsonObject") {
-                output += ("\n" + tab + publicPropName + ".stringValue = " + privatePropName + ".StringValue();");
-            } else if (internalPropertyType.includes("Array")) {
-                output += ("\n" + tab + publicPropName + " = " + privatePropName + ".Empty() ? nullptr : " + privatePropName + ".Data();");
-            } else if (internalPropertyType === "String" || internalPropertyType.includes("Vector")) {
-                output += ("\n" + tab + publicPropName + " = " + privatePropName + ".empty() ? nullptr : " + privatePropName + ".data();");
-            } else if (property.optional) {
-                output += ("\n" + tab + publicPropName + " = " + privatePropName + " ? " + privatePropName + ".operator->() : nullptr;");
+            if (property.actualtype === "object") {
+                output += (conjunction + "this->m_model." + CPropName + ".stringValue = " + wrapperPropName + ".stringValue.empty() ? nullptr : " + wrapperPropName + ".stringValue.data();");
+            } else if (property.collection || property.actualtype === "String") {
+                output += (conjunction + "this->m_model." + CPropName + " = " + wrapperPropName + ".empty() ? nullptr : " + wrapperPropName + ".data();");
             } else if (property.isclass) {
-                output += ("\n" + tab + publicPropName + " = (" + getPublicPropertyType(property, true) + ")&" + privatePropName + ";");
+                if (property.optional) {
+                    output += (conjunction + "this->m_model." + CPropName + " = " + wrapperPropName + " ?  &" + wrapperPropName + "->Model() : nullptr;");
+                } else {
+                    output += (conjunction + "this->m_model." + CPropName + " = &" + wrapperPropName + ".Model();");
+                }
+            } else if (property.optional) {
+                output += (conjunction + "this->m_model." + CPropName + " = " + wrapperPropName + " ? " + wrapperPropName + ".operator->() : nullptr;");
             } else {
                 throw Error("Unable to copy property of type " + property.actualtype);
             }
