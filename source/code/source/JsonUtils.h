@@ -159,6 +159,8 @@ void ObjectGetMemberTime(const JsonValue& jsonObject, const char* name, StdExtra
 
 void ObjectGetMemberTime(const JsonValue& jsonObject, const char* name, Vector<time_t>& output);
 
+void ObjectGetMemberTime(const JsonValue& jsonObject, const char* name, DictionaryEntryVector<PFDateTimeDictionaryEntry>& output);
+
 //------------------------------------------------------------------------------
 // Template implementations
 //------------------------------------------------------------------------------

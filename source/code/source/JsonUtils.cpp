@@ -231,6 +231,50 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, JsonValue& o
     }
 }
 
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, CStringVector& output)
+{
+    output.clear();
+    if (jsonObject.IsObject())
+    {
+        auto iter = jsonObject.FindMember(name);
+        if (iter != jsonObject.MemberEnd() && iter->value.IsArray())
+        {
+            auto jsonArray{ iter->value.GetArray() };
+
+            output.reserve(jsonArray.Size());
+
+            for (auto& value : jsonArray)
+            {
+                String stringValue;
+                FromJson(value, stringValue);
+                output.push_back(std::move(stringValue));
+            }
+        }
+    }
+}
+
+void ObjectGetMember(const JsonValue& jsonObject, const char* name, StringDictionaryEntryVector& output)
+{
+    output.clear();
+    if (jsonObject.IsObject())
+    {
+        auto iter = jsonObject.FindMember(name);
+        if (iter != jsonObject.MemberEnd() && iter->value.IsObject())
+        {
+            auto memberObject{ iter->value.GetObject() };
+
+            output.reserve(memberObject.MemberCount());
+
+            for (auto& pair : memberObject)
+            {
+                String stringValue{};
+                FromJson(pair.value, stringValue);
+                output.insert_or_assign(pair.name.GetString(), std::move(stringValue));
+            }
+        }
+    }
+}
+
 void ObjectGetMemberTime(const JsonValue& jsonObject, const char* name, time_t& output)
 {
     auto iter = jsonObject.FindMember(name);
@@ -273,29 +317,7 @@ void ObjectGetMemberTime(const JsonValue& jsonObject, const char* name, Vector<t
     }
 }
 
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, CStringVector& output)
-{
-    output.clear();
-    if (jsonObject.IsObject())
-    {
-        auto iter = jsonObject.FindMember(name);
-        if (iter != jsonObject.MemberEnd() && iter->value.IsArray())
-        {
-            auto jsonArray{ iter->value.GetArray() };
-
-            output.reserve(jsonArray.Size());
-
-            for (auto& value : jsonArray)
-            {
-                String stringValue;
-                FromJson(value, stringValue);
-                output.push_back(std::move(stringValue));
-            }
-        }
-    }
-}
-
-void ObjectGetMember(const JsonValue& jsonObject, const char* name, StringDictionaryEntryVector& output)
+void ObjectGetMemberTime(const JsonValue& jsonObject, const char* name, DictionaryEntryVector<PFDateTimeDictionaryEntry>& output)
 {
     output.clear();
     if (jsonObject.IsObject())
@@ -309,9 +331,9 @@ void ObjectGetMember(const JsonValue& jsonObject, const char* name, StringDictio
 
             for (auto& pair : memberObject)
             {
-                String stringValue{};
-                FromJson(pair.value, stringValue);
-                output.insert_or_assign(pair.name.GetString(), std::move(stringValue));
+                time_t value{};
+                FromJsonTime(pair.value, value);
+                output.insert_or_assign(pair.name.GetString(), value);
             }
         }
     }
