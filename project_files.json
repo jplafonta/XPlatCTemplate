@@ -2,6 +2,7 @@
   "filters": [
     "C Public Includes",
     "C Public Includes\\playfab",
+    "C Public Includes\\playfab\\cpp",
     "Source",
     "Source\\Api",
     "Source\\QoS"
@@ -13,14 +14,15 @@
     "include\\playfab\\PFGlobal.h": "C Public Includes\\playfab",
     "include\\playfab\\PFPal.h": "C Public Includes\\playfab",
     "include\\playfab\\PFQoS.h": "C Public Includes\\playfab",
-    "include\\playfab\\PFTitlePlayer.h": "C Public Includes\\playfab"
+    "include\\playfab\\PFTitlePlayer.h": "C Public Includes\\playfab",
+    "include\\playfab\\cpp\\ModelHelpers.h": "C Public Includes\\playfab\\cpp",
+    "include\\playfab\\cpp\\StdOptional.h": "C Public Includes\\playfab\\cpp"
   },
   "sourceFiles": {
     "source\\ApiAsyncProviders.h": "Source",
     "source\\AsyncOp.h": "Source",
     "source\\AsyncProvider.cpp": "Source",
     "source\\AsyncProvider.h": "Source",
-    "source\\BaseModel.cpp": "Source",
     "source\\BaseModel.h": "Source",
     "source\\CallbackManager.h": "Source",
     "source\\Entity.cpp": "Source",
@@ -36,6 +38,8 @@
     "source\\InternalMemory.h": "Source",
     "source\\JsonUtils.cpp": "Source",
     "source\\JsonUtils.h": "Source",
+    "source\\ModelBuffer.cpp": "Source",
+    "source\\ModelBuffer.h": "Source",
     "source\\PlatformUser.cpp": "Source",
     "source\\PlatformUser.h": "Source",
     "source\\PlatformUtils.h": "Source",
@@ -44,7 +48,6 @@
     "source\\SdkVersion.h": "Source",
     "source\\Socket.cpp": "Source",
     "source\\Socket.h": "Source",
-    "source\\StdOptional.h": "Source",
     "source\\TaskQueue.cpp": "Source",
     "source\\TaskQueue.h": "Source",
     "source\\TitlePlayer.cpp": "Source",

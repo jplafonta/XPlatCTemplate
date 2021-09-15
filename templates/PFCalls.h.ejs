@@ -180,7 +180,7 @@ HRESULT <%- prefix %><%- call.name %>GetResult(
     _Inout_ XAsyncBlock* async,
     _Out_ <%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>* result
 ) noexcept;
-<%  } else if (isSerializable(call.resultDatatype)) { %>
+<%  } else { %>
 /// <summary>
 /// Get the size in bytes needed to store the result of a <%- call.name %> call.
 /// </summary>
@@ -211,24 +211,7 @@ HRESULT <%- prefix %><%- call.name %>GetResult(
     _Outptr_ <%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>** result,
     _Out_opt_ size_t* bufferUsed
 ) noexcept;
-<%  } else { %>
-/// <summary>
-/// Gets the result of a successful <%- prefix %><%- call.name %>Async call.
-/// </summary>
-/// <param name="async">XAsyncBlock for the async operation.</param>
-/// <param name="resultHandle">Opaque handle to the result object.</param>
-/// <param name="result">Pointer to the result object.</param>
-/// <returns>Result code for this API operation.</returns>
-/// <remarks>
-/// The lifetime of the result object is tied to the result handle. When the result is no longer needed, call
-/// <%- globalPrefix %>ResultCloseHandle to release the result object.
-/// </remarks>
-HRESULT <%- prefix %><%- call.name %>GetResult(
-    _Inout_ XAsyncBlock* async,
-    _Out_ <%- globalPrefix %>ResultHandle* resultHandle,
-    _Outptr_ <%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>** result
-) noexcept;
-<%  } // end if
+<% } // end if
 %><%- callExclusionMacroEnd(call) %><%
 } // end for %>
 

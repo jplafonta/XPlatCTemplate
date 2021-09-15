@@ -97,6 +97,18 @@ struct _Is_trivially_swappable
     // object representations.
 };
 
+template<class _Ty>
+struct is_nothrow_swappable
+    : std::_Is_nothrow_swappable<_Ty>::type
+{   // Determine if _Ty lvalues satisfy is_nothrow_swappable_with
+};
+
+template<class _Ty>
+struct is_swappable
+    : std::_Is_swappable<_Ty>::type
+{   // Determine if _Ty lvalues satisfy is_swappable_with
+};
+
 //------------------------------------------------------------------------------
 // End copied chunks
 //------------------------------------------------------------------------------
@@ -497,11 +509,11 @@ public:
 
     // swap [optional.object.swap]
     void swap(optional& _Right)
-        noexcept(std::is_nothrow_move_constructible<_Ty>::value && std::is_nothrow_swappable<_Ty>::value)
+        noexcept(std::is_nothrow_move_constructible<_Ty>::value && is_nothrow_swappable<_Ty>::value)
     {   // exchange state with _Right
         static_assert(std::is_move_constructible<_Ty>::value,
             "optional<T>::swap requires T to be move constructible (N4659 23.6.3.4 [optional.swap]/1).");
-        static_assert(!std::is_move_constructible<_Ty>::value || std::is_swappable<_Ty>::value,
+        static_assert(!std::is_move_constructible<_Ty>::value || is_swappable<_Ty>::value,
             "optional<T>::swap requires T to be swappable (N4659 23.6.3.4 [optional.swap]/1).");
         _Swap(_Right, _Is_trivially_swappable<_Ty>{});
     }
@@ -629,7 +641,7 @@ private:
         {
             if (_Engaged)
             {
-                _Swap_adl(**this, *_Right);
+                std::_Swap_adl(**this, *_Right);
             }
         }
         else

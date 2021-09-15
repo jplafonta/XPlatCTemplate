@@ -73,22 +73,3 @@ HRESULT <%- prefix %>UninitializeAsync(
     RETURN_HR_INVALIDARG_IF_NULL(stateHandle);
     return stateHandle->CleanupAsync(async);
 }
-
-HRESULT <%- prefix %>ResultDuplicateHandle(
-    _In_ <%- prefix %>ResultHandle resultHandle,
-    _Out_ <%- prefix %>ResultHandle* duplicatedHandle
-) noexcept
-{
-    RETURN_HR_INVALIDARG_IF_NULL(resultHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(duplicatedHandle);
-
-    *duplicatedHandle = MakeUnique<<%- prefix %>Result>(*resultHandle).release();
-    return S_OK;
-}
-
-void <%- prefix %>ResultCloseHandle(
-    _In_ <%- prefix %>ResultHandle resultHandle
-) noexcept
-{
-    UniquePtr<<%- prefix %>Result>{ resultHandle };
-}

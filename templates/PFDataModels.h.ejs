@@ -162,7 +162,7 @@ typedef struct <%- datatype.prefix %><%- datatype.name %>DictionaryEntry
 if (datatype.isenum) { %>
     <%- datatype.prefix %><%- datatype.name %> value;
 <% } else { %>
-    <%- datatype.prefix %><%- datatype.name %>* value;<% } %>
+    <%- datatype.prefix %><%- datatype.name %> const* value;<% } %>
 } <%- datatype.prefix %><%- datatype.name %>DictionaryEntry;
 <% } %>
 #pragma pop_macro("IN")

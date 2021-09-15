@@ -6,7 +6,7 @@
 #include "Entity.h"
 
 using namespace PlayFab;
-using namespace PlayFab::<%- featureGroup.name %>Models;
+using namespace PlayFab::<%- featureGroup.name %>;
 <% var apiMemberName = featureGroup.name.charAt(0).toLowerCase() + featureGroup.name.slice(1) + "API";
 
 // There are many Login methods for both Client and Server, but we only want to define a single GetLoginResult method for each
@@ -104,7 +104,7 @@ HRESULT <%- prefix %><%- call.name %>GetResult(
 {
     return XAsyncGetResult(async, nullptr, sizeof(<%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>), result, nullptr);
 }
-<%  } else if (isSerializable(call.resultDatatype)) { %>
+<%  } else { %>
 HRESULT <%- prefix %><%- call.name %>GetResultSize(
     _In_ XAsyncBlock* async,
     _Out_ size_t* bufferSize
@@ -125,20 +125,6 @@ HRESULT <%- prefix %><%- call.name %>GetResult(
 
     RETURN_IF_FAILED(XAsyncGetResult(async, nullptr, bufferSize, buffer, bufferUsed));
     *result = static_cast<<%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>*>(buffer);
-
-    return S_OK;
-}
-<%  } else { %>
-HRESULT <%- prefix %><%- call.name %>GetResult(
-    _In_ XAsyncBlock* async,
-    _Out_ <%- globalPrefix %>ResultHandle* resultHandle,
-    _Outptr_ <%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>** result
-) noexcept
-{
-    RETURN_HR_INVALIDARG_IF_NULL(result);
-
-    RETURN_IF_FAILED(XAsyncGetResult(async, nullptr, sizeof(<%- globalPrefix %>ResultHandle), resultHandle, nullptr));
-    *result = (<%- call.resultDatatype.prefix %><%- call.resultDatatype.name %>*)(std::dynamic_pointer_cast<<%- call.resultDatatype.name %>>((*resultHandle)->result).get());
 
     return S_OK;
 }

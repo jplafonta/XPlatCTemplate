@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Shared/SharedDataModels.h"
+#include "JsonUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -24,16 +25,17 @@ TEST_CLASS(ModelTests)
 public:
     TEST_METHOD(MoveModel)
     {
-        constexpr char jsonArray[] = "[1, 2, 3, 4, 5]";
+        constexpr char jsonArray[] = "{\"array\" : [\"1\", \"2\", \"3\", \"4\", \"5\"] }";
 
         JsonDocument inputJson;
         inputJson.Parse(jsonArray);
 
-        PointerArrayModel<int, int> pointerArray;
-        pointerArray.FromJson(inputJson);
+        CStringVector pointerArray;
+        JsonUtils::ObjectGetMember(inputJson, "array", pointerArray);
 
         auto movedArray{ std::move(pointerArray) };
-        auto outputJson = movedArray.ToJson();
+        JsonValue outputJson{ rapidjson::kObjectType };
+        JsonUtils::ObjectAddMemberArray(outputJson, "array", pointerArray.data(), static_cast<uint32_t>(pointerArray.size()));
 
         Assert::IsTrue(inputJson == outputJson);
     }
@@ -43,25 +45,28 @@ public:
         const std::array<time_t, 3> times{ time(0), time(0), time(0) };
 
         JsonDocument inputJson{ rapidjson::kObjectType };
+        JsonValue timesJson{ rapidjson::kObjectType };
         auto& a{ inputJson.GetAllocator() };
         for (auto i = 0; i < times.size(); ++i)
         {
             std::stringstream ss;
             ss << "DateTime" << i << "_" << times[i];
-            inputJson.AddMember(JsonValue{ ss.str().data(), a }, JsonValue{ PlayFab::TimeTToIso8601String(times[i]).data(), a }, a);
+            timesJson.AddMember(JsonValue{ ss.str().data(), a }, JsonValue{ PlayFab::TimeTToIso8601String(times[i]).data(), a }, a);
         }
+        inputJson.AddMember("times", timesJson.Move(), a);
 
-        AssociativeArrayModel<PFDateTimeDictionaryEntry, void> dictionary;
-        dictionary.FromJson(inputJson);
+        DictionaryEntryVector<PFDateTimeDictionaryEntry> dictionary;
+        JsonUtils::ObjectGetMemberTime(inputJson, "times", dictionary);
 
-        Assert::IsTrue(times.size() == inputJson.MemberCount());
-        Assert::IsTrue(times.size() == dictionary.Size());
+        Assert::IsTrue(times.size() == inputJson["times"].MemberCount());
+        Assert::IsTrue(times.size() == dictionary.size());
         for (auto i = 0; i < times.size(); ++i)
         {
-            Assert::IsTrue(times[i] == dictionary.Data()[i].value);
+            Assert::IsTrue(times[i] == dictionary.data()[i].value);
         }
 
-        auto outputJson = dictionary.ToJson();
+        JsonValue outputJson{ rapidjson::kObjectType };
+        JsonUtils::ObjectAddMemberTime(outputJson, "times", dictionary.data(), static_cast<uint32_t>(dictionary.size()));
         Assert::IsTrue(inputJson == outputJson);
     }
 };

@@ -7,7 +7,7 @@
 using namespace PlayFab;
 using namespace PlayFab::QoS;
 
-HRESULT <%- prefix %>QoSGetMeasurmentsAsync(
+HRESULT <%- prefix %>QoSGetMeasurementsAsync(
     _In_ <%- prefix %>EntityHandle entityHandle,
     _In_ uint32_t pingIterations,
     _In_ uint32_t timeoutMs,
@@ -20,16 +20,26 @@ HRESULT <%- prefix %>QoSGetMeasurmentsAsync(
     return Provider::Run(UniquePtr<Provider>(provider.release()));
 }
 
+HRESULT <%- prefix %>QoSGetMeasurementsGetResultSize(
+    _Inout_ XAsyncBlock* async,
+    _Out_ size_t* bufferSize
+) noexcept
+{
+    return XAsyncGetResultSize(async, bufferSize);
+}
+
 HRESULT <%- prefix %>QoSGetMeasurementsGetResult(
-    _In_ XAsyncBlock* async,
-    _Out_ <%- prefix %>ResultHandle* resultHandle,
-    _Outptr_ <%- prefix %>QoSMeasurements** result
+    _Inout_ XAsyncBlock* async,
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_(bufferSize, *bufferUsed) void* buffer,
+    _Outptr_ <%- prefix %>QoSMeasurements** result,
+    _Out_opt_ size_t* bufferUsed
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(result);
 
-    RETURN_IF_FAILED(XAsyncGetResult(async, nullptr, sizeof(<%- prefix %>ResultHandle), resultHandle, nullptr));
-    *result = (<%- prefix %>QoSMeasurements*)(std::dynamic_pointer_cast<Measurements>((*resultHandle)->result).get());
+    RETURN_IF_FAILED(XAsyncGetResult(async, nullptr, bufferSize, buffer, bufferUsed));
+    *result = static_cast<<%- prefix %>QoSMeasurements*>(buffer);
 
     return S_OK;
 }

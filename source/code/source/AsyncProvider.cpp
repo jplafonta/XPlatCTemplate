@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "AsyncProvider.h"
+#include "EnumTraits.h"
 
 namespace PlayFab
 {

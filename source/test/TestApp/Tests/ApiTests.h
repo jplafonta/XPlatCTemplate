@@ -16,7 +16,6 @@ private:
 
     void TestApiStaticSizeResult(TestContext& testContext);
     void TestApiSerializableResult(TestContext& testContext);
-    void TestApiResultHandle(TestContext& testContext);
 
     void TestApiSessionTicket(TestContext& testContext);
     void TestApiEntityToken(TestContext& testContext);

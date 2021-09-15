@@ -45,8 +45,7 @@ protected:
 
     HRESULT GetResult(void* buffer, size_t bufferSize) override
     {
-        GetResultHelper(buffer, bufferSize);
-        return S_OK;
+        return GetResultHelper(buffer, bufferSize);
     }
 
     // How we deliver the XAsync result will depend on ResultT of m_call:
@@ -64,39 +63,29 @@ protected:
     }
 
     template<typename T = ResultT>
-    size_t StoreResult(Result<ResultT>&& result, typename std::enable_if_t<!std::is_void_v<T> && std::is_base_of_v<SerializableModel, T>>* = 0)
+    size_t StoreResult(Result<ResultT>&& result, typename std::enable_if_t<std::is_base_of_v<OutputModel<typename T::ModelType>, T>>* = 0)
     {
         this->m_result.emplace(std::move(result));
-        return this->m_result->Payload().SerializedSize();
+        return this->m_result->Payload().RequiredBufferSize();
     }
 
     template<typename T = ResultT>
-    size_t StoreResult(Result<ResultT>&& result, typename std::enable_if_t<!std::is_void_v<T> && !std::is_base_of_v<SerializableModel, T>>* = 0)
-    {
-        this->m_result.emplace(std::move(result));
-        return sizeof(<%- prefix %>ResultHandle);
-    }
-
-    template<typename T = ResultT>
-    void GetResultHelper(void*, size_t, typename std::enable_if_t<std::is_void_v<T>>* = 0)
+    HRESULT GetResultHelper(void*, size_t, typename std::enable_if_t<std::is_void_v<T>>* = 0)
     {
         // Should never be called
         assert(false);
+        return E_UNEXPECTED;
     }
 
     template<typename T = ResultT>
-    void GetResultHelper(void* buffer, size_t bufferSize, typename std::enable_if_t<!std::is_void_v<T> && std::is_base_of_v<SerializableModel, T>>* = 0)
+    HRESULT GetResultHelper(void* buffer, size_t bufferSize, typename std::enable_if_t<std::is_base_of_v<OutputModel<typename T::ModelType>, T>>* = 0)
     {
         assert(m_result.has_value());
-        m_result->Payload().Serialize(buffer, bufferSize);
-    }
-
-    template<typename T = ResultT>
-    void GetResultHelper(void* buffer, size_t /*bufferSize*/, typename std::enable_if_t<!std::is_void_v<T> && !std::is_base_of_v<SerializableModel, T>>* = 0)
-    {
-        assert(m_result.has_value());
-        auto resultPtr = static_cast<<%- prefix %>Result**>(buffer);
-        *resultPtr = MakeUnique<<%- prefix %>Result>(MakeShared<ResultT>(m_result->ExtractPayload())).release();
+        ModelBuffer b{ buffer, bufferSize };
+        auto result = m_result->Payload().Copy(b);
+        // TODO how to ensure offset of result object within buffer. Assume for now it will always be at byte 0
+        assert((void*)(result.Payload()) == buffer);
+        return result.hr;
     }
 
     CallT m_call;

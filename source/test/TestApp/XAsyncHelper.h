@@ -11,7 +11,6 @@ namespace PlayFabUnit
 struct XAsyncResult
 {
     std::vector<char> resultBuffer{};
-    PFResultHandle resultHandle{ nullptr };
 
     virtual HRESULT Get(XAsyncBlock* async)
     {
@@ -23,7 +22,6 @@ struct XAsyncResult
     }
     virtual ~XAsyncResult()
     {
-        PFResultCloseHandle(resultHandle);
     }
 };
 

@@ -105,6 +105,7 @@ for (var file in projectFiles.sourceFiles) {
 } 
 for(var featureGroupName in SDKFeatureGroups) { %>
     <ClInclude Include="$(PlayFabSourceDir)\include\playfab\<%- prefix + featureGroupName %>DataModels.h" />
+    <ClInclude Include="$(PlayFabSourceDir)\include\playfab\cpp\<%- prefix + featureGroupName %>DataModelWrappers.h" />
     <ClInclude Include="$(PlayFabSourceDir)\source\<%- featureGroupName %>\<%- featureGroupName %>DataModels.h" />
     <ClCompile Include="$(PlayFabSourceDir)\source\<%- featureGroupName %>\<%- featureGroupName %>DataModels.cpp" /><%
     if (!(featureGroupName === "Shared")) { %>

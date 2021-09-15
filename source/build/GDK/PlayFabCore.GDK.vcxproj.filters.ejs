@@ -33,6 +33,9 @@ for(var featureGroupName in SDKFeatureGroups) { %>
     <ClInclude Include="$(PlayFabSourceDir)\include\playfab\<%- prefix + featureGroupName %>DataModels.h">
       <Filter>C Public Includes\playfab</Filter>
     </ClInclude>
+    <ClInclude Include="$(PlayFabSourceDir)\include\playfab\cpp\<%- prefix + featureGroupName %>DataModelWrappers.h">
+      <Filter>C Public Includes\playfab\cpp</Filter>
+    </ClInclude>
     <ClInclude Include="$(PlayFabSourceDir)\source\<%- featureGroupName %>\<%- featureGroupName %>DataModels.h">
       <Filter>Source\<%- featureGroupName %></Filter>
     </ClInclude>
