@@ -8,6 +8,8 @@
 namespace PlayFabUnit
 {
 
+using namespace PlayFab::Wrappers;
+
 AutoGen<%- featureGroup.name %>Tests::<%- featureGroup.name %>TestData AutoGen<%- featureGroup.name %>Tests::testData;
 
 void AutoGen<%- featureGroup.name %>Tests::Log(std::stringstream& ss)
@@ -179,15 +181,13 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
 
 
 }
-
 <% for (var i = 0; i < featureGroup.calls.length; i++) 
 {
     var call = featureGroup.calls[i];
 %>
 #pragma region <%- call.name %>
 
-<%
-    for (var j = 0; j < prerequisiteCalls[call.name].length; j++)
+<%  for (var j = 0; j < prerequisiteCalls[call.name].length; j++)
     {
         var prereqCall = prerequisiteCalls[call.name][j];
         var prereqContextHandleParam = "stateHandle";
@@ -206,45 +206,39 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
         var prereqAsyncName = prefix + prereqCall.name + "Async"; 
         var prereqName =  "Test" + featureGroup.name + call.name + "Prerequisite" + prereqCall.name;
 %>void AutoGen<%- featureGroup.name %>Tests::<%- prereqName %>(TestContext& testContext)
-{
-    struct <%- prereqCall.name %>Result : public XAsyncResult
+{<% 
+var resultHolderType = "XAsyncResult";
+if (prereqCall.resultDatatype) {
+    resultHolderType = prereqCall.name + "ResultHolder"; %>
+    struct <%- prereqCall.name %>ResultHolder : public <%- prereqCall.resultDatatype.name %>Holder
     {
-<% if (!prereqCall.resultDatatype) {
-   } else if (isFixedSize(prereqCall.resultDatatype)) { %>        <%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %> result{};
-<% } else { %>        <%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>* result = nullptr;
-<% } // end if %>        HRESULT Get(XAsyncBlock* async) override
-        { <% if (!prereqCall.resultDatatype) { %>
-            // No Get Result method needed
-            return LogHR(XAsyncGetStatus(async, true));<% } else if (isFixedSize(prereqCall.resultDatatype)) { %>
-            return LogHR(<%- prefix + prereqCall.name %>GetResult(async, &result)); <% } else { %>
+        HRESULT Get(XAsyncBlock* async) override
+        {<%
+    if (isFixedSize(prereqCall.resultDatatype)) { %>
+            RETURN_IF_FAILED(LogHR(<%- prefix + prereqCall.name %>GetResult(async, &result)));
+            Log<%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>(&result);<%
+    } else { %>
             size_t requiredBufferSize;
             RETURN_IF_FAILED(LogHR(<%- prefix + prereqCall.name %>GetResultSize(async, &requiredBufferSize)));
 
             resultBuffer.resize(requiredBufferSize);
-            return LogHR(<%- prefix + prereqCall.name %>GetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr));<% } // end if %>
+            RETURN_IF_FAILED(LogHR(<%- prefix + prereqCall.name %>GetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr)));
+            
+            Log<%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>(result);<%
+    } // end if %>
+            return Store<%- call.name %>Prerequisite<%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>(shared_from_this());
         }
-
-        HRESULT Validate()
-        {
-<% if (!prereqCall.resultDatatype) { 
-%>            return S_OK;
-<% } else if (isFixedSize(prereqCall.resultDatatype)) { 
-%>            Log<%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>( &result );
-            return Store<%- call.name %>Prerequisite<%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>( &result );
-<% } else { 
-%>            Log<%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>( result );
-            return Store<%- call.name %>Prerequisite<%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>( result );
-<% } // end if %>        }
-    };
-
-    auto async = std::make_unique<XAsyncHelper<<%- prereqCall.name %>Result>>(testContext);
-<% if (prereqCall.requestDatatype) { 
-    let requestNamespace = "PlayFab::" + (prereqCall.requestDatatype.isShared ? "" : featureGroup.name + "Models::"); %>
-    <%- requestNamespace + prereqCall.requestDatatype.name %> request;
-    Fill<%- call.name %>Prerequisite<%- prereqCall.requestDatatype.name %>( &request );
-    Log<%- prereqCall.requestDatatype.name %>( &request, "<%- testName %>" );
-    HRESULT hr = <%- prereqAsyncName %>(<%- prereqContextHandleParam %>, &request, &async->asyncBlock); <% } else { %>
-    HRESULT hr = <%- prereqAsyncName %>(<%- prereqContextHandleParam %>, &async->asyncBlock); <% } %>
+    };<%   
+} // end if %>
+    auto async = std::make_unique<XAsyncHelper<<%- resultHolderType %>>>(testContext);
+<% if (prereqCall.requestDatatype) { %>
+    <%- prereqCall.requestDatatype.prefix + prereqCall.requestDatatype.name %>Wrapper<> request;
+    Fill<%- call.name %>Prerequisite<%- prereqCall.requestDatatype.name %>(request);
+    Log<%- prereqCall.requestDatatype.name %>(&request.Model(), "<%- testName %>");
+    HRESULT hr = <%- prereqAsyncName %>(<%- prereqContextHandleParam %>, &request.Model(), &async->asyncBlock);<%
+} else { %>
+    HRESULT hr = <%- prereqAsyncName %>(<%- prereqContextHandleParam %>, &async->asyncBlock);<%
+} %>
     if (FAILED(hr))
     {
         testContext.Fail("<%- prefix %><%- featureGroup.name + call.name + "Prerequisite" + prereqCall.name %>Async", hr);
@@ -270,45 +264,48 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
     var asyncName = prefix + call.name + "Async"; 
     var testName =  "Test" + featureGroup.name + call.name;
 %>void AutoGen<%- featureGroup.name %>Tests::<%- testName %>(TestContext& testContext)
-{
-    struct <%- call.name %>Result : public XAsyncResult
+{<% 
+var resultHolderType = "XAsyncResult";
+if (call.resultDatatype) {
+    resultHolderType = call.name + "ResultHolder"; %>
+    struct <%- call.name %>ResultHolder : public <%- call.resultDatatype.name %>Holder
     {
-<% if (!call.resultDatatype) {
-   } else if (isFixedSize(call.resultDatatype)) { %>        <%- call.resultDatatype.prefix + call.resultDatatype.name %> result{};
-<% } else { %>        <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result = nullptr;
-<% } // end if %>        HRESULT Get(XAsyncBlock* async) override
-        { <% if (!call.resultDatatype) { %>
-            // No Get Result method needed
-            return LogHR(XAsyncGetStatus(async, true));<% } else if (isFixedSize(call.resultDatatype)) { %>
-            return LogHR(<%- prefix + call.name %>GetResult(async, &result)); <% } else { %>
+        HRESULT Get(XAsyncBlock* async) override
+        {<%
+    if (isFixedSize(call.resultDatatype)) { %>
+            RETURN_IF_FAILED(LogHR(<%- prefix + call.name %>GetResult(async, &result)));
+            Log<%- call.resultDatatype.prefix + call.resultDatatype.name %>(&result);<%
+    } else { %>
             size_t requiredBufferSize;
             RETURN_IF_FAILED(LogHR(<%- prefix + call.name %>GetResultSize(async, &requiredBufferSize)));
 
             resultBuffer.resize(requiredBufferSize);
-            return LogHR(<%- prefix + call.name %>GetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr)); <% } // end if %>
+            RETURN_IF_FAILED(LogHR(<%- prefix + call.name %>GetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr)));
+            
+            Log<%- call.resultDatatype.prefix + call.resultDatatype.name %>(result);<%
+    } // end if %>
+            return S_OK;
         }
 
-        HRESULT Validate()
-        {
-<% if (!call.resultDatatype) { 
-%>            return S_OK;
-<% } else if (isFixedSize(call.resultDatatype)) { 
-%>            Log<%- call.resultDatatype.prefix + call.resultDatatype.name %>( &result );
-            return Validate<%- call.resultDatatype.prefix + call.resultDatatype.name %>( &result );
-<% } else { 
-%>            Log<%- call.resultDatatype.prefix + call.resultDatatype.name %>( result );
-            return Validate<%- call.resultDatatype.prefix + call.resultDatatype.name %>( result );
-<% } // end if %>        }
-    };
-
-    auto async = std::make_unique<XAsyncHelper<<%- call.name %>Result>>(testContext);
-<% if (call.requestDatatype) { 
-    let requestNamespace = "PlayFab::" + (call.requestDatatype.isShared ? "" : featureGroup.name + "Models::"); %>
-    <%- requestNamespace + call.requestDatatype.name %> request;
-    Fill<%- call.requestDatatype.name %>( &request );
-    Log<%- call.requestDatatype.name %>( &request, "<%- testName %>" );
-    HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &request, &async->asyncBlock); <% } else { %>
-    HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &async->asyncBlock); <% } %>
+        HRESULT Validate() override
+        {<%
+    if (isFixedSize(call.resultDatatype)) { %>
+            return Validate<%- call.resultDatatype.prefix + call.resultDatatype.name %>(&result);<%
+    } else { %>
+            return Validate<%- call.resultDatatype.prefix + call.resultDatatype.name %>(result);<%
+    } %>
+        }
+    };<%   
+} // end if %>
+    auto async = std::make_unique<XAsyncHelper<<%- resultHolderType %>>>(testContext);
+<% if (call.requestDatatype) { %>
+    <%- call.requestDatatype.prefix + call.requestDatatype.name %>Wrapper<> request;
+    Fill<%- call.requestDatatype.name %>(request);
+    Log<%- call.requestDatatype.name %>(&request.Model(), "<%- testName %>");
+    HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &request.Model(), &async->asyncBlock);<%
+} else { %>
+    HRESULT hr = <%- asyncName %>(<%- contextHandleParam %>, &async->asyncBlock);<%
+} %>
     if (FAILED(hr))
     {
         testContext.Fail("<%- prefix %><%- featureGroup.name + call.name %>Async", hr);
@@ -336,45 +333,37 @@ void AutoGen<%- featureGroup.name %>Tests::SetUp(TestContext& testContext)
         var cleanupAsyncName = prefix + cleanupCall.name + "Async"; 
         var cleanupName =  "Test" + featureGroup.name + call.name + "Cleanup" + cleanupCall.name;
 %>void AutoGen<%- featureGroup.name %>Tests::<%- cleanupName %>(TestContext& testContext)
-{
-    struct <%- cleanupCall.name %>Result : public XAsyncResult
+{<% 
+var resultHolderType = "XAsyncResult";
+if (cleanupCall.resultDatatype) {
+    resultHolderType = cleanupCall.name + "ResultHolder"; %>
+    struct <%- cleanupCall.name %>ResultHolder : public <%- cleanupCall.resultDatatype.name %>Holder
     {
-<% if (!cleanupCall.resultDatatype) {
-   } else if (isFixedSize(cleanupCall.resultDatatype)) { %>        <%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %> result{};
-<% } else { %>        <%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>* result = nullptr;
-<% } // end if %>        HRESULT Get(XAsyncBlock* async) override
-        { <% if (!cleanupCall.resultDatatype) { %>
-            // No Get Result method needed
-            return LogHR(XAsyncGetStatus(async, true));<% } else if (isFixedSize(cleanupCall.resultDatatype)) { %>
-            return LogHR(<%- prefix + cleanupCall.name %>GetResult(async, &result)); <% } else { %>
+        HRESULT Get(XAsyncBlock* async) override
+        {<%
+    if (isFixedSize(cleanupCall.resultDatatype)) { %>
+            RETURN_IF_FAILED(LogHR(<%- prefix + cleanupCall.name %>GetResult(async, &result)));
+            Log<%- call.resultDatatype.prefix + cleanupCall.resultDatatype.name %>(&result);<%
+    } else { %>
             size_t requiredBufferSize;
             RETURN_IF_FAILED(LogHR(<%- prefix + cleanupCall.name %>GetResultSize(async, &requiredBufferSize)));
 
             resultBuffer.resize(requiredBufferSize);
-            return LogHR(<%- prefix + cleanupCall.name %>GetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr)); <% } // end if %>
+            RETURN_IF_FAILED(LogHR(<%- prefix + cleanupCall.name %>GetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr)));<%
+    } // end if %>
+            return Store<%- call.name %>Cleanup<%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>(shared_from_this());
         }
-
-        HRESULT Validate()
-        {
-<% if (!cleanupCall.resultDatatype) { 
-%>            return S_OK;
-<% } else if (isFixedSize(cleanupCall.resultDatatype)) { 
-%>            Log<%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>( &result );
-            return Store<%- call.name %>Cleanup<%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>( &result );
-<% } else { 
-%>            Log<%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>( result );
-            return Store<%- call.name %>Cleanup<%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>( result );
-<% } // end if %>        }
-    };
-
-    auto async = std::make_unique<XAsyncHelper<<%- cleanupCall.name %>Result>>(testContext);
-<% if (cleanupCall.requestDatatype) { 
-    let requestNamespace = "PlayFab::" + (cleanupCall.requestDatatype.isShared ? "" : featureGroup.name + "Models::"); %>
-    <%- requestNamespace + cleanupCall.requestDatatype.name %> request;
-    Fill<%- call.name %>Cleanup<%- cleanupCall.requestDatatype.name %>( &request );
-    Log<%- cleanupCall.requestDatatype.name %>( &request, "<%- cleanupName %>" );
-    HRESULT hr = <%- cleanupAsyncName %>(<%- cleanupContextHandleParam %>, &request, &async->asyncBlock); <% } else { %>
-    HRESULT hr = <%- cleanupAsyncName %>(<%- cleanupContextHandleParam %>, &async->asyncBlock); <% } %>
+    };<%   
+} // end if %>
+    auto async = std::make_unique<XAsyncHelper<<%- resultHolderType %>>>(testContext);
+<% if (cleanupCall.requestDatatype) { %>
+    <%- cleanupCall.requestDatatype.prefix + cleanupCall.requestDatatype.name %>Wrapper<> request;
+    Fill<%- call.name %>Cleanup<%- cleanupCall.requestDatatype.name %>(request);
+    Log<%- cleanupCall.requestDatatype.name %>(&request.Model(), "<%- cleanupName %>");
+    HRESULT hr = <%- cleanupAsyncName %>(<%- cleanupContextHandleParam %>, &request.Model(), &async->asyncBlock);<%
+} else { %>
+    HRESULT hr = <%- cleanupAsyncName %>(<%- cleanupContextHandleParam %>, &async->asyncBlock);<%
+} %>
     if (FAILED(hr))
     {
         testContext.Fail("<%- prefix %><%- featureGroup.name + call.name + "Cleanup" + cleanupCall.name %>Async", hr);

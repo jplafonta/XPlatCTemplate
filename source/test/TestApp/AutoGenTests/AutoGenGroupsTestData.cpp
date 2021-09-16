@@ -7,1030 +7,904 @@
 namespace PlayFabUnit
 {
 
+using namespace PlayFab::Wrappers;
+
 #pragma region AcceptGroupApplication
 
-    void AutoGenGroupsTests::FillAcceptGroupApplicationPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillAcceptGroupApplicationPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreAcceptGroupApplicationPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreAcceptGroupApplicationPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillAcceptGroupApplicationPrerequisiteApplyToGroupRequest(PFGroupsApplyToGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+}
 
-    void AutoGenGroupsTests::FillAcceptGroupApplicationPrerequisiteApplyToGroupRequest(PlayFab::GroupsModels::ApplyToGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::StoreAcceptGroupApplicationPrerequisitePFGroupsApplyToGroupResponse(std::shared_ptr<ApplyToGroupResponseHolder> result)
+{
+    testData.m_ApplyToGroupResponse = result;
+    return S_OK;
+}
 
-    HRESULT AutoGenGroupsTests::StoreAcceptGroupApplicationPrerequisitePFGroupsApplyToGroupResponse(PFGroupsApplyToGroupResponse* result)
-    {
-        PlayFab::GroupsModels::ApplyToGroupResponse internalResult(*result);
-        testData.m_ApplyToGroupResponse.FromJson(internalResult.ToJson());
+void AutoGenGroupsTests::FillAcceptGroupApplicationRequest(PFGroupsAcceptGroupApplicationRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(*testData.m_ApplyToGroupResponse->result->entity->key);
+}
 
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillAcceptGroupApplicationRequest(PlayFab::GroupsModels::AcceptGroupApplicationRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        inputJson["Entity"]["Id"].SetString(testData.m_ApplyToGroupResponse.entity->key->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
-
-    void AutoGenGroupsTests::FillAcceptGroupApplicationCleanupRemoveMembersRequest(PlayFab::GroupsModels::RemoveMembersRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        inputJson["Members"][0]["Id"].SetString(testData.m_ApplyToGroupResponse.entity->key->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillAcceptGroupApplicationCleanupRemoveMembersRequest(PFGroupsRemoveMembersRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"ABC1234DEF\", \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    ModelVector<PFEntityKeyWrapper<>> members;
+    members.push_back(*testData.m_ApplyToGroupResponse->result->entity->key);
+    request.SetMembers(std::move(members));
+}
 
 #pragma endregion
 
 #pragma region AcceptGroupInvitation
 
-    void AutoGenGroupsTests::FillAcceptGroupInvitationPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillAcceptGroupInvitationPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreAcceptGroupInvitationPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreAcceptGroupInvitationPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillAcceptGroupInvitationPrerequisiteInviteToGroupRequest(PFGroupsInviteToGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"awesomepeople\", \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(PFEntityKey{ "33D5E873FB4D8629", "title_player_account" });
+}
 
-    void AutoGenGroupsTests::FillAcceptGroupInvitationPrerequisiteInviteToGroupRequest(PlayFab::GroupsModels::InviteToGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"33D5E873FB4D8629\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::StoreAcceptGroupInvitationPrerequisitePFGroupsInviteToGroupResponse(std::shared_ptr<InviteToGroupResponseHolder> result)
+{
+    testData.m_InviteToGroupResponse = result;
+    return S_OK;
+}
 
-    HRESULT AutoGenGroupsTests::StoreAcceptGroupInvitationPrerequisitePFGroupsInviteToGroupResponse(PFGroupsInviteToGroupResponse* result)
-    {
-        PlayFab::GroupsModels::InviteToGroupResponse internalResult(*result);
-        testData.m_InviteToGroupResponse.FromJson(internalResult.ToJson());
+void AutoGenGroupsTests::FillAcceptGroupInvitationRequest(PFGroupsAcceptGroupInvitationRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+}
 
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillAcceptGroupInvitationRequest(PlayFab::GroupsModels::AcceptGroupInvitationRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
-
-    void AutoGenGroupsTests::FillAcceptGroupInvitationCleanupRemoveMembersRequest(PlayFab::GroupsModels::RemoveMembersRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        inputJson["Members"][0]["Id"].SetString(testData.m_InviteToGroupResponse.invitedEntity->key->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillAcceptGroupInvitationCleanupRemoveMembersRequest(PFGroupsRemoveMembersRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"ABC1234DEF\", \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    ModelVector<PFEntityKeyWrapper<>> members;
+    members.push_back(*testData.m_InviteToGroupResponse->result->invitedEntity->key);
+    request.SetMembers(std::move(members));
+}
 
 #pragma endregion
 
 #pragma region AddMembers
 
-    void AutoGenGroupsTests::FillAddMembersPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillAddMembersPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreAddMembersPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreAddMembersPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillAddMembersRequest(PFGroupsAddMembersRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    ModelVector<PFEntityKeyWrapper<>> members;
+    members.push_back(PFEntityKey{ "FED18FB0293BA445", "title_player_account" });
+    request.SetMembers(std::move(members));
+}
 
-    void AutoGenGroupsTests::FillAddMembersRequest(PlayFab::GroupsModels::AddMembersRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"FED18FB0293BA445\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
-
-    void AutoGenGroupsTests::FillAddMembersCleanupRemoveMembersRequest(PlayFab::GroupsModels::RemoveMembersRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"FED18FB0293BA445\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillAddMembersCleanupRemoveMembersRequest(PFGroupsRemoveMembersRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"ABC1234DEF\", \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    ModelVector<PFEntityKeyWrapper<>> members;
+    members.push_back(PFEntityKey{ "FED18FB0293BA445", "title_player_account" });
+    request.SetMembers(std::move(members));
+}
 
 #pragma endregion
 
 #pragma region ApplyToGroup
 
-    void AutoGenGroupsTests::FillApplyToGroupPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillApplyToGroupPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreApplyToGroupPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreApplyToGroupPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillApplyToGroupRequest(PFGroupsApplyToGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+}
 
-    void AutoGenGroupsTests::FillApplyToGroupRequest(PlayFab::GroupsModels::ApplyToGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsApplyToGroupResponse(PFGroupsApplyToGroupResponse* result)
+{
+    // result.entity = PFGroupsEntityWithLineage const*;
+    // result.expires = time_t;
+    // result.group = PFEntityKey const*;
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsApplyToGroupResponse(PFGroupsApplyToGroupResponse* result)
-    {
-        // result.entity = PFGroupsEntityWithLineage const*;
-        // result.expires = time_t;
-        // result.group = PFEntityKey const*;
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillApplyToGroupCleanupRemoveGroupApplicationRequest(PlayFab::GroupsModels::RemoveGroupApplicationRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"33D5E873FB4D8629\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillApplyToGroupCleanupRemoveGroupApplicationRequest(PFGroupsRemoveGroupApplicationRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(PFEntityKey{ "33D5E873FB4D8629", "title_player_account" });
+}
 
 #pragma endregion
 
 #pragma region BlockEntity
 
-    void AutoGenGroupsTests::FillBlockEntityPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillBlockEntityPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreBlockEntityPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreBlockEntityPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillBlockEntityRequest(PFGroupsBlockEntityRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(PFEntityKey{ "93402701D5183557", "title_player_account" });
+}
 
-    void AutoGenGroupsTests::FillBlockEntityRequest(PlayFab::GroupsModels::BlockEntityRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"93402701D5183557\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
-
-    void AutoGenGroupsTests::FillBlockEntityCleanupUnblockEntityRequest(PlayFab::GroupsModels::UnblockEntityRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"93402701D5183557\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillBlockEntityCleanupUnblockEntityRequest(PFGroupsUnblockEntityRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(PFEntityKey{ "93402701D5183557", "title_player_account" });
+}
 
 #pragma endregion
 
 #pragma region ChangeMemberRole
 
-    void AutoGenGroupsTests::FillChangeMemberRolePrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillChangeMemberRolePrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreChangeMemberRolePrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreChangeMemberRolePrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillChangeMemberRoleRequest(PFGroupsChangeMemberRoleRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"OriginRoleId\": \"awesomepeople\", \"DestinationRoleId\": \"members\", \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetOriginRoleId("members");
+    request.SetDestinationRoleId("testrole");
+    ModelVector<PFEntityKeyWrapper<>> members;
+    members.push_back(PFEntityKey{ "6037570B9CA839BF", "title_player_account" });
+    request.SetMembers(std::move(members));
+}
 
-    void AutoGenGroupsTests::FillChangeMemberRoleRequest(PlayFab::GroupsModels::ChangeMemberRoleRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"OriginRoleId\": \"members\", \"DestinationRoleId\": \"testrole\", \"Members\": [ {  \"Id\": \"6037570B9CA839BF\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
-
-    void AutoGenGroupsTests::FillChangeMemberRoleCleanupChangeMemberRoleRequest(PlayFab::GroupsModels::ChangeMemberRoleRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"OriginRoleId\": \"testrole\", \"DestinationRoleId\": \"members\", \"Members\": [ {  \"Id\": \"6037570B9CA839BF\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillChangeMemberRoleCleanupChangeMemberRoleRequest(PFGroupsChangeMemberRoleRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"OriginRoleId\": \"awesomepeople\", \"DestinationRoleId\": \"members\", \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetOriginRoleId("testrole");
+    request.SetDestinationRoleId("members");
+    ModelVector<PFEntityKeyWrapper<>> members;
+    members.push_back(PFEntityKey{ "6037570B9CA839BF", "title_player_account" });
+    request.SetMembers(std::move(members));
+}
 
 #pragma endregion
 
 #pragma region CreateGroup
 
-    void AutoGenGroupsTests::FillCreateGroupRequest(PlayFab::GroupsModels::CreateGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Example Group\"}");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillCreateGroupRequest(PFGroupsCreateGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"GroupName\": \"Example Group\"}"
+    request.SetGroupName("Example Group");
+}
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsCreateGroupResponse(PFGroupsCreateGroupResponse* result)
-    {
-        // result.adminRoleId = const char*;
-        // result.created = time_t;
-        // result.group = PFEntityKey const*;
-        // result.groupName = const char*;
-        // result.memberRoleId = const char*;
-        // result.profileVersion = int32_t;
-        // result.roles = struct PFStringDictionaryEntry const*;
-        // result.rolesCount = uint32_t;
+HRESULT AutoGenGroupsTests::ValidatePFGroupsCreateGroupResponse(PFGroupsCreateGroupResponse* result)
+{
+    // result.adminRoleId = const char*;
+    // result.created = time_t;
+    // result.group = PFEntityKey const*;
+    // result.groupName = const char*;
+    // result.memberRoleId = const char*;
+    // result.profileVersion = int32_t;
+    // result.roles = struct PFStringDictionaryEntry const*;
+    // result.rolesCount = uint32_t;
 
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
-    void AutoGenGroupsTests::FillCreateGroupCleanupGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Example Group\"}");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillCreateGroupCleanupGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Example Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreCreateGroupCleanupPFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreCreateGroupCleanupPFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillCreateGroupCleanupDeleteGroupRequest(PlayFab::GroupsModels::DeleteGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillCreateGroupCleanupDeleteGroupRequest(PFGroupsDeleteGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+}
 
 #pragma endregion
 
 #pragma region CreateRole
 
-    void AutoGenGroupsTests::FillCreateRolePrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillCreateRolePrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreCreateRolePrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreCreateRolePrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillCreateGroupRoleRequest(PFGroupsCreateGroupRoleRequestWrapper<>& request)
+{
+    // Example Request: "{ \"RoleId\": \"example\", \"RoleName\": \"Example Role\", \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetRoleId("example");
+    request.SetRoleName("Example Role");
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+}
 
-    void AutoGenGroupsTests::FillCreateGroupRoleRequest(PlayFab::GroupsModels::CreateGroupRoleRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"RoleId\": \"example\", \"RoleName\": \"Example Role\", \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsCreateGroupRoleResponse(PFGroupsCreateGroupRoleResponse* result)
+{
+    // result.profileVersion = int32_t;
+    // result.roleId = const char*;
+    // result.roleName = const char*;
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsCreateGroupRoleResponse(PFGroupsCreateGroupRoleResponse* result)
-    {
-        // result.profileVersion = int32_t;
-        // result.roleId = const char*;
-        // result.roleName = const char*;
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillCreateRoleCleanupDeleteRoleRequest(PlayFab::GroupsModels::DeleteRoleRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"example\"}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillCreateRoleCleanupDeleteRoleRequest(PFGroupsDeleteRoleRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"ABC1234DEF\"}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetRoleId("example");
+}
 
 #pragma endregion
 
 #pragma region DeleteGroup
 
-    void AutoGenGroupsTests::FillDeleteGroupPrerequisiteCreateGroupRequest(PlayFab::GroupsModels::CreateGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Example Group2\"}");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillDeleteGroupPrerequisiteCreateGroupRequest(PFGroupsCreateGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"GroupName\": \"Example Group\"}"
+    request.SetGroupName("Example Group2");
+}
 
-    HRESULT AutoGenGroupsTests::StoreDeleteGroupPrerequisitePFGroupsCreateGroupResponse(PFGroupsCreateGroupResponse* result)
-    {
-        PlayFab::GroupsModels::CreateGroupResponse internalResult(*result);
-        testData.m_CreateGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreDeleteGroupPrerequisitePFGroupsCreateGroupResponse(std::shared_ptr<CreateGroupResponseHolder> result)
+{
+    testData.m_CreateGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillDeleteGroupRequest(PlayFab::GroupsModels::DeleteGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_CreateGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillDeleteGroupRequest(PFGroupsDeleteGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_CreateGroupResponse->result->group);
+}
 
 #pragma endregion
 
 #pragma region DeleteRole
 
-    void AutoGenGroupsTests::FillDeleteRolePrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillDeleteRolePrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreDeleteRolePrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreDeleteRolePrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillDeleteRolePrerequisiteCreateGroupRoleRequest(PFGroupsCreateGroupRoleRequestWrapper<>& request)
+{
+    // Example request: "{ \"RoleId\": \"example\", \"RoleName\": \"Example Role\", \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetRoleId("example");
+    request.SetRoleName("Example Role");
+}
 
-    void AutoGenGroupsTests::FillDeleteRolePrerequisiteCreateGroupRoleRequest(PlayFab::GroupsModels::CreateGroupRoleRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"RoleId\": \"example\", \"RoleName\": \"Example Role\", \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::StoreDeleteRolePrerequisitePFGroupsCreateGroupRoleResponse(std::shared_ptr<CreateGroupRoleResponseHolder> result)
+{
+    testData.m_CreateGroupRoleResponse = result;
+    return S_OK;
+}
 
-    HRESULT AutoGenGroupsTests::StoreDeleteRolePrerequisitePFGroupsCreateGroupRoleResponse(PFGroupsCreateGroupRoleResponse* result)
-    {
-        PlayFab::GroupsModels::CreateGroupRoleResponse internalResult(*result);
-        testData.m_CreateGroupRoleResponse.FromJson(internalResult.ToJson());
-
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillDeleteRoleRequest(PlayFab::GroupsModels::DeleteRoleRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"example\"}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillDeleteRoleRequest(PFGroupsDeleteRoleRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"ABC1234DEF\"}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetRoleId("example");
+}
 
 #pragma endregion
 
 #pragma region GetGroup
 
-    void AutoGenGroupsTests::FillGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        // result.adminRoleId = const char*;
-        // result.created = time_t;
-        // result.group = PFEntityKey const*;
-        // result.groupName = const char*;
-        // result.memberRoleId = const char*;
-        // result.profileVersion = int32_t;
-        // result.roles = struct PFStringDictionaryEntry const*;
-        // result.rolesCount = uint32_t;
+HRESULT AutoGenGroupsTests::ValidatePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
+{
+    // result.adminRoleId = const char*;
+    // result.created = time_t;
+    // result.group = PFEntityKey const*;
+    // result.groupName = const char*;
+    // result.memberRoleId = const char*;
+    // result.profileVersion = int32_t;
+    // result.roles = struct PFStringDictionaryEntry const*;
+    // result.rolesCount = uint32_t;
 
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
 #pragma endregion
 
 #pragma region InviteToGroup
 
-    void AutoGenGroupsTests::FillInviteToGroupPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillInviteToGroupPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreInviteToGroupPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreInviteToGroupPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillInviteToGroupRequest(PFGroupsInviteToGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"awesomepeople\", \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(PFEntityKey{ "33D5E873FB4D8629", "title_player_account" });
+}
 
-    void AutoGenGroupsTests::FillInviteToGroupRequest(PlayFab::GroupsModels::InviteToGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"33D5E873FB4D8629\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsInviteToGroupResponse(PFGroupsInviteToGroupResponse* result)
+{
+    // result.expires = time_t;
+    // result.group = PFEntityKey const*;
+    // result.invitedByEntity = PFGroupsEntityWithLineage const*;
+    // result.invitedEntity = PFGroupsEntityWithLineage const*;
+    // result.roleId = const char*;
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsInviteToGroupResponse(PFGroupsInviteToGroupResponse* result)
-    {
-        // result.expires = time_t;
-        // result.group = PFEntityKey const*;
-        // result.invitedByEntity = PFGroupsEntityWithLineage const*;
-        // result.invitedEntity = PFGroupsEntityWithLineage const*;
-        // result.roleId = const char*;
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillInviteToGroupCleanupRemoveGroupInvitationRequest(PlayFab::GroupsModels::RemoveGroupInvitationRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"33D5E873FB4D8629\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillInviteToGroupCleanupRemoveGroupInvitationRequest(PFGroupsRemoveGroupInvitationRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(PFEntityKey{ "33D5E873FB4D8629", "title_player_account" });
+}
 
 #pragma endregion
 
 #pragma region IsMember
 
-    void AutoGenGroupsTests::FillIsMemberPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillIsMemberPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreIsMemberPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreIsMemberPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillIsMemberRequest(PFGroupsIsMemberRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"ABC1234DEF\", \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(PFEntityKey{ "B64BE91E5DBD5597", "title_player_account" });
+}
 
-    void AutoGenGroupsTests::FillIsMemberRequest(PlayFab::GroupsModels::IsMemberRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"B64BE91E5DBD5597\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsIsMemberResponse(PFGroupsIsMemberResponse* result)
+{
+    // result.isMember = bool;
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsIsMemberResponse(PFGroupsIsMemberResponse* result)
-    {
-        // result.isMember = bool;
-
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
 #pragma endregion
 
 #pragma region ListGroupApplications
 
-    void AutoGenGroupsTests::FillListGroupApplicationsPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillListGroupApplicationsPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreListGroupApplicationsPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreListGroupApplicationsPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillListGroupApplicationsRequest(PFGroupsListGroupApplicationsRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+}
 
-    void AutoGenGroupsTests::FillListGroupApplicationsRequest(PlayFab::GroupsModels::ListGroupApplicationsRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupApplicationsResponse(PFGroupsListGroupApplicationsResponse* result)
+{
+    // result.applications = PFGroupsGroupApplication const* const*;
+    // result.applicationsCount = uint32_t;
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupApplicationsResponse(PFGroupsListGroupApplicationsResponse* result)
-    {
-        // result.applications = PFGroupsGroupApplication const* const*;
-        // result.applicationsCount = uint32_t;
-
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
 #pragma endregion
 
 #pragma region ListGroupBlocks
 
-    void AutoGenGroupsTests::FillListGroupBlocksPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillListGroupBlocksPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreListGroupBlocksPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreListGroupBlocksPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillListGroupBlocksRequest(PFGroupsListGroupBlocksRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+}
 
-    void AutoGenGroupsTests::FillListGroupBlocksRequest(PlayFab::GroupsModels::ListGroupBlocksRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupBlocksResponse(PFGroupsListGroupBlocksResponse* result)
+{
+    // result.blockedEntities = PFGroupsGroupBlock const* const*;
+    // result.blockedEntitiesCount = uint32_t;
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupBlocksResponse(PFGroupsListGroupBlocksResponse* result)
-    {
-        // result.blockedEntities = PFGroupsGroupBlock const* const*;
-        // result.blockedEntitiesCount = uint32_t;
-
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
 #pragma endregion
 
 #pragma region ListGroupInvitations
 
-    void AutoGenGroupsTests::FillListGroupInvitationsPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillListGroupInvitationsPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreListGroupInvitationsPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreListGroupInvitationsPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillListGroupInvitationsRequest(PFGroupsListGroupInvitationsRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+}
 
-    void AutoGenGroupsTests::FillListGroupInvitationsRequest(PlayFab::GroupsModels::ListGroupInvitationsRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupInvitationsResponse(PFGroupsListGroupInvitationsResponse* result)
+{
+    // result.invitations = PFGroupsGroupInvitation const* const*;
+    // result.invitationsCount = uint32_t;
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupInvitationsResponse(PFGroupsListGroupInvitationsResponse* result)
-    {
-        // result.invitations = PFGroupsGroupInvitation const* const*;
-        // result.invitationsCount = uint32_t;
-
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
 #pragma endregion
 
 #pragma region ListGroupMembers
 
-    void AutoGenGroupsTests::FillListGroupMembersPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillListGroupMembersPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreListGroupMembersPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreListGroupMembersPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillListGroupMembersRequest(PFGroupsListGroupMembersRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+}
 
-    void AutoGenGroupsTests::FillListGroupMembersRequest(PlayFab::GroupsModels::ListGroupMembersRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupMembersResponse(PFGroupsListGroupMembersResponse* result)
+{
+    // result.members = PFGroupsEntityMemberRole const* const*;
+    // result.membersCount = uint32_t;
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsListGroupMembersResponse(PFGroupsListGroupMembersResponse* result)
-    {
-        // result.members = PFGroupsEntityMemberRole const* const*;
-        // result.membersCount = uint32_t;
-
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
 #pragma endregion
 
 #pragma region ListMembership
 
-    void AutoGenGroupsTests::FillListMembershipPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillListMembershipPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreListMembershipPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreListMembershipPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillListMembershipRequest(PFGroupsListMembershipRequestWrapper<>&)
+{
+    // Example Request: "{}"
+}
 
-    void AutoGenGroupsTests::FillListMembershipRequest(PlayFab::GroupsModels::ListMembershipRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListMembershipResponse(PFGroupsListMembershipResponse* result)
+{
+    // result.groups = PFGroupsGroupWithRoles const* const*;
+    // result.groupsCount = uint32_t;
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsListMembershipResponse(PFGroupsListMembershipResponse* result)
-    {
-        // result.groups = PFGroupsGroupWithRoles const* const*;
-        // result.groupsCount = uint32_t;
-
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
 #pragma endregion
 
 #pragma region ListMembershipOpportunities
 
-    void AutoGenGroupsTests::FillListMembershipOpportunitiesPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillListMembershipOpportunitiesPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreListMembershipOpportunitiesPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreListMembershipOpportunitiesPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillListMembershipOpportunitiesPrerequisiteApplyToGroupRequest(PFGroupsApplyToGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+}
 
-    void AutoGenGroupsTests::FillListMembershipOpportunitiesPrerequisiteApplyToGroupRequest(PlayFab::GroupsModels::ApplyToGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::StoreListMembershipOpportunitiesPrerequisitePFGroupsApplyToGroupResponse(std::shared_ptr<ApplyToGroupResponseHolder> result)
+{
+    testData.m_ApplyToGroupResponse = result;
+    return S_OK;
+}
 
-    HRESULT AutoGenGroupsTests::StoreListMembershipOpportunitiesPrerequisitePFGroupsApplyToGroupResponse(PFGroupsApplyToGroupResponse* result)
-    {
-        PlayFab::GroupsModels::ApplyToGroupResponse internalResult(*result);
-        testData.m_ApplyToGroupResponse.FromJson(internalResult.ToJson());
+void AutoGenGroupsTests::FillListMembershipOpportunitiesRequest(PFGroupsListMembershipOpportunitiesRequestWrapper<>&)
+{
+    // Example Request: "{}"
+}
 
-        return S_OK;
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsListMembershipOpportunitiesResponse(PFGroupsListMembershipOpportunitiesResponse* result)
+{
+    // result.applications = PFGroupsGroupApplication const* const*;
+    // result.applicationsCount = uint32_t;
+    // result.invitations = PFGroupsGroupInvitation const* const*;
+    // result.invitationsCount = uint32_t;
 
-    void AutoGenGroupsTests::FillListMembershipOpportunitiesRequest(PlayFab::GroupsModels::ListMembershipOpportunitiesRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{}");
-        request->FromJson(inputJson);
-    }
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsListMembershipOpportunitiesResponse(PFGroupsListMembershipOpportunitiesResponse* result)
-    {
-        // result.applications = PFGroupsGroupApplication const* const*;
-        // result.applicationsCount = uint32_t;
-        // result.invitations = PFGroupsGroupInvitation const* const*;
-        // result.invitationsCount = uint32_t;
-
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillListMembershipOpportunitiesCleanupRemoveGroupApplicationRequest(PlayFab::GroupsModels::RemoveGroupApplicationRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        inputJson["Entity"]["Id"].SetString(testData.m_ApplyToGroupResponse.entity->key->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillListMembershipOpportunitiesCleanupRemoveGroupApplicationRequest(PFGroupsRemoveGroupApplicationRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(*testData.m_ApplyToGroupResponse->result->entity->key);
+}
 
 #pragma endregion
 
 #pragma region RemoveGroupApplication
 
-    void AutoGenGroupsTests::FillRemoveGroupApplicationPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillRemoveGroupApplicationPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreRemoveGroupApplicationPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreRemoveGroupApplicationPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillRemoveGroupApplicationPrerequisiteApplyToGroupRequest(PFGroupsApplyToGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+}
 
-    void AutoGenGroupsTests::FillRemoveGroupApplicationPrerequisiteApplyToGroupRequest(PlayFab::GroupsModels::ApplyToGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::StoreRemoveGroupApplicationPrerequisitePFGroupsApplyToGroupResponse(std::shared_ptr<ApplyToGroupResponseHolder> result)
+{
+    testData.m_ApplyToGroupResponse = result;
+    return S_OK;
+}
 
-    HRESULT AutoGenGroupsTests::StoreRemoveGroupApplicationPrerequisitePFGroupsApplyToGroupResponse(PFGroupsApplyToGroupResponse* result)
-    {
-        PlayFab::GroupsModels::ApplyToGroupResponse internalResult(*result);
-        testData.m_ApplyToGroupResponse.FromJson(internalResult.ToJson());
-
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillRemoveGroupApplicationRequest(PlayFab::GroupsModels::RemoveGroupApplicationRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        inputJson["Entity"]["Id"].SetString(testData.m_ApplyToGroupResponse.entity->key->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillRemoveGroupApplicationRequest(PFGroupsRemoveGroupApplicationRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(*testData.m_ApplyToGroupResponse->result->entity->key);
+}
 
 #pragma endregion
 
 #pragma region RemoveGroupInvitation
 
-    void AutoGenGroupsTests::FillRemoveGroupInvitationPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillRemoveGroupInvitationPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreRemoveGroupInvitationPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreRemoveGroupInvitationPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillRemoveGroupInvitationPrerequisiteInviteToGroupRequest(PFGroupsInviteToGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"awesomepeople\", \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(PFEntityKey{ "33D5E873FB4D8629", "title_player_account" });
+}
 
-    void AutoGenGroupsTests::FillRemoveGroupInvitationPrerequisiteInviteToGroupRequest(PlayFab::GroupsModels::InviteToGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"33D5E873FB4D8629\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::StoreRemoveGroupInvitationPrerequisitePFGroupsInviteToGroupResponse(std::shared_ptr<InviteToGroupResponseHolder> result)
+{
+    testData.m_InviteToGroupResponse = result;
+    return S_OK;
+}
 
-    HRESULT AutoGenGroupsTests::StoreRemoveGroupInvitationPrerequisitePFGroupsInviteToGroupResponse(PFGroupsInviteToGroupResponse* result)
-    {
-        PlayFab::GroupsModels::InviteToGroupResponse internalResult(*result);
-        testData.m_InviteToGroupResponse.FromJson(internalResult.ToJson());
-
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillRemoveGroupInvitationRequest(PlayFab::GroupsModels::RemoveGroupInvitationRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        inputJson["Entity"]["Id"].SetString(testData.m_InviteToGroupResponse.invitedEntity->key->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillRemoveGroupInvitationRequest(PFGroupsRemoveGroupInvitationRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(*testData.m_InviteToGroupResponse->result->invitedEntity->key);
+}
 
 #pragma endregion
 
 #pragma region RemoveMembers
 
-    void AutoGenGroupsTests::FillRemoveMembersPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillRemoveMembersPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreRemoveMembersPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreRemoveMembersPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillRemoveMembersPrerequisiteAddMembersRequest(PFGroupsAddMembersRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    ModelVector<PFEntityKeyWrapper<>> members;
+    members.push_back(PFEntityKey{ "FED18FB0293BA445", "title_player_account" });
+    request.SetMembers(std::move(members));
+}
 
-    void AutoGenGroupsTests::FillRemoveMembersPrerequisiteAddMembersRequest(PlayFab::GroupsModels::AddMembersRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"FED18FB0293BA445\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
-
-    void AutoGenGroupsTests::FillRemoveMembersRequest(PlayFab::GroupsModels::RemoveMembersRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Members\": [ {  \"Id\": \"FED18FB0293BA445\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillRemoveMembersRequest(PFGroupsRemoveMembersRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"ABC1234DEF\", \"Members\": [ {  \"Id\": \"90901000\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    ModelVector<PFEntityKeyWrapper<>> members;
+    members.push_back(PFEntityKey{ "FED18FB0293BA445", "title_player_account" });
+    request.SetMembers(std::move(members));
+}
 
 #pragma endregion
 
 #pragma region UnblockEntity
 
-    void AutoGenGroupsTests::FillUnblockEntityPrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillUnblockEntityPrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreUnblockEntityPrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreUnblockEntityPrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillUnblockEntityPrerequisiteBlockEntityRequest(PFGroupsBlockEntityRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(PFEntityKey{ "93402701D5183557", "title_player_account" });
+}
 
-    void AutoGenGroupsTests::FillUnblockEntityPrerequisiteBlockEntityRequest(PlayFab::GroupsModels::BlockEntityRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"93402701D5183557\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
-
-    void AutoGenGroupsTests::FillUnblockEntityRequest(PlayFab::GroupsModels::UnblockEntityRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"93402701D5183557\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillUnblockEntityRequest(PFGroupsUnblockEntityRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetEntity(PFEntityKey{ "93402701D5183557", "title_player_account" });
+}
 
 #pragma endregion
 
 #pragma region UpdateGroup
 
-    void AutoGenGroupsTests::FillUpdateGroupPrerequisiteCreateGroupRequest(PlayFab::GroupsModels::CreateGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Example Group\"}");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillUpdateGroupPrerequisiteCreateGroupRequest(PFGroupsCreateGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"GroupName\": \"Example Group\"}"
+    request.SetGroupName("Example Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreUpdateGroupPrerequisitePFGroupsCreateGroupResponse(PFGroupsCreateGroupResponse* result)
-    {
-        PlayFab::GroupsModels::CreateGroupResponse internalResult(*result);
-        testData.m_CreateGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreUpdateGroupPrerequisitePFGroupsCreateGroupResponse(std::shared_ptr<CreateGroupResponseHolder> result)
+{
+    testData.m_CreateGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillUpdateGroupRequest(PFGroupsUpdateGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"GroupName\": \"My New Group Name\", \"ExpectedProfileVersion\": 17}"
+    request.SetGroup(*testData.m_CreateGroupResponse->result->group);
+    request.SetGroupName("My New Group Name");
+}
 
-    void AutoGenGroupsTests::FillUpdateGroupRequest(PlayFab::GroupsModels::UpdateGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"GroupName\": \"My New Group Name\" }");
-        inputJson["Group"]["Id"].SetString(testData.m_CreateGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsUpdateGroupResponse(PFGroupsUpdateGroupResponse* result)
+{
+    // result.operationReason = const char*;
+    // result.profileVersion = int32_t;
+    // result.setResult = PFOperationTypes const*;
 
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsUpdateGroupResponse(PFGroupsUpdateGroupResponse* result)
-    {
-        // result.operationReason = const char*;
-        // result.profileVersion = int32_t;
-        // result.setResult = PFOperationTypes const*;
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
-
-    void AutoGenGroupsTests::FillUpdateGroupCleanupDeleteGroupRequest(PlayFab::GroupsModels::DeleteGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }}");
-        inputJson["Group"]["Id"].SetString(testData.m_CreateGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillUpdateGroupCleanupDeleteGroupRequest(PFGroupsDeleteGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroup(*testData.m_CreateGroupResponse->result->group);
+}
 
 #pragma endregion
 
 #pragma region UpdateRole
 
-    void AutoGenGroupsTests::FillUpdateRolePrerequisiteGetGroupRequest(PlayFab::GroupsModels::GetGroupRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"GroupName\": \"Permanent Group\" }");
-        request->FromJson(inputJson);
-    }
+void AutoGenGroupsTests::FillUpdateRolePrerequisiteGetGroupRequest(PFGroupsGetGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }}"
+    request.SetGroupName("Permanent Group");
+}
 
-    HRESULT AutoGenGroupsTests::StoreUpdateRolePrerequisitePFGroupsGetGroupResponse(PFGroupsGetGroupResponse* result)
-    {
-        PlayFab::GroupsModels::GetGroupResponse internalResult(*result);
-        testData.m_GetGroupResponse.FromJson(internalResult.ToJson());
+HRESULT AutoGenGroupsTests::StoreUpdateRolePrerequisitePFGroupsGetGroupResponse(std::shared_ptr<GetGroupResponseHolder> result)
+{
+    testData.m_GetGroupResponse = result;
+    return S_OK;
+}
 
-        return S_OK;
-    }
+void AutoGenGroupsTests::FillUpdateRolePrerequisiteUpdateGroupRoleRequest(PFGroupsUpdateGroupRoleRequestWrapper<>& request)
+{
+    // Example request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"ABC1234DEF\", \"RoleName\": \"My New Role Name\", \"ExpectedProfileVersion\": 17}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetRoleId("testrole");
+    request.SetRoleName("Prereq Role");
+}
 
-    void AutoGenGroupsTests::FillUpdateRolePrerequisiteUpdateGroupRoleRequest(PlayFab::GroupsModels::UpdateGroupRoleRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"testrole\", \"RoleName\": \"Prereq Role\" }");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
+HRESULT AutoGenGroupsTests::StoreUpdateRolePrerequisitePFGroupsUpdateGroupRoleResponse(std::shared_ptr<UpdateGroupRoleResponseHolder> result)
+{
+    testData.m_UpdateGroupRoleResponse = result;
+    return S_OK;
+}
 
-    HRESULT AutoGenGroupsTests::StoreUpdateRolePrerequisitePFGroupsUpdateGroupRoleResponse(PFGroupsUpdateGroupRoleResponse* result)
-    {
-        PlayFab::GroupsModels::UpdateGroupRoleResponse internalResult(*result);
-        testData.m_UpdateGroupRoleResponse.FromJson(internalResult.ToJson());
+void AutoGenGroupsTests::FillUpdateGroupRoleRequest(PFGroupsUpdateGroupRoleRequestWrapper<>& request)
+{
+    // Example Request: "{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"ABC1234DEF\", \"RoleName\": \"My New Role Name\", \"ExpectedProfileVersion\": 17}"
+    request.SetGroup(*testData.m_GetGroupResponse->result->group);
+    request.SetRoleId("testrole");
+    request.SetRoleName("Test Role");
+}
 
-        return S_OK;
-    }
+HRESULT AutoGenGroupsTests::ValidatePFGroupsUpdateGroupRoleResponse(PFGroupsUpdateGroupRoleResponse* result)
+{
+    // result.operationReason = const char*;
+    // result.profileVersion = int32_t;
+    // result.setResult = PFOperationTypes const*;
 
-    void AutoGenGroupsTests::FillUpdateGroupRoleRequest(PlayFab::GroupsModels::UpdateGroupRoleRequest* request)
-    {
-        PlayFab::JsonDocument inputJson;
-        inputJson.Parse("{ \"Group\": { \"Id\": \"ABC1234ABC\" }, \"RoleId\": \"testrole\", \"RoleName\": \"Test Role\" }");
-        inputJson["Group"]["Id"].SetString(testData.m_GetGroupResponse.group->id, inputJson.GetAllocator());
-        request->FromJson(inputJson);
-    }
-
-    HRESULT AutoGenGroupsTests::ValidatePFGroupsUpdateGroupRoleResponse(PFGroupsUpdateGroupRoleResponse* result)
-    {
-        // result.operationReason = const char*;
-        // result.profileVersion = int32_t;
-        // result.setResult = PFOperationTypes const*;
-
-        UNREFERENCED_PARAMETER(result);
-        return S_OK;
-    }
+    UNREFERENCED_PARAMETER(result);
+    return S_OK;
+}
 
 #pragma endregion
-
+ 
 
 }

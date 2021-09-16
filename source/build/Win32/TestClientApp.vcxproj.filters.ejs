@@ -23,6 +23,9 @@ for(var featureGroupName in SDKFeatureGroups) { %>
     <ClInclude Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- featureGroupName %>Tests.h">
       <Filter>Source\AutoGen Tests</Filter>
     </ClInclude>
+    <ClInclude Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- featureGroupName %>ResultHolders.h">
+      <Filter>Source\AutoGen Tests</Filter>
+    </ClInclude>
     <ClCompile Include="$(PlayFabTestDir)\TestApp\AutoGenTests\AutoGen<%- featureGroupName %>TestData.cpp">
       <Filter>Source\AutoGen Tests</Filter>
     </ClCompile>
