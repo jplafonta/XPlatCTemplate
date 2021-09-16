@@ -152,6 +152,9 @@ function makeFeatureGroupFiles(featureGroup, sourceDir, apiOutputDir) {
         var testHeader = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.h.ejs"));
         writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + featureGroup.name + "Tests.h"), testHeader(locals));
 
+        var testResultHolders = getCompiledTemplate(path.resolve(sourceDir, "templates/ResultHolders.h.ejs"));
+        writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + featureGroup.name + "ResultHolders.h"), testResultHolders(locals));
+
         var testMain = getCompiledTemplate(path.resolve(sourceDir, "templates/Test.cpp.ejs"));
         writeFile(path.resolve(apiOutputDir, "test/TestApp/AutoGenTests/", "AutoGen" + featureGroup.name + "Tests.cpp"), testMain(locals));
 
@@ -584,20 +587,6 @@ function isFixedSize(datatype) {
     return true;
 }
 
-// function getDictionaryEntryTypeFromValueType(valueType) {
-//     var types = {
-//         "String": "String", "const char*": "String", "bool": "Bool", "int16_t": "Int16", "uint16_t": "Uint16", "int32_t": "Int32", "uint32_t": "Uint32",
-//         "int64_t": "int64_t", "uint64_t": "int64_t", "float": "float", "double": "double", "time_t": "DateTime"
-//     };
-
-//     if (valueType in types) {
-//         return globalPrefix + types[valueType] + "DictionaryEntry";
-//     } else {
-//         // valueType should already be prefixed appropriately
-//         return valueType + "DictionaryEntry";
-//     }
-// }
-
 function requiresDynamicStorage(property) {
     // An internal property is needed if the public property requires dynamic storage.
     // Dynamic storage is not required for non-optional/non-collection primitive & enum types
@@ -614,7 +603,7 @@ function getDictionaryEntryType(property) {
         "String": "String", "Boolean": "Bool", "int16": "Int16", "uint16": "Uint16", "int32": "Int32", "uint32": "Uint32",
         "int64": "Int64", "uint64": "Uint64", "float": "Float", "double": "Double", "time_t": "DateTime"
     };
-
+    
     if (property.actualtype in dictionaryEntryTypes) {
         return globalPrefix + dictionaryEntryTypes[property.actualtype] + "DictionaryEntry";
     } else {
@@ -874,48 +863,15 @@ function getWrapperPropertyDefinition(property){
     return output;
 }
 
-function getPropertyFromJson(property, datatype) {
-    var publicPropName = getPropertyName(property, false);
-    var privatePropName = getPropertyName(property, true);
+function getWrapperPropertyDefinition(property){
+    var output = "";
 
-    var output = "JsonUtils::ObjectGetMember(input, \"" + property.name + "\", ";
-
-    if (requiresDynamicStorage(property) && !datatype.isInternalOnly) {
-        // if there is internal storage for a property, get the internal value and the public pointer to it
-        output += (privatePropName + ", " + publicPropName);
-    } else {
-        output += publicPropName;
+    if (requiresDynamicStorage(property)) {
+        var type = getWrapperPropertyType(property);
+        var propName = getPropertyName(property, true);
+        output += ("\n" + tab + type + " " + propName + ";");
     }
-
-    if (property.collection && !(property.actualtype === "object") && !datatype.isInternalOnly) {
-        // for collections, also retreive the collection count
-        output += (", " + publicPropName + "Count");
-    }
-
-    // for DateTime values, set optional param "convertToIso8601String" to true
-    if (property.actualtype === "DateTime") {
-        output += ", true";
-    }
-
-    return output + ");";
-}
-
-function addPropertyToJson(property, datatype) {
-    var publicPropName = getPropertyName(property, false);
-
-    var output = "JsonUtils::ObjectAddMember(output, \"" + property.name + "\", " + (!datatype.isInternalOnly ? "input." : "") + publicPropName;
-
-    // for collections, pass the collection count
-    if (property.collection && !(property.actualtype === "object") && !datatype.isInternalOnly) {
-        output += ", input." + publicPropName + "Count";
-    }
-
-    // for DateTime values, set optional param "convertToIso8601String" to true
-    if (property.actualtype === "DateTime") {
-        output += ", true"; 
-    }
-
-    return output + ");";
+    return output;
 }
 
 function canDefaultCopyConstructor(datatype) {
@@ -951,77 +907,7 @@ function getWrapConstructorInitializationList(datatype) {
             } else if (property.optional) {
                 output += (conjunction + wrapperPropName + "{ model." + CPropName + " ? " + wrapperPropType + "{ *model." + CPropName + " } : StdExtra::nullopt }");
             } else {
-                output += (conjunction + wrapperPropName + "{ *model." + CPropName + " }");
-            }
-        }
-    }
-    return output;
-}
-
-function getCopyConstructorInitializationList(datatype) {
-    var output = "";
-    var conjunction = " :\n" + tab;
-
-    if (!(datatype.isInternalOnly)) {
-        output += conjunction + datatype.prefix + datatype.name + "{ src }"
-        conjunction = ",\n" + tab;
-    }
-
-    for (var i = 0; i < datatype.properties.length; i++) {
-        var property = datatype.properties[i];
-        if (datatype.isInternalOnly || requiresDynamicStorage(property)) {
-            var propName = getPropertyName(property, datatype.isInternalOnly ? false : true);
-            output += (conjunction + propName + "{ src." + propName + " }");
-            conjunction = ",\n" + tab;
-        }
-    }
-    return output;
-}
-
-function getMoveConstructorInitializationList(datatype) {
-    var output = "";
-    var conjunction = " :\n" + tab;
-
-    if (!(datatype.isInternalOnly)) {
-        output += conjunction + datatype.prefix + datatype.name + "{ src }"
-        conjunction = ",\n" + tab;
-    }
-
-    for (var i = 0; i < datatype.properties.length; i++) {
-        var property = datatype.properties[i];
-        if (datatype.isInternalOnly || requiresDynamicStorage(property)) {
-            var propName = getPropertyName(property, datatype.isInternalOnly ? false : true);
-            output += (conjunction + propName + "{ std::move(src." + propName + ") }");
-            conjunction = ",\n" + tab;
-        }
-    }
-    return output;
-}
-
-function getCopyConstructorBody(datatype) {
-    var output = "";
-    var conjunction = "\n" + tab + tab;
-
-    for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
-        var property = datatype.properties[propIdx];
-        if (requiresDynamicStorage(property) && !datatype.isInternalOnly) {
-            var wrapperPropName = getPropertyName(property, true);
-            var CPropName = getPropertyName(property, false)
-
-            if (property.actualtype === "object") {
-                output += (conjunction + "this->m_model." + CPropName + ".stringValue = " + wrapperPropName + ".stringValue.empty() ? nullptr : " + wrapperPropName + ".stringValue.data();");
-            } else if (property.collection || property.actualtype === "String") {
-                output += (conjunction + "this->m_model." + CPropName + " = " + wrapperPropName + ".empty() ? nullptr : " + wrapperPropName + ".data();");
-            } else if (property.isclass) {
-                if (property.optional) {
-                    output += (conjunction + "this->m_model." + CPropName + " = " + wrapperPropName + " ?  &" + wrapperPropName + "->Model() : nullptr;");
-                } else {
-                    output += (conjunction + "this->m_model." + CPropName + " = &" + wrapperPropName + ".Model();");
-                }
-            } else if (property.optional) {
-                output += (conjunction + "this->m_model." + CPropName + " = " + wrapperPropName + " ? " + wrapperPropName + ".operator->() : nullptr;");
-            } else {
-                throw Error("Unable to copy property of type " + property.actualtype);
+                output += (conjunction + wrapperPropName + "{ model." + CPropName + " ? *model." + CPropName + " : decltype(*model." + CPropName + "){} }");
             }
         }
     }

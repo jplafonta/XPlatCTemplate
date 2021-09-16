@@ -56,6 +56,8 @@ function debugLogCollection(varName, propName, property, prefix, apiName) {
 }
 %>namespace PlayFabUnit
 {
+
+using namespace PlayFab::Wrappers;
 <% 
 var hasFillBeenDefinedMap = {};
 var hasValidateBeenDefinedMap = {};
@@ -77,22 +79,17 @@ for (var i = 0; i < featureGroup.calls.length; i++)
 
         if(prereqCall.requestDatatype && !(call.name + "Prereq" + prereqCall.requestDatatype.name in hasFillBeenDefinedMap)) {  // prereqCall.name == "AcceptTrade"
         hasFillBeenDefinedMap[call.name + "Prereq" + prereqCall.requestDatatype.name] = true;
-        let requestNamespace = "PlayFab::" + (prereqCall.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
-%>void AutoGen<%- featureGroup.name %>Tests::Fill<%- call.name %>Prerequisite<%- prereqCall.requestDatatype.name %>( <%- requestNamespace + prereqCall.requestDatatype.name %>* request )
+%>void AutoGen<%- featureGroup.name %>Tests::Fill<%- call.name %>Prerequisite<%- prereqCall.requestDatatype.name %>(<%- prereqCall.requestDatatype.prefix + prereqCall.requestDatatype.name %>Wrapper<>& request)
 {
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( <%- getRequestExample(featureGroup, prereqCall) %> );
-    request->FromJson(inputJson);
+    // Example request: <%- getRequestExample(featureGroup, prereqCall) %>
+    UNREFERENCED_PARAMETER(request); // TODO
 }
 
 <% } if (prereqCall.resultDatatype && !(call.name + prereqCall.resultDatatype.name in hasValidateBeenDefinedMap)) {
     hasValidateBeenDefinedMap[call.name + prereqCall.resultDatatype.name] = true;
-    let resultNamespace = "PlayFab::" + (prereqCall.resultDatatype.isShared ? "" : featureGroup.name + "Models::");
-%>HRESULT AutoGen<%- featureGroup.name %>Tests::Store<%- call.name %>Prerequisite<%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>( <%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>* result )
+%>HRESULT AutoGen<%- featureGroup.name %>Tests::Store<%- call.name %>Prerequisite<%- prereqCall.resultDatatype.prefix + prereqCall.resultDatatype.name %>(std::shared_ptr<<%- prereqCall.resultDatatype.name %>Holder> result)
 {
-    <%- resultNamespace + prereqCall.resultDatatype.name %> internalResult(*result);
-    testData.m_<%- prereqCall.resultDatatype.name %>.FromJson(internalResult.ToJson());
-
+    testData.m_<%- prereqCall.resultDatatype.name %> = result;
     return S_OK;
 }
 
@@ -101,18 +98,16 @@ for (var i = 0; i < featureGroup.calls.length; i++)
 
     if(call.requestDatatype && !(call.requestDatatype.name in hasFillBeenDefinedMap)) {  // call.name == "AcceptTrade"
         hasFillBeenDefinedMap[call.requestDatatype.name] = true;
-        let requestNamespace = "PlayFab::" + (call.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
-%>void AutoGen<%- featureGroup.name %>Tests::Fill<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request )
+%>void AutoGen<%- featureGroup.name %>Tests::Fill<%- call.requestDatatype.name %>(<%- call.requestDatatype.prefix + call.requestDatatype.name %>Wrapper<>& request)
 {<% if (addDebugMarker) { %>
     // TODO: debug <%- testStatusListStatus %> test<% } %>
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( <%- getRequestExample(featureGroup, call) %> );
-    request->FromJson(inputJson);
+    // Example Request: <%- getRequestExample(featureGroup, call) %>
+    UNREFERENCED_PARAMETER(request); // TODO
 }
 <% } if (call.resultDatatype && !(call.resultDatatype.name in hasValidateBeenDefinedMap)) {
     hasValidateBeenDefinedMap[call.resultDatatype.name] = true;
 %>
-HRESULT AutoGen<%- featureGroup.name %>Tests::Validate<%- call.resultDatatype.prefix + call.resultDatatype.name %>( <%- call.resultDatatype.prefix + call.resultDatatype.name %>* result )
+HRESULT AutoGen<%- featureGroup.name %>Tests::Validate<%- call.resultDatatype.prefix + call.resultDatatype.name %>(<%- call.resultDatatype.prefix + call.resultDatatype.name %>* result)
 {
 <% for (var propIdx = 0; propIdx < call.resultDatatype.properties.length; propIdx++) 
     {
@@ -139,23 +134,19 @@ HRESULT AutoGen<%- featureGroup.name %>Tests::Validate<%- call.resultDatatype.pr
 
         if(cleanupCall.requestDatatype && !(call.name + "Cleanup" + cleanupCall.requestDatatype.name in hasFillBeenDefinedMap)) {  // cleanupCall.name == "AcceptTrade"
         hasFillBeenDefinedMap[call.name + "Cleanup" + cleanupCall.requestDatatype.name] = true;
-        let requestNamespace = "PlayFab::" + (cleanupCall.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
 %>
-void AutoGen<%- featureGroup.name %>Tests::Fill<%- call.name %>Cleanup<%- cleanupCall.requestDatatype.name %>( <%- requestNamespace + cleanupCall.requestDatatype.name %>* request )
+void AutoGen<%- featureGroup.name %>Tests::Fill<%- call.name %>Cleanup<%- cleanupCall.requestDatatype.name %>(<%- cleanupCall.requestDatatype.prefix + cleanupCall.requestDatatype.name %>Wrapper<>& request)
 {
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( <%- getRequestExample(featureGroup, cleanupCall) %> );
-    request->FromJson(inputJson);
+    // Example Request: <%- getRequestExample(featureGroup, cleanupCall) %>
+    UNREFERENCED_PARAMETER(request); // TODO
 }
 <% } if (cleanupCall.resultDatatype && !(call.name + cleanupCall.resultDatatype.name in hasValidateBeenDefinedMap)) {
     hasValidateBeenDefinedMap[call.name + cleanupCall.resultDatatype.name] = true;
     let resultNamespace = "PlayFab::" + (cleanupCall.resultDatatype.isShared ? "" : featureGroup.name + "Models::");
 %>
-HRESULT AutoGen<%- featureGroup.name %>Tests::Store<%- call.name %>Cleanup<%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>( <%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>* result )
+HRESULT AutoGen<%- featureGroup.name %>Tests::Store<%- call.name %>Cleanup<%- cleanupCall.resultDatatype.prefix + cleanupCall.resultDatatype.name %>(std::shared_ptr<<%- cleanupCall.resultDatatype.name %>Holder> result)
 {
-    <%- resultNamespace + cleanupCall.resultDatatype.name %> internalResult(*result);
-    testData.m_<%- cleanupCall.resultDatatype.name %>.FromJson(internalResult.ToJson());
-
+    testData.m_<%- cleanupCall.resultDatatype.name %> = result;
     return S_OK;
 }
 <% } } %>

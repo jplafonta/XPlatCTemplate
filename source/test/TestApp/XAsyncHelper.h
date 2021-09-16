@@ -1,4 +1,5 @@
-#include "TestAppPch.h"
+#pragma once
+
 #include "TestContext.h"
 #include <playfab/PFAuthentication.h>
 
@@ -10,6 +11,13 @@ namespace PlayFabUnit
 // lifetime is maintained correctly
 struct XAsyncResult
 {
+    XAsyncResult() = default;
+    XAsyncResult(const XAsyncResult&) = default;
+    XAsyncResult(XAsyncResult&&) = default;
+    XAsyncResult& operator=(const XAsyncResult&) = default;
+    XAsyncResult& operator=(XAsyncResult&&) = default;
+    virtual ~XAsyncResult() = default;
+
     std::vector<char> resultBuffer{};
 
     virtual HRESULT Get(XAsyncBlock* async)
@@ -19,9 +27,6 @@ struct XAsyncResult
     virtual HRESULT Validate()
     {
         return S_OK;
-    }
-    virtual ~XAsyncResult()
-    {
     }
 };
 

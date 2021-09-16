@@ -70,8 +70,7 @@ for (var i = 0; i < featureGroup.calls.length; i++)
     var skipTest = (testStatusListStatus != "Passing");
     if(call.requestDatatype && !(call.requestDatatype.name in hasFillBeenDefinedMap)) {  // call.name == "AcceptTrade"
         hasFillBeenDefinedMap[call.requestDatatype.name] = true;
-        let requestNamespace = "PlayFab::" + (call.requestDatatype.isShared ? "" : featureGroup.name + "Models::");
-%>void AutoGen<%- featureGroup.name %>Tests::Log<%- call.requestDatatype.name %>( <%- requestNamespace + call.requestDatatype.name %>* request, const char* testName )
+%>void AutoGen<%- featureGroup.name %>Tests::Log<%- call.requestDatatype.name %>(<%- call.requestDatatype.prefix + call.requestDatatype.name %> const* request, const char* testName)
 {<% let testStatusListStatus = testStatusMap[testName]; %>
     if( !TestApp::ShouldTrace(PFTestTraceLevel::Information) )
     {
@@ -126,7 +125,7 @@ if( false ) { throw Error('Not found ' + call.request) } %>
 
 <% } if (call.resultDatatype && !(call.resultDatatype.name in hasValidateBeenDefinedMap)) {
     hasValidateBeenDefinedMap[call.resultDatatype.name] = true;
-%>HRESULT AutoGen<%- featureGroup.name %>Tests::Log<%- call.resultDatatype.prefix + call.resultDatatype.name %>(<%- call.resultDatatype.prefix + call.resultDatatype.name %>* result )
+%>HRESULT AutoGen<%- featureGroup.name %>Tests::Log<%- call.resultDatatype.prefix + call.resultDatatype.name %>(<%- call.resultDatatype.prefix + call.resultDatatype.name %> const* result)
 {
     if( !TestApp::ShouldTrace(PFTestTraceLevel::Information) )
     {

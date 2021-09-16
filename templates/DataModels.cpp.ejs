@@ -100,14 +100,17 @@ for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
     ModelVector<<%- property.datatype.name %>> <%- CPropName %>{};
     JsonUtils::<%- getMemberMethod %><<%- property.datatype.name %>>(input, "<%- property.name %>", <%- CPropName %>);
     this-><%- setPropMethod %>(std::move(<%- CPropName %>));
-<%
-        } else if (property.optional) { %>
+<%      } else if (property.optional) { %>
     StdExtra::optional<<%- property.datatype.name %>> <%- CPropName %>{};
     JsonUtils::<%- getMemberMethod %>(input, "<%- property.name %>", <%- CPropName %>);
     if (<%- CPropName %>)
     {
         this-><%- setPropMethod %>(std::move(*<%- CPropName %>));
     }
+<%      } else { %>
+    <%- property.datatype.name %> <%- CPropName %>{};
+    JsonUtils::<%- getMemberMethod %>(input, "<%- property.name %>", <%- CPropName %>);
+    this-><%- setPropMethod %>(std::move(<%- CPropName %>));
 <%      } // endif
     } else if (property.actualtype === "String") {
         var propType = "String";

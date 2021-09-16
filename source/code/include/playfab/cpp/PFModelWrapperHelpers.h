@@ -214,6 +214,7 @@ public:
     using PointerVectorType::PointerVectorType;
     CStringVector() = default;
     CStringVector(const char* const* begin, const char* const* end);
+    CStringVector(std::initializer_list<std::basic_string<char, std::char_traits<char>, Alloc<char>>> init);
     CStringVector(const CStringVector& src);
 
 private:
@@ -595,6 +596,18 @@ CStringVector<Alloc>::CStringVector(const char* const* begin, const char* const*
     for (; begin != end; ++begin)
     {
         this->push_back(SafeString(*begin));
+    }
+}
+
+template<template<typename AllocT> class Alloc>
+CStringVector<Alloc>::CStringVector(std::initializer_list<std::basic_string<char, std::char_traits<char>, Alloc<char>>> init)
+{
+    size_t count = init.size();
+    this->m_pointers.reserve(count);
+    this->m_values.reserve(count);
+    for (auto&& value : init)
+    {
+        this->push_back(std::move(value));
     }
 }
 
