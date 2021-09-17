@@ -9,8 +9,8 @@
 
 #include <httpClient/pal.h>
 #include <httpClient/async.h>
-#include <playfab/PFSharedDataModels.h>
-#include <playfab/PFAuthenticationDataModels.h>
+#include <playfab/<%- prefix %>SharedDataModels.h>
+#include <playfab/<%- prefix %>AuthenticationDataModels.h>
 
 extern "C"
 {
@@ -135,37 +135,65 @@ HRESULT <%- prefix %>EntityGetEntityTokenGetResult(
 ) noexcept;
 
 /// <summary>
-/// Get the Entity Id for an Entity.
+/// Get the size in bytes needed to store the <%- prefix %>EntityKey for an Entity.
 /// </summary>
 /// <param name="entityHandle"><%- prefix %>EntityHandle returned from a auth call.</param>
-/// <param name="entityId">Returned pointer to the entityId. Valid until the Entity object is cleaned up.</param>
+/// <param name="bufferSize">The buffer size in bytes required for the EntityKey.</param>
 /// <returns>Result code for this API operation.</returns>
-HRESULT <%- prefix %>EntityGetEntityId(
+HRESULT <%- prefix %>EntityGetEntityKeySize(
     _In_ <%- prefix %>EntityHandle entityHandle,
-    _Outptr_ const char** entityId
+    _Out_ size_t* bufferSize
 ) noexcept;
 
 /// <summary>
-/// Get the Entity type for an entity.
+/// Get the <%- prefix %>EntityKey for an entity.
 /// </summary>
 /// <param name="entityHandle"><%- prefix %>EntityHandle returned from a auth call.</param>
-/// <param name="entityId">Returned pointer to the entityType. Valid until the Entity object is cleaned up.</param>
+/// <param name="bufferSize">The size of the buffer for the <%- prefix %>EntityKey. The required size can be obtained from <%- prefix %>EntityGetEntityKeySize.</param>
+/// <param name="buffer">Byte buffer used for the <%- prefix %>EntityKey and its fields.</param>
+/// <param name="result">Pointer to the <%- prefix %>EntityKey object.</param>
+/// <param name="bufferUsed">The number of bytes in the provided buffer that were used.</param>
 /// <returns>Result code for this API operation.</returns>
-HRESULT <%- prefix %>EntityGetEntityType(
+/// <remarks>
+/// entityKey is a pointer within buffer and does not need to be freed separately.
+/// </remarks>
+HRESULT <%- prefix %>EntityGetEntityKey(
     _In_ <%- prefix %>EntityHandle entityHandle,
-    _Outptr_ const char** entityType
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_(bufferSize, *bufferUsed) void* buffer,
+    _Outptr_ const <%- prefix %>EntityKey** entityKey,
+    _Out_opt_ size_t* bufferUsed
+) noexcept;
+
+/// <summary>
+/// Get the size in bytes needed to store the cached <%- prefix %>EntityToken for an Entity.
+/// </summary>
+/// <param name="entityHandle"><%- prefix %>EntityHandle returned from a auth call.</param>
+/// <param name="bufferSize">The buffer size in bytes required for the cached <%- prefix %>EntityToken.</param>
+/// <returns>Result code for this API operation.</returns>
+HRESULT <%- prefix %>EntityGetCachedEntityTokenSize(
+    _In_ <%- prefix %>EntityHandle entityHandle,
+    _Out_ size_t* bufferSize
 ) noexcept;
 
 /// <summary>
 /// Get the cached Entity token.
 /// </summary>
 /// <param name="entityHandle"><%- prefix %>EntityHandle returned from a auth call.</param>
-/// <param name="entityToken">Returned pointer to the entityToken. The pointer is valid until the Entity object is cleaned up, though
-/// the token may expire before then.</param>
+/// <param name="bufferSize">The size of the buffer for the <%- prefix %>EntityToken.  The required size can be obtained from <%- prefix %>EntityGetCachedEntityTokenSize.</param>
+/// <param name="buffer">Byte buffer used for the <%- prefix %>EntityToken and its fields.</param>
+/// <param name="result">Pointer to the <%- prefix %>EntityToken object.</param>
+/// <param name="bufferUsed">The number of bytes in the provided buffer that were used.</param>
 /// <returns>Result code for this API operation.</returns>
+/// <remarks>
+/// entityToken is a pointer within buffer and does not need to be freed separately.
+/// </remarks>
 HRESULT <%- prefix %>EntityGetCachedEntityToken(
     _In_ <%- prefix %>EntityHandle entityHandle,
-    _Outptr_ const <%- prefix %>EntityToken** entityToken
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_(bufferSize, *bufferUsed) void* buffer,
+    _Outptr_ const <%- prefix %>EntityToken** entityToken,
+    _Out_opt_ size_t* bufferUsed
 ) noexcept;
 
 }

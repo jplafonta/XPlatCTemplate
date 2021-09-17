@@ -22,6 +22,9 @@ public:
     EntityToken(EntityToken&& src);
     ~EntityToken() = default;
 
+    size_t RequiredBufferSize() const;
+    Result<PFEntityToken const*> Copy(ModelBuffer& buffer) const;
+
 private:
     String m_token;
     StdExtra::optional<time_t> m_expiration;
@@ -32,16 +35,15 @@ private:
 class Entity : public std::enable_shared_from_this<Entity>
 {
 public:
-    Entity(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, const Authentication::EntityTokenResponse& entityTokenResponse);
-    Entity(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, const Authentication::GetEntityTokenResponse& entityTokenResponse);
+    Entity(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, Authentication::EntityTokenResponse&& entityTokenResponse);
+    Entity(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, Authentication::GetEntityTokenResponse&& entityTokenResponse);
 
     Entity(const Entity&) = delete;
     Entity& operator=(const Entity&) = delete;
     ~Entity() = default;
 
 public:
-    String const& EntityId() const;
-    String const& EntityType() const;
+    EntityKey const& EntityKey() const;
     SharedPtr<PlayFab::EntityToken const> EntityToken() const;
 
     // Shared HttpClient
@@ -74,8 +76,7 @@ protected:
 
 private:
     // Entity attributes
-    String const m_id;
-    String const m_type;
+    PlayFab::EntityKey const m_key;
 };
 
 }

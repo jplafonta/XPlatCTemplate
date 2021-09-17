@@ -29,9 +29,9 @@ private:
 class TitlePlayer : public Entity
 {
 public:
-    TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, const Authentication::LoginResult& loginResult);
-    TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, const Authentication::ServerLoginResult& loginResult);
-    TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, const Authentication::RegisterPlayFabUserResult& registerResult);
+    TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, Authentication::LoginResult&& loginResult);
+    TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, Authentication::ServerLoginResult&& loginResult);
+    TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, Authentication::RegisterPlayFabUserResult&& registerResult);
 
     TitlePlayer(const TitlePlayer&) = delete;
     TitlePlayer& operator=(const TitlePlayer&) = delete;
@@ -44,12 +44,11 @@ public:
     // Client SessionTicket for "Classic" PlayFab APIs
     SharedPtr<String const> SessionTicket() const;
 
-    // Getter methods to retreive TitlePlayer properties. All data only guaranteed to be accurate at the time of most recent login. Lifetime of returned data is tied
-    // to Entity object.
-    GetPlayerCombinedInfoResultPayload const* PlayerCombinedInfo() const;
-    time_t const* LastLoginTime() const;
-    Authentication::UserSettings const* UserSettings() const;
-    TreatmentAssignment const* TreatmentAssignment() const;
+    // Getter methods to retreive TitlePlayer properties. All data only guaranteed to be accurate at the time of most recent login. 
+    StdExtra::optional<GetPlayerCombinedInfoResultPayload> const& PlayerCombinedInfo() const;
+    StdExtra::optional<time_t const> const& LastLoginTime() const;
+    StdExtra::optional<Authentication::UserSettings const> const& UserSettings() const;
+    StdExtra::optional<TreatmentAssignment> const& TreatmentAssignment() const;
 
     // Refresh the cached Entity token by replaying login request
     AsyncOp<void> RefreshToken(const TaskQueue& queue) override;
@@ -60,10 +59,10 @@ private:
     String const m_playFabId;
     SharedPtr<String> m_sessionTicket;
 
-    UniquePtr<GetPlayerCombinedInfoResultPayload> m_playerCombinedInfo;
+    StdExtra::optional<GetPlayerCombinedInfoResultPayload> m_playerCombinedInfo;
     StdExtra::optional<time_t const> m_lastLoginTime;
     StdExtra::optional<Authentication::UserSettings const> m_userSettings;
-    UniquePtr<PlayFab::TreatmentAssignment> m_treatmentAssignment;
+    StdExtra::optional<PlayFab::TreatmentAssignment> m_treatmentAssignment;
 };
 
 }

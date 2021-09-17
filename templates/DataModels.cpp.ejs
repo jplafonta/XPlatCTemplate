@@ -229,13 +229,29 @@ for (var propIdx = 0; propIdx < datatype.properties.length; propIdx++) {
     var templateParam = property.isclass ? ("<" + property.datatype.name + ">") : "";
 
     if (property.actualtype === "object") { %>
-    output.<%- propName %>.stringValue = buffer.CopyTo(input.<%- propName %>.stringValue);<%
+    {
+        auto propCopyResult = buffer.CopyTo(input.<%- propName %>.stringValue);
+        RETURN_IF_FAILED(propCopyResult.hr);
+        output.<%- propName %>.stringValue = propCopyResult.ExtractPayload();
+    }<%
     } else if (property.collection === "map") { %>
-    output.<%- propName %> = buffer.CopyToDictionary<%- templateParam %>(input.<%- propName %>, input.<%- propName %>Count);<%
+    {
+        auto propCopyResult = buffer.CopyToDictionary<%- templateParam %>(input.<%- propName %>, input.<%- propName %>Count);
+        RETURN_IF_FAILED(propCopyResult.hr);
+        output.<%- propName %> = propCopyResult.ExtractPayload();
+    }<%
     } else if (property.collection === "array") { %>
-    output.<%- propName %> = buffer.CopyToArray<%- templateParam %>(input.<%- propName %>, input.<%- propName %>Count);<%
+    {
+        auto propCopyResult = buffer.CopyToArray<%- templateParam %>(input.<%- propName %>, input.<%- propName %>Count);
+        RETURN_IF_FAILED(propCopyResult.hr);
+        output.<%- propName %> = propCopyResult.ExtractPayload();
+    }<%
     } else if (requiresDynamicStorage(property)) { %>
-    output.<%- propName %> = buffer.CopyTo<%- templateParam %>(input.<%- propName %>);<%
+    {
+        auto propCopyResult = buffer.CopyTo<%- templateParam %>(input.<%- propName %>); 
+        RETURN_IF_FAILED(propCopyResult.hr);
+        output.<%- propName %> = propCopyResult.ExtractPayload();
+    }<%
     }
 } // end for %>
     return S_OK;

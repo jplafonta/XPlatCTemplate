@@ -7,36 +7,36 @@ namespace PlayFab
 
 using namespace Authentication;
 
-TitlePlayer::TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, const LoginResult& result)
-    : Entity{ std::move(httpClient), std::move(qosAPI), *result.entityToken },
+TitlePlayer::TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, LoginResult&& result)
+    : Entity{ std::move(httpClient), std::move(qosAPI), std::move(*result.entityToken) },
     m_loginContext{ std::move(loginContext) },
-    m_playFabId{ result.playFabId },
+    m_playFabId{ std::move(result.playFabId) },
     m_sessionTicket{ MakeShared<String>(result.sessionTicket) },
-    m_playerCombinedInfo{ result.infoResultPayload.has_value() ? MakeUnique<GetPlayerCombinedInfoResultPayload>(*result.infoResultPayload) : nullptr },
-    m_lastLoginTime{ result.lastLoginTime },
-    m_userSettings{ result.settingsForUser },
-    m_treatmentAssignment{ result.treatmentAssignment.has_value() ? MakeUnique<PlayFab::TreatmentAssignment>(*result.treatmentAssignment) : nullptr }
+    m_playerCombinedInfo{ std::move(result.infoResultPayload) },
+    m_lastLoginTime{ std::move(result.lastLoginTime) },
+    m_userSettings{ std::move(result.settingsForUser) },
+    m_treatmentAssignment{ std::move(result.treatmentAssignment) }
 {
 }
 
-TitlePlayer::TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, const ServerLoginResult& result)
-    : Entity{ std::move(httpClient), std::move(qosAPI), *result.entityToken },
+TitlePlayer::TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, ServerLoginResult&& result)
+    : Entity{ std::move(httpClient), std::move(qosAPI), std::move(*result.entityToken) },
     m_loginContext{ std::move(loginContext) },
-    m_playFabId{ result.playFabId },
+    m_playFabId{ std::move(result.playFabId) },
     m_sessionTicket{ MakeShared<String>(result.sessionTicket) },
-    m_playerCombinedInfo{ result.infoResultPayload.has_value() ? MakeUnique<GetPlayerCombinedInfoResultPayload>(*result.infoResultPayload) : nullptr },
-    m_lastLoginTime{ result.lastLoginTime },
-    m_userSettings{ result.settingsForUser },
-    m_treatmentAssignment{ result.treatmentAssignment.has_value() ? MakeUnique<PlayFab::TreatmentAssignment>(*result.treatmentAssignment) : nullptr }
+    m_playerCombinedInfo{ std::move(result.infoResultPayload) },
+    m_lastLoginTime{ std::move(result.lastLoginTime) },
+    m_userSettings{ std::move(result.settingsForUser) },
+    m_treatmentAssignment{ std::move(result.treatmentAssignment) }
 {
 }
 
-TitlePlayer::TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, const RegisterPlayFabUserResult& result)
-    : Entity{ std::move(httpClient), std::move(qosAPI), *result.entityToken },
+TitlePlayer::TitlePlayer(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, SharedPtr<LoginContext const> loginContext, RegisterPlayFabUserResult&& result)
+    : Entity{ std::move(httpClient), std::move(qosAPI), std::move(*result.entityToken) },
     m_loginContext{ std::move(loginContext) },
-    m_playFabId{ result.playFabId },
+    m_playFabId{ std::move(result.playFabId) },
     m_sessionTicket{ MakeShared<String>(result.sessionTicket) },
-    m_userSettings{ result.settingsForUser }
+    m_userSettings{ std::move(result.settingsForUser) }
 {
 }
 
@@ -97,24 +97,24 @@ SharedPtr<String const> TitlePlayer::SessionTicket() const
     return m_sessionTicket;
 }
 
-GetPlayerCombinedInfoResultPayload const* TitlePlayer::PlayerCombinedInfo() const
+StdExtra::optional<GetPlayerCombinedInfoResultPayload> const& TitlePlayer::PlayerCombinedInfo() const
 {
-    return m_playerCombinedInfo.get();
+    return m_playerCombinedInfo;
 }
 
-time_t const* TitlePlayer::LastLoginTime() const
+StdExtra::optional<time_t const> const& TitlePlayer::LastLoginTime() const
 {
-    return m_lastLoginTime.has_value() ? m_lastLoginTime.operator->() : nullptr;
+    return m_lastLoginTime;
 }
 
-UserSettings const* TitlePlayer::UserSettings() const
+StdExtra::optional<UserSettings const> const& TitlePlayer::UserSettings() const
 {
-    return m_userSettings.has_value() ? m_userSettings.operator->() : nullptr;
+    return m_userSettings;
 }
 
-TreatmentAssignment const* TitlePlayer::TreatmentAssignment() const
+StdExtra::optional<TreatmentAssignment> const& TitlePlayer::TreatmentAssignment() const
 {
-    return m_treatmentAssignment.get();
+    return m_treatmentAssignment;
 }
 
 LoginContext::LoginContext(const char* requestPath)

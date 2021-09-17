@@ -25,51 +25,102 @@ struct AuthResult : public XAsyncResult
 
     HRESULT Validate() override
     {
-        const char* playFabId;
-        RETURN_IF_FAILED(PFTitlePlayerGetPlayFabId(titlePlayerHandle, &playFabId));
-
-        const char* entityIdFromTitlePlayer;
-        RETURN_IF_FAILED(PFTitlePlayerGetEntityId(titlePlayerHandle, &entityIdFromTitlePlayer));
-
-        const char* entityIdFromEntity;
-        RETURN_IF_FAILED(PFEntityGetEntityId(entityHandle, &entityIdFromEntity));
-
-        if (std::strcmp(entityIdFromEntity, entityIdFromTitlePlayer))
         {
-            return E_FAIL;
+            size_t bufferSize{};
+            RETURN_IF_FAILED(PFTitlePlayerGetPlayFabIdSize(titlePlayerHandle, &bufferSize));
+
+            std::string playFabId;
+            playFabId.resize(bufferSize);
+            RETURN_IF_FAILED(PFTitlePlayerGetPlayFabId(titlePlayerHandle, playFabId.size(), &playFabId[0], nullptr));
         }
 
-        const char* entityType;
-        RETURN_IF_FAILED(PFEntityGetEntityType(entityHandle, &entityType));
-
-        const PFEntityToken* entityTokenFromTitlePlayer;
-        RETURN_IF_FAILED(PFTitlePlayerGetCachedEntityToken(titlePlayerHandle, &entityTokenFromTitlePlayer));
-
-        const PFEntityToken* entityTokenFromEntity;
-        RETURN_IF_FAILED(PFEntityGetCachedEntityToken(entityHandle, &entityTokenFromEntity));
-
-        if (std::strcmp(entityTokenFromEntity->token, entityTokenFromTitlePlayer->token))
         {
-            return E_FAIL;
+            size_t bufferSize{};
+            RETURN_IF_FAILED(PFTitlePlayerGetEntityKeySize(titlePlayerHandle, &bufferSize));
+
+            std::vector<char> buffer1(bufferSize);
+            PFEntityKey const* entityKeyFromTitlePlayer;
+            RETURN_IF_FAILED(PFTitlePlayerGetEntityKey(titlePlayerHandle, buffer1.size(), buffer1.data(), &entityKeyFromTitlePlayer, nullptr));
+
+            RETURN_IF_FAILED(PFEntityGetEntityKeySize(entityHandle, &bufferSize));
+
+            std::vector<char> buffer2(bufferSize);
+            PFEntityKey const* entityKeyFromEntity;
+            RETURN_IF_FAILED(PFEntityGetEntityKey(entityHandle, buffer2.size(), buffer2.data(), &entityKeyFromEntity, nullptr));
+
+            if (std::strcmp(entityKeyFromTitlePlayer->id, entityKeyFromEntity->id))
+            {
+                return E_FAIL;
+            }
+
+            if (std::strcmp(entityKeyFromTitlePlayer->type, entityKeyFromEntity->type))
+            {
+                return E_FAIL;
+            }
+
+            if (std::strcmp(entityKeyFromTitlePlayer->type, PFTitlePlayerEntityType))
+            {
+                return E_FAIL;
+            }
         }
 
-        size_t sessionTicketSize;
-        RETURN_IF_FAILED(PFTitlePlayerGetCachedSessionTicketSize(titlePlayerHandle, &sessionTicketSize));
+        {
+            size_t bufferSize{};
+            RETURN_IF_FAILED(PFTitlePlayerGetCachedEntityTokenSize(titlePlayerHandle, &bufferSize));
 
-        std::vector<char> sessionTicket(sessionTicketSize);
-        RETURN_IF_FAILED(PFTitlePlayerGetCachedSessionTicket(titlePlayerHandle, sessionTicketSize, sessionTicket.data(), nullptr));
+            std::vector<char> buffer1(bufferSize);
+            const PFEntityToken* entityTokenFromTitlePlayer;
+            RETURN_IF_FAILED(PFTitlePlayerGetCachedEntityToken(titlePlayerHandle, buffer1.size(), buffer1.data(), &entityTokenFromTitlePlayer, nullptr));
 
-        PFGetPlayerCombinedInfoResultPayload const* playerCombinedInfo;
-        RETURN_IF_FAILED(PFTitlePlayerGetPlayerCombinedInfo(titlePlayerHandle, &playerCombinedInfo));
+            RETURN_IF_FAILED(PFEntityGetCachedEntityTokenSize(entityHandle, &bufferSize));
 
-        time_t const* lastLoginTime;
-        RETURN_IF_FAILED(PFTitlePlayerGetLastLoginTime(titlePlayerHandle, &lastLoginTime));
+            std::vector<char> buffer2(bufferSize);
+            const PFEntityToken* entityTokenFromEntity;
+            RETURN_IF_FAILED(PFEntityGetCachedEntityToken(entityHandle, buffer2.size(), buffer2.data(), &entityTokenFromEntity, nullptr));
 
-        PFAuthenticationUserSettings const* userSettings;
-        RETURN_IF_FAILED(PFTitlePlayerGetUserSettings(titlePlayerHandle, &userSettings));
+            if (std::strcmp(entityTokenFromEntity->token, entityTokenFromTitlePlayer->token))
+            {
+                return E_FAIL;
+            }
+        }
 
-        PFTreatmentAssignment const* treatmentAssignment;
-        RETURN_IF_FAILED(PFTitlePlayerGetTreatmentAssignment(titlePlayerHandle, &treatmentAssignment));
+        {
+            size_t sessionTicketSize;
+            RETURN_IF_FAILED(PFTitlePlayerGetCachedSessionTicketSize(titlePlayerHandle, &sessionTicketSize));
+
+            std::string sessionTicket;
+            sessionTicket.resize(sessionTicketSize);
+            RETURN_IF_FAILED(PFTitlePlayerGetCachedSessionTicket(titlePlayerHandle, sessionTicketSize, &sessionTicket[0], nullptr));
+        }
+
+        {
+            size_t bufferSize;
+            RETURN_IF_FAILED(PFTitlePlayerGetPlayerCombinedInfoSize(titlePlayerHandle, &bufferSize));
+
+            std::vector<char> buffer(bufferSize);
+            PFGetPlayerCombinedInfoResultPayload const* playerCombinedInfo;
+            RETURN_IF_FAILED(PFTitlePlayerGetPlayerCombinedInfo(titlePlayerHandle, buffer.size(), buffer.data(), &playerCombinedInfo, nullptr));
+        }
+
+        {
+            time_t lastLoginTime;
+            RETURN_IF_FAILED(PFTitlePlayerGetLastLoginTime(titlePlayerHandle, &lastLoginTime));
+        }
+
+        {
+            PFAuthenticationUserSettings userSettings;
+            RETURN_IF_FAILED(PFTitlePlayerGetUserSettings(titlePlayerHandle, &userSettings));
+        }
+
+        {
+            size_t bufferSize;
+            RETURN_IF_FAILED(PFTitlePlayerGetTreatmentAssignmentSize(titlePlayerHandle, &bufferSize));
+
+
+            std::vector<char> buffer(bufferSize);
+            PFTreatmentAssignment const* treatmentAssignment;
+            RETURN_IF_FAILED(PFTitlePlayerGetTreatmentAssignment(titlePlayerHandle, buffer.size(), buffer.data(), &treatmentAssignment, nullptr));
+        }
 
         return S_OK;
     }
@@ -138,8 +189,12 @@ void EntityTests::TestManualTokenRefresh(TestContext& testContext)
 
         PFTitlePlayerGetEntityHandle(testState->authResult.titlePlayerHandle, &testState->authResult.entityHandle);
 
+        size_t bufferSize;
+        PFEntityGetCachedEntityTokenSize(testState->authResult.entityHandle, &bufferSize);
+
+        std::vector<char> buffer(bufferSize);
         const PFEntityToken* entityToken;
-        PFEntityGetCachedEntityToken(testState->authResult.entityHandle, &entityToken);
+        PFEntityGetCachedEntityToken(testState->authResult.entityHandle, buffer.size(), buffer.data(), &entityToken, nullptr);
     }
 
     PFRegistrationToken token{};
@@ -148,8 +203,12 @@ void EntityTests::TestManualTokenRefresh(TestContext& testContext)
         {
             std::unique_ptr<State> testState{ static_cast<State*>(context) };
 
+            size_t bufferSize;
+            PFEntityGetCachedEntityTokenSize(testState->authResult.entityHandle, &bufferSize);
+
+            std::vector<char> buffer(bufferSize);
             const PFEntityToken* entityToken;
-            PFEntityGetCachedEntityToken(testState->authResult.entityHandle, &entityToken);
+            PFEntityGetCachedEntityToken(testState->authResult.entityHandle, buffer.size(), buffer.data(), &entityToken, nullptr);
 
             if (std::strcmp(newToken->token, entityToken->token))
             {

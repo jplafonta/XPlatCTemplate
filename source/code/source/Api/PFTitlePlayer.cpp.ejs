@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include <playfab/PFTitlePlayer.h>
+#include <playfab/<%- prefix %>TitlePlayer.h>
 #include "TitlePlayer.h"
 
 using namespace PlayFab;
@@ -12,7 +12,7 @@ HRESULT <%- prefix %>TitlePlayerDuplicateHandle(
     RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
     RETURN_HR_INVALIDARG_IF_NULL(duplicatedHandle);
 
-    *duplicatedHandle = MakeUnique<PFTitlePlayer>(*titlePlayerHandle).release();
+    *duplicatedHandle = MakeUnique<<%- prefix %>TitlePlayer>(*titlePlayerHandle).release();
     return S_OK;
 }
 
@@ -20,7 +20,7 @@ void <%- prefix %>TitlePlayerCloseHandle(
     _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle
 ) noexcept
 {
-    UniquePtr<PFTitlePlayer>{ titlePlayerHandle };
+    UniquePtr<<%- prefix %>TitlePlayer>{ titlePlayerHandle };
 }
 
 HRESULT <%- prefix %>TitlePlayerGetEntityHandle(
@@ -31,19 +31,44 @@ HRESULT <%- prefix %>TitlePlayerGetEntityHandle(
     RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
 
-    *entityHandle = MakeUnique<PFEntity>(titlePlayerHandle->titlePlayer).release();
+    *entityHandle = MakeUnique<<%- prefix %>Entity>(titlePlayerHandle->titlePlayer).release();
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetPlayFabIdSize(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Out_ size_t* playFabIdSize
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(playFabIdSize);
+
+    *playFabIdSize = titlePlayerHandle->titlePlayer->PlayFabId().size() + 1;
     return S_OK;
 }
 
 HRESULT <%- prefix %>TitlePlayerGetPlayFabId(
     _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
-    _Outptr_ const char** playFabId
+    _In_ size_t playFabIdSize,
+    _Out_writes_bytes_to_opt_(playFabIdSize, playFabIdUsed) char* playFabIdBuffer,
+    _Out_opt_ size_t* playFabIdUsed
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(playFabId);
+    RETURN_HR_INVALIDARG_IF_NULL(playFabIdBuffer);
 
-    *playFabId = titlePlayerHandle->titlePlayer->PlayFabId().data();
+    auto playFabId = titlePlayerHandle->titlePlayer->PlayFabId();
+    if (playFabId.size() + 1 > playFabIdSize)
+    {
+        return E_INVALIDARG;
+    }
+
+    std::strcpy(playFabIdBuffer, playFabId.data());
+    if (playFabIdUsed)
+    {
+        *playFabIdUsed = playFabId.size() + 1;
+    }
+
     return S_OK;
 }
 
@@ -97,74 +122,203 @@ HRESULT <%- prefix %>TitlePlayerGetCachedSessionTicket(
     return S_OK;
 }
 
-HRESULT <%- prefix %>TitlePlayerGetEntityId(
+HRESULT <%- prefix %>TitlePlayerGetEntityKeySize(
     _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
-    _Outptr_ const char** entityId
+    _Out_ size_t* bufferSize
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(entityId);
 
-    *entityId = titlePlayerHandle->titlePlayer->EntityId().data();
-    return S_OK;
+    <%- prefix %>Entity entity{ titlePlayerHandle->titlePlayer };
+    return <%- prefix %>EntityGetEntityKeySize(&entity, bufferSize);
+}
+
+HRESULT <%- prefix %>TitlePlayerGetEntityKey(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_(bufferSize, *bufferUsed) void* buffer,
+    _Outptr_ const <%- prefix %>EntityKey** entityKey,
+    _Out_opt_ size_t* bufferUsed
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+
+    <%- prefix %>Entity entity{ titlePlayerHandle->titlePlayer };
+    return <%- prefix %>EntityGetEntityKey(&entity, bufferSize, buffer, entityKey, bufferUsed);
+}
+
+HRESULT <%- prefix %>TitlePlayerGetCachedEntityTokenSize(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Out_ size_t* bufferSize
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+
+    <%- prefix %>Entity entity{ titlePlayerHandle->titlePlayer };
+    return <%- prefix %>EntityGetCachedEntityTokenSize(&entity, bufferSize);
 }
 
 HRESULT <%- prefix %>TitlePlayerGetCachedEntityToken(
     _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
-    _Outptr_ const <%- prefix %>EntityToken** entityToken
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_(bufferSize, *bufferUsed) void* buffer,
+    _Outptr_ const <%- prefix %>EntityToken** entityToken,
+    _Out_opt_ size_t* bufferUsed
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(entityToken);
 
-    *entityToken = titlePlayerHandle->titlePlayer->EntityToken().get();
+    <%- prefix %>Entity entity{ titlePlayerHandle->titlePlayer };
+    return <%- prefix %>EntityGetCachedEntityToken(&entity, bufferSize, buffer, entityToken, bufferUsed);
+}
+
+HRESULT <%- prefix %>TitlePlayerGetPlayerCombinedInfoSize(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Out_ size_t* bufferSize
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(bufferSize);
+
+    auto& playerCombinedInfo = titlePlayerHandle->titlePlayer->PlayerCombinedInfo();
+    if (playerCombinedInfo)
+    {
+        *bufferSize = playerCombinedInfo->RequiredBufferSize();
+    }
+    else
+    {
+        *bufferSize = 0;
+    }
     return S_OK;
 }
 
 HRESULT <%- prefix %>TitlePlayerGetPlayerCombinedInfo(
     _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
-    _Outptr_result_maybenull_ const <%- prefix %>GetPlayerCombinedInfoResultPayload** playerCombinedInfo
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_(bufferSize, *bufferUsed) void* buffer,
+    _Outptr_ const <%- prefix %>GetPlayerCombinedInfoResultPayload** playerCombinedInfoPtr,
+    _Out_opt_ size_t* bufferUsed
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(playerCombinedInfo);
+    RETURN_HR_INVALIDARG_IF_NULL(buffer);
+    RETURN_HR_INVALIDARG_IF_NULL(playerCombinedInfoPtr);
 
-    *playerCombinedInfo = &titlePlayerHandle->titlePlayer->PlayerCombinedInfo()->Model(); 
+    ModelBuffer b{ buffer, bufferSize };
+    auto& playerCombinedInfo = titlePlayerHandle->titlePlayer->PlayerCombinedInfo();
+    if (playerCombinedInfo)
+    {
+        auto copyResult = playerCombinedInfo->Copy(b);
+        RETURN_IF_FAILED(copyResult.hr);
+        *playerCombinedInfoPtr = copyResult.ExtractPayload();
+    }
+    else
+    {
+        TRACE_INFORMATION("<%- prefix %>GetPlayerCombinedInfoResultPayload not cached for this TitlePlayer");
+        *playerCombinedInfoPtr = nullptr;
+    }
+
+    if (bufferUsed)
+    {
+        *bufferUsed = bufferSize - b.RemainingSpace();
+    }
+
     return S_OK;
 }
 
 HRESULT <%- prefix %>TitlePlayerGetLastLoginTime(
     _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
-    _Outptr_result_maybenull_ const time_t** lastLoginTime
+    _Out_ time_t* lastLoginTimePointer
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(lastLoginTime);
+    RETURN_HR_INVALIDARG_IF_NULL(lastLoginTimePointer);
 
-    *lastLoginTime = titlePlayerHandle->titlePlayer->LastLoginTime();
+    auto lastLoginTime = titlePlayerHandle->titlePlayer->LastLoginTime();
+    if (lastLoginTime)
+    {
+        *lastLoginTimePointer = *lastLoginTime;
+    }
+    else
+    {
+        // Set to default per header docs
+        *lastLoginTimePointer = time_t{ 0 };
+    }
+
     return S_OK;
 }
 
 HRESULT <%- prefix %>TitlePlayerGetUserSettings(
     _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
-    _Outptr_result_maybenull_ const <%- prefix %>AuthenticationUserSettings** userSettings
+    _Out_ <%- prefix %>AuthenticationUserSettings* userSettingsPtr
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(userSettings);
+    RETURN_HR_INVALIDARG_IF_NULL(userSettingsPtr);
 
-    *userSettings = &titlePlayerHandle->titlePlayer->UserSettings()->Model();
+    auto& userSettings = titlePlayerHandle->titlePlayer->UserSettings();
+    if (userSettings)
+    {
+        *userSettingsPtr = titlePlayerHandle->titlePlayer->UserSettings()->Model();
+    }
+    else
+    {
+        TRACE_INFORMATION("<%- prefix %>AuthenticationUserSettings not cached for this TitlePlayer");
+        *userSettingsPtr = {};
+    }
+    return S_OK;
+}
+
+HRESULT <%- prefix %>TitlePlayerGetTreatmentAssignmentSize(
+    _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
+    _Out_ size_t* bufferSize
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(bufferSize);
+
+    auto& treatmentAssignment = titlePlayerHandle->titlePlayer->TreatmentAssignment();
+    if (treatmentAssignment)
+    {
+        *bufferSize = treatmentAssignment->RequiredBufferSize();
+    }
+    else
+    {
+        *bufferSize = 0;
+    }
     return S_OK;
 }
 
 HRESULT <%- prefix %>TitlePlayerGetTreatmentAssignment(
     _In_ <%- prefix %>TitlePlayerHandle titlePlayerHandle,
-    _Outptr_result_maybenull_ const <%- prefix %>TreatmentAssignment** treatmentAssignment
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_(bufferSize, *bufferUsed) void* buffer,
+    _Outptr_ const <%- prefix %>TreatmentAssignment** treatmentAssignmentPtr,
+    _Out_opt_ size_t* bufferUsed
 ) noexcept 
 {
     RETURN_HR_INVALIDARG_IF_NULL(titlePlayerHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(treatmentAssignment);
+    RETURN_HR_INVALIDARG_IF_NULL(buffer);
+    RETURN_HR_INVALIDARG_IF_NULL(treatmentAssignmentPtr);
 
-    *treatmentAssignment = &titlePlayerHandle->titlePlayer->TreatmentAssignment()->Model();
+    ModelBuffer b{ buffer, bufferSize };
+    auto& treatmentAssignment = titlePlayerHandle->titlePlayer->TreatmentAssignment();
+    if (treatmentAssignment)
+    {
+        auto copyResult = treatmentAssignment->Copy(b);
+        RETURN_IF_FAILED(copyResult.hr);
+        *treatmentAssignmentPtr = copyResult.ExtractPayload();
+    }
+    else
+    {
+        TRACE_INFORMATION("<%- prefix %>TreatmentAssignment not cached for this TitlePlayer");
+        *treatmentAssignmentPtr = nullptr;
+    }
+
+    if (bufferUsed)
+    {
+        *bufferUsed = bufferSize - b.RemainingSpace();
+    }
+
     return S_OK;
 }
