@@ -82,10 +82,13 @@ protected:
     {
         assert(m_result.has_value());
         ModelBuffer b{ buffer, bufferSize };
-        auto result = m_result->Payload().Copy(b);
-        // TODO how to ensure offset of result object within buffer. Assume for now it will always be at byte 0
-        assert((void*)(result.Payload()) == buffer);
-        return result.hr;
+        auto copyResult = m_result->Payload().Copy(b);
+        if (SUCCEEDED(copyResult.hr))
+        {
+            // TODO how to ensure offset of result object within buffer. Assume for now it will always be at byte 0
+            assert((void*)(copyResult.Payload()) == buffer);
+        }
+        return copyResult.hr;
     }
 
     CallT m_call;

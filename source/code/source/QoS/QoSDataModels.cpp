@@ -60,7 +60,9 @@ size_t RegionResult::RequiredBufferSize(const PFQoSRegionResult& model)
 HRESULT RegionResult::Copy(const PFQoSRegionResult& input, PFQoSRegionResult& output, ModelBuffer& buffer)
 {
     output = input;
-    output.region = buffer.CopyTo(input.region);
+    auto propCopyResult = buffer.CopyTo(input.region);
+    RETURN_IF_FAILED(propCopyResult.hr);
+    output.region = propCopyResult.ExtractPayload();
     return S_OK;
 }
 
@@ -110,10 +112,18 @@ size_t Measurements::RequiredBufferSize() const
 
 Result<PFQoSMeasurements const*> Measurements::Copy(ModelBuffer& buffer) const
 {
-    auto output = buffer.Alloc<PFQoSMeasurements>(1);
-    *output = m_model;
-    output->regionResults = buffer.CopyToArray<RegionResult>(m_model.regionResults, m_model.regionResultsCount);
-    return output;
+    // Alloc
+    auto allocResult = buffer.Alloc<PFQoSMeasurements>(1);
+    RETURN_IF_FAILED(allocResult.hr);
+    // Copy
+    auto outputPtr = allocResult.ExtractPayload();
+    *outputPtr = m_model;
+    {
+        auto propCopyResult = buffer.CopyToArray<RegionResult>(m_model.regionResults, m_model.regionResultsCount);
+        RETURN_IF_FAILED(propCopyResult.hr);
+        outputPtr->regionResults = propCopyResult.ExtractPayload();
+    }
+    return outputPtr;
 }
 
 Vector<RegionResult> Measurements::SortRegionResults(const UnorderedMap<String, RegionResult>& regionResultsMap)

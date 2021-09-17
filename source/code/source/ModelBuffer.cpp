@@ -14,53 +14,78 @@ ModelBuffer::ModelBuffer(void* buffer, size_t bufferSize) :
 {
 }
 
-const char* ModelBuffer::CopyTo(const char* input)
+size_t ModelBuffer::RemainingSpace() const
+{
+    return m_remaining;
+}
+
+Result<const char*> ModelBuffer::CopyTo(const char* input)
 {
     if (input)
     {
+        // Alloc
         size_t bytesNeeded = std::strlen(input) + 1; // null terminator
-        auto stringCopy = Alloc<char>(bytesNeeded);
-        return std::strcpy(stringCopy, input);
+        auto allocResult = Alloc<char>(bytesNeeded);
+        RETURN_IF_FAILED(allocResult.hr);
+        // Copy
+        auto outputPtr = allocResult.ExtractPayload();
+        return std::strcpy(outputPtr, input);
     }
     else
     {
+        // Nothing to copy
         return nullptr;
     }
 }
 
-const char** ModelBuffer::CopyToArray(const char* const* input, size_t inputCount)
+Result<const char* const*> ModelBuffer::CopyToArray(const char* const* input, size_t inputCount)
 {
     if (input && inputCount)
     {
-        auto output = Alloc<const char*>(inputCount);
-        assert(output);
+        // Alloc
+        auto allocResult = Alloc<const char*>(inputCount);
+        RETURN_IF_FAILED(allocResult.hr);
+        // Copy
+        auto outputPtr = allocResult.ExtractPayload();
         for (size_t i = 0; i < inputCount; ++i)
         {
-            output[i] = CopyTo(input[i]);
+            auto copyResult = this->CopyTo(input[i]);
+            RETURN_IF_FAILED(copyResult.hr);
+            outputPtr[i] = copyResult.ExtractPayload();
         }
-        return output;
+        return outputPtr;
     }
     else
     {
+        // Nothing to copy
         return nullptr;
     }
 }
 
-PFStringDictionaryEntry* ModelBuffer::CopyToDictionary(PFStringDictionaryEntry const* input, size_t inputCount)
+Result<PFStringDictionaryEntry const*> ModelBuffer::CopyToDictionary(PFStringDictionaryEntry const* input, size_t inputCount)
 {
     if (input && inputCount)
     {
-        auto output = Alloc<PFStringDictionaryEntry>(inputCount);
-        assert(output);
+        // Alloc
+        auto allocResult = Alloc<PFStringDictionaryEntry>(inputCount);
+        RETURN_IF_FAILED(allocResult.hr);
+        // Copy
+        auto outputPtr = allocResult.ExtractPayload();
         for (size_t i = 0; i < inputCount; ++i)
         {
-            output[i].key = CopyTo(input[i].key);
-            output[i].value = CopyTo(input[i].value);
+            auto copyKeyResult = this->CopyTo(input[i].key);
+            RETURN_IF_FAILED(copyKeyResult.hr);
+            outputPtr[i].key = copyKeyResult.ExtractPayload();
+
+            auto copyValueResult = this->CopyTo(input[i].value);
+            RETURN_IF_FAILED(copyValueResult.hr);
+            outputPtr[i].value = copyValueResult.ExtractPayload();
         }
-        return output;
+        return outputPtr;
     }
     else
     {
+        // Nothing to copy
         return nullptr;
     }
 }

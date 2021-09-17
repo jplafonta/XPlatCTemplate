@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include <playfab/PFEntity.h>
+#include <playfab/<%- prefix %>Entity.h>
 #include "Entity.h"
 #include "ApiAsyncProviders.h"
 
@@ -75,38 +75,74 @@ HRESULT <%- prefix %>EntityGetEntityTokenGetResult(
     return XAsyncGetResult(async, nullptr, sizeof(<%- prefix %>EntityHandle), entityHandle, nullptr);
 }
 
-HRESULT <%- prefix %>EntityGetEntityId(
+HRESULT <%- prefix %>EntityGetEntityKeySize(
     _In_ <%- prefix %>EntityHandle entityHandle,
-    _Outptr_ const char** entityId
+    _Out_ size_t* bufferSize
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(entityId);
+    RETURN_HR_INVALIDARG_IF_NULL(bufferSize);
 
-    *entityId = entityHandle->entity->EntityId().data();
+    *bufferSize = entityHandle->entity->EntityKey().RequiredBufferSize();
     return S_OK;
 }
 
-HRESULT <%- prefix %>EntityGetEntityType(
+HRESULT <%- prefix %>EntityGetEntityKey(
     _In_ <%- prefix %>EntityHandle entityHandle,
-    _Outptr_ const char** entityType
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_(bufferSize, *bufferUsed) void* buffer,
+    _Outptr_ const <%- prefix %>EntityKey** entityKey,
+    _Out_opt_ size_t* bufferUsed
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
-    RETURN_HR_INVALIDARG_IF_NULL(entityType);
+    RETURN_HR_INVALIDARG_IF_NULL(buffer);
+    RETURN_HR_INVALIDARG_IF_NULL(entityKey);
 
-    *entityType = entityHandle->entity->EntityType().data();
+    ModelBuffer b{ buffer, bufferSize };
+    auto copyResult = entityHandle->entity->EntityKey().Copy(b);
+    RETURN_IF_FAILED(copyResult.hr);
+    *entityKey = copyResult.ExtractPayload();
+    if (bufferUsed)
+    {
+        *bufferUsed = bufferSize - b.RemainingSpace();
+    }
+    
+    return S_OK;
+}
+
+HRESULT <%- prefix %>EntityGetCachedEntityTokenSize(
+    _In_ <%- prefix %>EntityHandle entityHandle,
+    _Out_ size_t* bufferSize
+) noexcept
+{
+    RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(bufferSize);
+
+    *bufferSize = entityHandle->entity->EntityToken()->RequiredBufferSize();
     return S_OK;
 }
 
 HRESULT <%- prefix %>EntityGetCachedEntityToken(
     _In_ <%- prefix %>EntityHandle entityHandle,
-    _Outptr_ const <%- prefix %>EntityToken** entityToken
+    _In_ size_t bufferSize,
+    _Out_writes_bytes_to_(bufferSize, *bufferUsed) void* buffer,
+    _Outptr_ const <%- prefix %>EntityToken** entityToken,
+    _Out_opt_ size_t* bufferUsed
 ) noexcept
 {
     RETURN_HR_INVALIDARG_IF_NULL(entityHandle);
+    RETURN_HR_INVALIDARG_IF_NULL(buffer);
     RETURN_HR_INVALIDARG_IF_NULL(entityToken);
 
-    *entityToken = entityHandle->entity->EntityToken().get();
+    ModelBuffer b{ buffer, bufferSize };
+    auto copyResult = entityHandle->entity->EntityToken()->Copy(b);
+    RETURN_IF_FAILED(copyResult.hr);
+    *entityToken = copyResult.ExtractPayload();
+    if (bufferUsed)
+    {
+        *bufferUsed = bufferSize - b.RemainingSpace();
+    }
+
     return S_OK;
 }

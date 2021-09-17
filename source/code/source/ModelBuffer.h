@@ -13,32 +13,34 @@ public:
     ModelBuffer(ModelBuffer&&) = default;
     ~ModelBuffer() = default;
 
+    size_t RemainingSpace() const;
+
     template<typename T>
-    T* Alloc(size_t n);
+    Result<T*> Alloc(size_t n);
 
     template<typename T, typename std::enable_if_t<std::is_fundamental_v<T> || std::is_enum_v<T>>* = 0>
-    T* CopyTo(const T* input);
+    Result<T const*> CopyTo(const T* input);
 
     template<typename T>
-    typename T::ModelType* CopyTo(typename T::ModelType const* input);
+    Result<typename T::ModelType const*> CopyTo(typename T::ModelType const* input);
 
-    const char* CopyTo(const char* input);
+    Result<const char*> CopyTo(const char* input);
 
     template<typename T, typename std::enable_if_t<std::is_fundamental_v<T> || std::is_enum_v<T>>* = 0>
-    T* CopyToArray(const T* input, size_t inputCount);
+    Result<T const*> CopyToArray(const T* input, size_t inputCount);
 
     template<typename T>
-    typename T::ModelType const** CopyToArray(typename T::ModelType const* const* input, size_t inputCount);
+    Result<typename T::ModelType const* const*> CopyToArray(typename T::ModelType const* const* input, size_t inputCount);
 
-    const char** CopyToArray(const char* const* input, size_t inputCount);
+    Result<const char* const*> CopyToArray(const char* const* input, size_t inputCount);
 
     template<typename T, typename std::enable_if_t<Detail::IsDictionaryEntry<T>::value && (std::is_fundamental_v<decltype(T::value)> || std::is_enum_v<decltype(T::value)>)>* = 0>
-    T* CopyToDictionary(const T* input, size_t inputCount);
+    Result<T const*> CopyToDictionary(const T* input, size_t inputCount);
 
     template<typename InternalModelWrapperT>
-    typename InternalModelWrapperT::DictionaryEntryType* CopyToDictionary(const typename InternalModelWrapperT::DictionaryEntryType* input, size_t inputCount);
+    Result<typename InternalModelWrapperT::DictionaryEntryType const*> CopyToDictionary(const typename InternalModelWrapperT::DictionaryEntryType* input, size_t inputCount);
 
-    PFStringDictionaryEntry* CopyToDictionary(PFStringDictionaryEntry const* input, size_t inputCount);
+    Result<PFStringDictionaryEntry const*> CopyToDictionary(PFStringDictionaryEntry const* input, size_t inputCount);
 
 private:
 #if _DEBUG
@@ -54,7 +56,7 @@ private:
 //------------------------------------------------------------------------------
 
 template<typename T>
-T* ModelBuffer::Alloc(size_t n)
+Result<T*> ModelBuffer::Alloc(size_t n)
 {
     size_t const size = sizeof(T) * n;
     if (std::align(alignof(T), size, m_bufferPtr, m_remaining))
@@ -64,113 +66,147 @@ T* ModelBuffer::Alloc(size_t n)
         m_remaining -= size;
         return result;
     }
-    assert(false);
-    return nullptr;
+    return E_NOT_SUFFICIENT_BUFFER;
 }
 
 template<typename T, typename std::enable_if_t<std::is_fundamental_v<T> || std::is_enum_v<T>>*>
-T* ModelBuffer::CopyTo(const T* input)
+Result<T const*> ModelBuffer::CopyTo(const T* input)
 {
     if (input)
     {
-        auto output = Alloc<T>(1);
-        assert(output);
-        *output = *input;
-        return output;
+        // Alloc
+        auto allocResult = Alloc<T>(1);
+        RETURN_IF_FAILED(allocResult.hr);
+        // Copy
+        auto outputPtr = allocResult.ExtractPayload();
+        *outputPtr = *input;
+        return outputPtr;
     }
     else
     {
+        // Nothing to copy
         return nullptr;
     }
 }
 
 template<typename T>
-typename T::ModelType* ModelBuffer::CopyTo(const typename T::ModelType* input)
+Result<typename T::ModelType const*> ModelBuffer::CopyTo(const typename T::ModelType* input)
 {
     if (input)
     {
-        auto output = Alloc<typename T::ModelType>(1);
-        assert(output);
-        T::Copy(*input, *output, *this);
-        return output;
+        // Alloc
+        auto allocResult = Alloc<typename T::ModelType>(1);
+        RETURN_IF_FAILED(allocResult.hr);
+        // Copy
+        auto outputPtr = allocResult.ExtractPayload();
+        RETURN_IF_FAILED(T::Copy(*input, *outputPtr, *this));
+
+        return outputPtr;
     }
     else
     {
+        // Nothing to copy
         return nullptr;
     }
 }
 
 template<typename T, typename std::enable_if_t<std::is_fundamental_v<T> || std::is_enum_v<T>>*>
-T* ModelBuffer::CopyToArray(const T* input, size_t inputCount)
+Result<T const*> ModelBuffer::CopyToArray(const T* input, size_t inputCount)
 {
     if (input && inputCount)
     {
-        auto output = Alloc<T>(inputCount);
-        assert(output);
-        std::memcpy(output, input, sizeof(T) * inputCount);
-        return output;
+        // Alloc
+        auto allocResult = Alloc<T>(inputCount);
+        RETURN_IF_FAILED(allocResult.hr);
+        // Copy
+        auto outputPtr = allocResult.ExtractPayload();
+        std::memcpy(outputPtr, input, sizeof(T) * inputCount);
+
+        return outputPtr;
     }
     else
     {
+        // Nothing to copy
         return nullptr;
     }
 }
 
 template<typename T>
-typename T::ModelType const** ModelBuffer::CopyToArray(typename T::ModelType const* const* input, size_t inputCount)
+Result<typename T::ModelType const* const*> ModelBuffer::CopyToArray(typename T::ModelType const* const* input, size_t inputCount)
 {
     if (input && inputCount)
     {
-        auto output = Alloc<typename T::ModelType const*>(inputCount);
-        assert(output);
+        // Alloc
+        auto allocResult = Alloc<typename T::ModelType const*>(inputCount);
+        RETURN_IF_FAILED(allocResult.hr);
+        // Copy
+        auto outputPtr = allocResult.ExtractPayload();
         for (size_t i = 0; i < inputCount; ++i)
         {
-            output[i] = CopyTo<T>(input[i]);
+            auto copyResult = this->CopyTo<T>(input[i]);
+            RETURN_IF_FAILED(copyResult.hr);
+            outputPtr[i] = copyResult.ExtractPayload();
         }
-        return output;
+        return outputPtr;
     }
     else
     {
+        // Nothing to copy
         return nullptr;
     }
 }
 
 template<typename T, typename std::enable_if_t<Detail::IsDictionaryEntry<T>::value && (std::is_fundamental_v<decltype(T::value)> || std::is_enum_v<decltype(T::value)>)>*>
-T* ModelBuffer::CopyToDictionary(const T* input, size_t inputCount)
+Result<T const*> ModelBuffer::CopyToDictionary(const T* input, size_t inputCount)
 {
     if (input && inputCount)
     {
-        auto output = Alloc<T>(inputCount);
-        assert(output);
+        // Alloc
+        auto allocResult = Alloc<T>(inputCount);
+        RETURN_IF_FAILED(allocResult.hr);
+        // Copy
+        auto outputPtr = allocResult.ExtractPayload();
         for (size_t i = 0; i < inputCount; ++i)
         {
-            output[i].key = CopyTo(input[i].key);
-            output[i].value = input[i].value;
+            auto copyKeyResult = this->CopyTo(input[i].key);
+            RETURN_IF_FAILED(copyKeyResult.hr);
+            outputPtr[i].key = copyKeyResult.ExtractPayload();
+            outputPtr[i].value = input[i].value;
         }
-        return output;
+        return outputPtr;
     }
     else
     {
+        // Nothing to copy
         return nullptr;
     }
 }
 
 template<typename InternalModelWrapperT>
-typename InternalModelWrapperT::DictionaryEntryType* ModelBuffer::CopyToDictionary(const typename InternalModelWrapperT::DictionaryEntryType* input, size_t inputCount)
+Result<typename InternalModelWrapperT::DictionaryEntryType const*> ModelBuffer::CopyToDictionary(const typename InternalModelWrapperT::DictionaryEntryType* input, size_t inputCount)
 {
     if (input && inputCount)
     {
-        auto output = Alloc<typename InternalModelWrapperT::DictionaryEntryType>(inputCount);
-        assert(output);
+        // Alloc
+        auto allocResult = Alloc<typename InternalModelWrapperT::DictionaryEntryType>(inputCount);
+        RETURN_IF_FAILED(allocResult.hr);
+        // Copy
+        auto outputPtr = allocResult.ExtractPayload();
         for (size_t i = 0; i < inputCount; ++i)
         {
-            output[i].key = CopyTo(input[i].key);
-            output[i].value = CopyTo<InternalModelWrapperT>(input[i].value);
+            auto copyKeyResult = this->CopyTo(input[i].key);
+            RETURN_IF_FAILED(copyKeyResult.hr);
+            outputPtr[i].key = copyKeyResult.ExtractPayload();
+
+            auto copyValueResult = this->CopyTo<InternalModelWrapperT>(input[i].value);
+            RETURN_IF_FAILED(copyValueResult.hr);
+            outputPtr[i].value = copyValueResult.ExtractPayload();
         }
-        return output;
+        return outputPtr;
     }
     else
     {
+        // Nothing to copy
         return nullptr;
     }
 }

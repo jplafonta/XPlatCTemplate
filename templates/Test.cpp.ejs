@@ -109,9 +109,6 @@ void AutoGen<%- featureGroup.name %>Tests::ClassSetUp()
 
                 hr = PFTitlePlayerGetEntityHandle(titlePlayerHandle, &entityHandle);
                 assert(SUCCEEDED(hr) && entityHandle);
-
-                hr = PFTitlePlayerGetPlayerCombinedInfo(titlePlayerHandle, &playerCombinedInfo);
-                assert(SUCCEEDED(hr));
             }
         }
 
@@ -131,9 +128,6 @@ void AutoGen<%- featureGroup.name %>Tests::ClassSetUp()
 
                 hr = PFTitlePlayerGetEntityHandle(titlePlayerHandle2, &entityHandle2);
                 assert(SUCCEEDED(hr) && entityHandle2);
-
-                hr = PFTitlePlayerGetPlayerCombinedInfo(titlePlayerHandle2, &playerCombinedInfo2);
-                assert(SUCCEEDED(hr));
             }
         }
 

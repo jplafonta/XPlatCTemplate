@@ -6,32 +6,25 @@ namespace PlayFab
 
 using Wrappers::SafeString;
 
-Entity::Entity(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, const Authentication::EntityTokenResponse& result) :
+Entity::Entity(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, Authentication::EntityTokenResponse&& result) :
     m_httpClient{ std::move(httpClient) },
     m_qosAPI{ std::move(qosAPI) },
     m_entityToken{ MakeShared<PlayFab::EntityToken>(result) },
-    m_id{ SafeString(result.Model().entity->id) },
-    m_type{ SafeString(result.Model().entity->type) }
+    m_key{ result.Model().entity ? *result.Model().entity : PlayFab::EntityKey{} }
 {
 }
 
-Entity::Entity(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, const Authentication::GetEntityTokenResponse& result) :
+Entity::Entity(SharedPtr<PlayFab::HttpClient const> httpClient, SharedPtr<QoS::QoSAPI const> qosAPI, Authentication::GetEntityTokenResponse&& result) :
     m_httpClient{ std::move(httpClient) },
     m_qosAPI{ std::move(qosAPI) },
     m_entityToken{ MakeShared<PlayFab::EntityToken>(result) },
-    m_id{ SafeString(result.entity->Model().id) },
-    m_type{ SafeString(result.entity->Model().type) }
+    m_key{ result.entity ? *result.entity : PlayFab::EntityKey{} }
 {
 }
 
-String const& Entity::EntityId() const
+PlayFab::EntityKey const& Entity::EntityKey() const
 {
-    return m_id;
-}
-
-String const& Entity::EntityType() const
-{
-    return m_type;
+    return m_key;
 }
 
 SharedPtr<PlayFab::EntityToken const> Entity::EntityToken() const
@@ -89,10 +82,10 @@ AsyncOp<SharedPtr<Entity>> Entity::GetEntityToken(
             Authentication::GetEntityTokenResponse resultModel;
             resultModel.FromJson(serviceResponse.Data);
 
-            if (sharedThis->m_id == SafeString(resultModel.entity->Model().id))
+            if (std::strcmp(SafeString(sharedThis->m_key.Model().id), SafeString(resultModel.entity->Model().id)) == 0)
             {
                 // If we requested an EntityToken for ourselves, update m_authTokens and return "this"
-                assert(sharedThis->m_type == SafeString(resultModel.entity->Model().type));
+                assert(std::strcmp(SafeString(sharedThis->m_key.Model().type), SafeString(resultModel.entity->Model().type)) == 0);
                 sharedThis->m_entityToken = MakeShared<PlayFab::EntityToken>(resultModel);
                 sharedThis->TokenRefreshedCallbacks.Invoke(sharedThis->m_entityToken);
                 return Result<SharedPtr<Entity>>{ std::move(sharedThis) };
@@ -142,6 +135,40 @@ EntityToken::EntityToken(EntityToken&& src) :
     m_expiration{ src.m_expiration }
 {
     expiration = m_expiration ? m_expiration.operator->() : nullptr;
+}
+
+size_t EntityToken::RequiredBufferSize() const
+{
+    size_t requiredSize{ alignof(EntityToken) + sizeof(EntityToken) };
+    if (token)
+    {
+        requiredSize += (std::strlen(token) + 1);
+    }
+    if (expiration)
+    {
+        requiredSize += (alignof(time_t) + sizeof(time_t));
+    }
+    return requiredSize;
+}
+
+Result<PFEntityToken const*> EntityToken::Copy(ModelBuffer& buffer) const
+{
+    // Alloc
+    auto allocResult = buffer.Alloc<PFEntityToken>(1);
+    RETURN_IF_FAILED(allocResult.hr);
+    // Copy
+    auto outputPtr = allocResult.ExtractPayload();
+    {
+        auto tokenCopyResult = buffer.CopyTo(this->token);
+        RETURN_IF_FAILED(tokenCopyResult.hr);
+        outputPtr->token = tokenCopyResult.ExtractPayload();
+    }
+    {
+        auto expirationCopyResult = buffer.CopyTo(this->expiration);
+        RETURN_IF_FAILED(expirationCopyResult.hr);
+        outputPtr->expiration = expirationCopyResult.ExtractPayload();
+    }
+    return outputPtr;
 }
 
 }

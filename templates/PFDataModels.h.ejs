@@ -48,7 +48,11 @@ for (var typeIndex = 0; typeIndex < featureGroup.sortedClasses.length; typeIndex
     var datatype = featureGroup.sortedClasses[typeIndex];
     if (datatype.isInternalOnly) {
         continue;
-    } %>
+    } 
+    if (datatype.name === "EntityKey") { %>
+#ifndef PF_ENTITY_KEY_DEFINED
+#define PF_ENTITY_KEY_DEFINED<%
+    } // end if %>        
 /// <summary>
 <%- getFormattedDatatypeDescription(datatype) %>
 /// </summary>
@@ -58,8 +62,10 @@ for (var propertyIndex = 0; propertyIndex < datatype.properties.length; property
 %><%- getPropertyDefinition(datatype, property, false) %><% } %>
 } <%- datatype.prefix %><%- datatype.name %>;
 <% 
-// Explicitly add LoginWithXUserRequest type alongside LoginWithXboxRequest
-if (datatype.name === "ClientLoginWithXboxRequest") { %>
+    if (datatype.name === "EntityKey") { %>
+#endif // PF_ENTITY_KEY_DEFINED<%
+    } else if (datatype.name === "ClientLoginWithXboxRequest") { 
+        // Explicitly add LoginWithXUserRequest type alongside LoginWithXboxRequest %>
 #if HC_PLATFORM == HC_PLATFORM_GDK
 /// <summary>
 /// <%- prefix %>LoginWithXUserRequest data model. If this is the first time a user has signed in with
@@ -110,7 +116,7 @@ typedef struct <%- prefix %>LoginWithXUserRequest
 
 } <%- prefix %>LoginWithXUserRequest;
 #endif
-<% } // end if
+<%  } // end if
 } // end for
 
 if (featureGroup.name === "Shared") { %>
