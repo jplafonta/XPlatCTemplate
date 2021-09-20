@@ -8,3 +8,9 @@
 #pragma once
 
 #include <httpClient/pal.h>
+
+#if !HC_PLATFORM_IS_MICROSOFT
+#ifndef _Null_terminated_
+#define _Null_terminated_
+#endif
+#endif // HC_PLATFORM_IS_MICROSOFT
