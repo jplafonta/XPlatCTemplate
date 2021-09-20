@@ -836,7 +836,20 @@ function getPropertyDefinition(datatype, property, isInternal) {
     if (!isInternal || datatype.isInternalOnly || requiresDynamicStorage(property)) {
         var type = isInternal ? getInternalPropertyType(property) : getPublicPropertyType(property, true);
         var propName = getPropertyName(property, datatype.isInternalOnly ? false : isInternal);
-        output += ("\n" + tab + type + " " + propName + ";");
+        var salAnnotations = "";
+        if (property.actualtype !== "object") {
+            if (property.optional) {
+                salAnnotations += "_Maybenull_ ";
+            }
+            if (property.collection) {
+                salAnnotations += ("_Field_size_(" + propName + "Count) ");
+            }
+        }
+        if (property.actualtype === "String" && !property.collection) {
+            salAnnotations += "_Null_terminated_ ";
+        }
+
+        output += ("\n" + tab + salAnnotations + type + " " + propName + ";");
 
         // For public collection properties add an additional "count" property
         if (property.collection && !(type === (globalPrefix + "JsonObject")) && !isInternal) {

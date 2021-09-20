@@ -40,7 +40,7 @@ if (featureGroup.name === "Shared") { %>
 /// </summary>
 typedef struct <%- globalPrefix %>JsonObject
 {
-    const char* stringValue;
+    _Maybenull_ _Null_terminated_ const char* stringValue;
 } <%- globalPrefix %>JsonObject;
 <% }
 
@@ -80,13 +80,13 @@ typedef struct <%- prefix %>LoginWithXUserRequest
     /// <summary>
     /// (Optional) Automatically create a PlayFab account if one is not currently linked to this ID.
     /// </summary>
-    bool const* createAccount;
+    _Maybenull_ bool const* createAccount;
 
     /// <summary>
     /// (Optional) The optional custom tags associated with the request (e.g. build number, external
     /// trace identifiers, etc.).
     /// </summary>
-    struct <%- globalPrefix %>StringDictionaryEntry const* customTags;
+    _Maybenull_ _Field_size_(customTagsCount) struct <%- globalPrefix %>StringDictionaryEntry const* customTags;
 
     /// <summary>
     /// Count of customTags
@@ -96,18 +96,18 @@ typedef struct <%- prefix %>LoginWithXUserRequest
     /// <summary>
     /// (Optional) Flags for which pieces of info to return for the user.
     /// </summary>
-    <%- globalPrefix %>GetPlayerCombinedInfoRequestParams const* infoRequestParameters;
+    _Maybenull_ <%- globalPrefix %>GetPlayerCombinedInfoRequestParams const* infoRequestParameters;
 
     /// <summary>
     /// (Optional) Player secret that is used to verify API request signatures (Enterprise Only).
     /// </summary>
-    const char* playerSecret;
+    _Maybenull_ _Null_terminated_ const char* playerSecret;
 
     /// <summary>
     /// Unique identifier for the title, found in the Settings > Game Properties section of the PlayFab
     /// developer site when a title has been selected.
     /// </summary>
-    const char* titleId;
+    _Null_terminated_ const char* titleId;
 
     /// <summary>
     /// XUserHandle returned from XUserAddAsync or XUserAddByIdWithUiAsync.
@@ -125,8 +125,8 @@ if (featureGroup.name === "Shared") { %>
 /// </summary>
 typedef struct <%- globalPrefix %>StringDictionaryEntry
 {
-    const char* key;
-    const char* value;
+    _Null_terminated_ const char* key;
+    _Null_terminated_ const char* value;
 } <%- globalPrefix %>StringDictionaryEntry;
 
 /// <summary>
@@ -134,7 +134,7 @@ typedef struct <%- globalPrefix %>StringDictionaryEntry
 /// </summary>
 typedef struct <%- globalPrefix %>Int32DictionaryEntry
 {
-    const char* key;
+    _Null_terminated_ const char* key;
     int32_t value;
 } <%- globalPrefix %>Int32DictionaryEntry;
 
@@ -143,7 +143,7 @@ typedef struct <%- globalPrefix %>Int32DictionaryEntry
 /// </summary>
 typedef struct <%- globalPrefix %>Uint32DictionaryEntry
 {
-    const char* key;
+    _Null_terminated_ const char* key;
     uint32_t value;
 } <%- globalPrefix %>Uint32DictionaryEntry;
 
@@ -152,7 +152,7 @@ typedef struct <%- globalPrefix %>Uint32DictionaryEntry
 /// </summary>
 typedef struct <%- globalPrefix %>DateTimeDictionaryEntry
 {
-    const char* key;
+    _Null_terminated_ const char* key;
     time_t value;
 } <%- globalPrefix %>DateTimeDictionaryEntry;
 <% } // end if
@@ -164,7 +164,7 @@ for (var typeKey in featureGroup.dictionaryEntryTypes) {
 /// </summary>
 typedef struct <%- datatype.prefix %><%- datatype.name %>DictionaryEntry
 {
-    const char* key;<%
+    _Null_terminated_ const char* key;<%
 if (datatype.isenum) { %>
     <%- datatype.prefix %><%- datatype.name %> value;
 <% } else { %>
