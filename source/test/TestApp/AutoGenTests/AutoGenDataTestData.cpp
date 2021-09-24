@@ -3,11 +3,33 @@
 #include "TestApp.h"
 #include "AutoGenDataTests.h"
 #include "XAsyncHelper.h"
+#include "JsonUtils.h"
+
+#include <HttpClient.h>
+#include <httpClient/httpClient.h>
 
 namespace PlayFabUnit
 {
 
 using namespace PlayFab::Wrappers;
+
+HRESULT UploadFileSync(std::string url, PlayFab::JsonValue& requestBody)
+{
+    HCCallHandle callHandle{ nullptr };
+
+    // Set up HCHttpCallHandle
+    RETURN_IF_FAILED(HCHttpCallCreate(&callHandle));
+    RETURN_IF_FAILED(HCHttpCallRequestSetUrl(callHandle, "PUT", url.c_str()));
+
+    RETURN_IF_FAILED(HCHttpCallRequestSetHeader(callHandle, "Content-Type", "application/json; charset=utf-8", true));
+    
+    RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyString(callHandle, PlayFab::JsonUtils::WriteToString(requestBody).c_str()));
+
+    XAsyncBlock asyncBlock{};
+    RETURN_IF_FAILED(HCHttpCallPerformAsync(callHandle, &asyncBlock));
+
+    return XAsyncGetStatus(&asyncBlock, true);
+}
 
 #pragma region AbortFileUploads
 
@@ -54,6 +76,10 @@ void AutoGenDataTests::FillDeleteFilesPrerequisiteInitiateFileUploadsRequest(PFD
 HRESULT AutoGenDataTests::StoreDeleteFilesPrerequisitePFDataInitiateFileUploadsResponse(std::shared_ptr<InitiateFileUploadsResponseHolder> result)
 {
     testData.m_InitiateFileUploadsResponse = result;
+
+    PlayFab::JsonDocument requestBody;
+    requestBody.Parse("{ \"body\": \"Delete Files\" }");
+    UploadFileSync(testData.m_InitiateFileUploadsResponse->result->uploadDetails[0]->uploadUrl, requestBody);
     return S_OK;
 }
 
@@ -101,6 +127,10 @@ void AutoGenDataTests::FillFinalizeFileUploadsPrerequisiteInitiateFileUploadsReq
 HRESULT AutoGenDataTests::StoreFinalizeFileUploadsPrerequisitePFDataInitiateFileUploadsResponse(std::shared_ptr<InitiateFileUploadsResponseHolder> result)
 {
     testData.m_InitiateFileUploadsResponse = result;
+
+    PlayFab::JsonDocument requestBody;
+    requestBody.Parse("{ \"body\": \"Finalize File Uploads\" }");
+    UploadFileSync(testData.m_InitiateFileUploadsResponse->result->uploadDetails[0]->uploadUrl, requestBody);
     return S_OK;
 }
 
