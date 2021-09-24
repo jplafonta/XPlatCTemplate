@@ -44,10 +44,12 @@ exports.makeCombinedAPI = function (apis, sourceDir, apiOutputDir) {
     }
 
     customizations = parseDataFile("customizations.json");
-    prereqsAndCleanupMap = parseDataFile("prerequisitesAndCleanup.json");
-    callingEntityOverrides = parseDataFile("callingEntityOverrides.json");
+    testCustomizations = parseDataFile("testCustomizations.json");
     xmlRefDocs = parseDataFile("XMLRefDocs.json");
     testStatusMap = parseDataFile("TestStatus.json");
+
+    prereqsAndCleanupMap = testCustomizations.prerequisitesAndCleanup;
+    callingEntityOverrides = testCustomizations.callingEntityOverrides;
 
     // Make SDK customizations to apis structure
     curateServiceApis(apis)

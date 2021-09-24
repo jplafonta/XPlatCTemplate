@@ -183,7 +183,7 @@
   "TestDataDeleteFiles": "Failing",
   "TestDataFinalizeFileUploads": "Failing",
   "TestDataGetFiles": "PassingWithData",
-  "TestDataInitiateFileUploads": "Failing",
+  "TestDataInitiateFileUploads": "PassingWithData",
   "TestDataGetObjects": "PassingWithData",
   "TestDataSetObjects": "Failing"
 
