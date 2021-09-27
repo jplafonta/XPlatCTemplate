@@ -1,3 +1,4 @@
+const { assert } = require("console");
 var path = require("path");
 const { fileURLToPath } = require("url");
 
@@ -283,7 +284,34 @@ function curateServiceApis(apis) {
             } else if (call.result && (call.resultDatatype.name.endsWith("LoginResult") || call.resultDatatype.name === "RegisterPlayFabUserResult")) {
                 call.entityReturned = "TitlePlayer";
                 call.resultDatatype.isInternalOnly = true;
+
+                customizeLoginRequest(call.requestDatatype);
             }
+        }
+    }
+}
+
+// Make several customizations to Login requests. Ideally long term the service contract can be modified so that these modifications aren't necessary,
+// but for know they lead to much cleaner client APIs.
+// 1) Remove titleId field since we already have that from PFInitialize and titles shouldn't need to provide it again
+// 2) Remove option for encrypted request (and update other optional accordingly)
+function customizeLoginRequest(requestDatatype) {
+    assert(requestDatatype.properties);
+
+    for (var i = requestDatatype.properties.length - 1; i >= 0 ; i--) {
+        let property = requestDatatype.properties[i];
+        if (property.name === "TitleId") {
+            requestDatatype.properties.splice(i, 1);
+        } else if (property.name === "EncryptedRequest") {
+            requestDatatype.properties.splice(i, 1);
+        }
+
+        // Properties that are only marked optional because of the optional to provide an encrypted request. Change "optional" to false.
+        var nonOptionalLoginProperties = new Set(["CreateAccount", "AndroidDeviceId", "CustomId", "ServerAuthCode", "DeviceId", "AuthTicket", "KongregateId", "IdentityToken",
+        "IdToken", "AuthCode", "SteamTicket", "AccessToken", "XboxToken", "Password", "ServerCustomId"]);
+
+        if (nonOptionalLoginProperties.has(property.name)) {
+            property.optional = false;
         }
     }
 }

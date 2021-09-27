@@ -15,7 +15,7 @@
     "include\\playfab\\PFPal.h": "C Public Includes\\playfab",
     "include\\playfab\\PFQoS.h": "C Public Includes\\playfab",
     "include\\playfab\\PFTitlePlayer.h": "C Public Includes\\playfab",
-    "include\\playfab\\cpp\\ModelHelpers.h": "C Public Includes\\playfab\\cpp",
+    "include\\playfab\\cpp\\PFModelWrapperHelpers.h": "C Public Includes\\playfab\\cpp",
     "include\\playfab\\cpp\\StdOptional.h": "C Public Includes\\playfab\\cpp"
   },
   "sourceFiles": {

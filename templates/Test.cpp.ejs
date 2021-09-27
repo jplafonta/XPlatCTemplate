@@ -77,9 +77,7 @@ void AutoGen<%- featureGroup.name %>Tests::ClassSetUp()
     {
         PFAuthenticationLoginWithCustomIDRequest request{};
         request.customId = "CustomId";
-        bool createAccount = true;
-        request.createAccount = &createAccount;
-        request.titleId = testTitleData.titleId.data();
+        request.createAccount = true;
 
         PFGetPlayerCombinedInfoRequestParams combinedInfoRequestParams{};
         combinedInfoRequestParams.getCharacterInventories = true;
@@ -99,7 +97,7 @@ void AutoGen<%- featureGroup.name %>Tests::ClassSetUp()
         assert(SUCCEEDED(hr));
         if (SUCCEEDED(hr))
         {
-            // Synchronously what for login to complete
+            // Synchronously wait for login to complete
             hr = XAsyncGetStatus(&async, true);
             assert(SUCCEEDED(hr));
             if (SUCCEEDED(hr))
@@ -137,7 +135,7 @@ void AutoGen<%- featureGroup.name %>Tests::ClassSetUp()
         assert(SUCCEEDED(hr));
         if (SUCCEEDED(hr))
         {
-            // Synchronously what for login to complete
+            // Synchronously wait for login to complete
             hr = XAsyncGetStatus(&async, true);
             assert(SUCCEEDED(hr));
             

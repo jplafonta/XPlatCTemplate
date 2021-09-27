@@ -97,9 +97,12 @@ struct AuthResult : public XAsyncResult
             size_t bufferSize;
             RETURN_IF_FAILED(PFTitlePlayerGetPlayerCombinedInfoSize(titlePlayerHandle, &bufferSize));
 
-            std::vector<char> buffer(bufferSize);
-            PFGetPlayerCombinedInfoResultPayload const* playerCombinedInfo;
-            RETURN_IF_FAILED(PFTitlePlayerGetPlayerCombinedInfo(titlePlayerHandle, buffer.size(), buffer.data(), &playerCombinedInfo, nullptr));
+            if (bufferSize > 0)
+            {
+                std::vector<char> buffer(bufferSize);
+                PFGetPlayerCombinedInfoResultPayload const* playerCombinedInfo;
+                RETURN_IF_FAILED(PFTitlePlayerGetPlayerCombinedInfo(titlePlayerHandle, buffer.size(), buffer.data(), &playerCombinedInfo, nullptr));
+            }
         }
 
         {
@@ -116,10 +119,12 @@ struct AuthResult : public XAsyncResult
             size_t bufferSize;
             RETURN_IF_FAILED(PFTitlePlayerGetTreatmentAssignmentSize(titlePlayerHandle, &bufferSize));
 
-
-            std::vector<char> buffer(bufferSize);
-            PFTreatmentAssignment const* treatmentAssignment;
-            RETURN_IF_FAILED(PFTitlePlayerGetTreatmentAssignment(titlePlayerHandle, buffer.size(), buffer.data(), &treatmentAssignment, nullptr));
+            if (bufferSize > 0)
+            {
+                std::vector<char> buffer(bufferSize);
+                PFTreatmentAssignment const* treatmentAssignment;
+                RETURN_IF_FAILED(PFTitlePlayerGetTreatmentAssignment(titlePlayerHandle, buffer.size(), buffer.data(), &treatmentAssignment, nullptr));
+            }
         }
 
         return S_OK;
@@ -135,9 +140,8 @@ void EntityTests::TestClientLogin(TestContext& testContext)
 
     PFAuthenticationLoginWithCustomIDRequest request{};
     request.customId = "CustomId";
-    bool createAccount = true;
-    request.createAccount = &createAccount;
-    request.titleId = testTitleData.titleId.data();
+    request.createAccount = true;
+
     PFGetPlayerCombinedInfoRequestParams combinedInfoRequestParams{};
     combinedInfoRequestParams.getPlayerProfile = true;
     combinedInfoRequestParams.getTitleData = true;
@@ -167,9 +171,7 @@ void EntityTests::TestManualTokenRefresh(TestContext& testContext)
 
         PFAuthenticationLoginWithCustomIDRequest request{};
         request.customId = "CustomId";
-        bool createAccount = true;
-        request.createAccount = &createAccount;
-        request.titleId = testTitleData.titleId.data();
+        request.createAccount = true;
 
         HRESULT hr = PFAuthenticationClientLoginWithCustomIDAsync(stateHandle, &request, &async);
         if (FAILED(hr))
@@ -293,9 +295,7 @@ void EntityTests::TestLoginWithXUser(TestContext& testContext)
         auto async = std::make_unique<XAsyncHelper<AuthResult>>(testContext);
 
         PFAuthenticationLoginWithXUserRequest request{};
-        bool createAccount = true;
-        request.createAccount = &createAccount;
-        request.titleId = testTitleData.titleId.data();
+        request.createAccount = true;
         request.userHandle = xUser.handle;
 
         hr = PFAuthenticationLoginWithXUserAsync(stateHandle, &request, &async->asyncBlock);
