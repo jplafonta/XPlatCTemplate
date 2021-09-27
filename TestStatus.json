@@ -180,12 +180,12 @@
   "TestGroupsUpdateGroup": "PassingWithData",
   "TestGroupsUpdateRole": "PassingWithData",
   "TestDataAbortFileUploads": "PassingWithData",
-  "TestDataDeleteFiles": "Failing",
-  "TestDataFinalizeFileUploads": "Failing",
+  "TestDataDeleteFiles": "PassingWithData",
+  "TestDataFinalizeFileUploads": "PassingWithData",
   "TestDataGetFiles": "PassingWithData",
-  "TestDataInitiateFileUploads": "PassingWithData",
   "TestDataGetObjects": "PassingWithData",
-  "TestDataSetObjects": "Failing"
+  "TestDataInitiateFileUploads": "PassingWithData",
+  "TestDataSetObjects": "PassingWithData"
 
 
 }

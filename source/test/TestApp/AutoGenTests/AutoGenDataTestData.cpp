@@ -3,11 +3,33 @@
 #include "TestApp.h"
 #include "AutoGenDataTests.h"
 #include "XAsyncHelper.h"
+#include "JsonUtils.h"
+
+#include <HttpClient.h>
+#include <httpClient/httpClient.h>
 
 namespace PlayFabUnit
 {
 
 using namespace PlayFab::Wrappers;
+
+HRESULT UploadFileSync(std::string url, PlayFab::JsonValue& requestBody)
+{
+    HCCallHandle callHandle{ nullptr };
+
+    // Set up HCHttpCallHandle
+    RETURN_IF_FAILED(HCHttpCallCreate(&callHandle));
+    RETURN_IF_FAILED(HCHttpCallRequestSetUrl(callHandle, "PUT", url.c_str()));
+
+    RETURN_IF_FAILED(HCHttpCallRequestSetHeader(callHandle, "Content-Type", "application/json; charset=utf-8", true));
+    
+    RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyString(callHandle, PlayFab::JsonUtils::WriteToString(requestBody).c_str()));
+
+    XAsyncBlock asyncBlock{};
+    RETURN_IF_FAILED(HCHttpCallPerformAsync(callHandle, &asyncBlock));
+
+    return XAsyncGetStatus(&asyncBlock, true);
+}
 
 #pragma region AbortFileUploads
 
@@ -54,6 +76,10 @@ void AutoGenDataTests::FillDeleteFilesPrerequisiteInitiateFileUploadsRequest(PFD
 HRESULT AutoGenDataTests::StoreDeleteFilesPrerequisitePFDataInitiateFileUploadsResponse(std::shared_ptr<InitiateFileUploadsResponseHolder> result)
 {
     testData.m_InitiateFileUploadsResponse = result;
+
+    PlayFab::JsonDocument requestBody;
+    requestBody.Parse("{ \"body\": \"Delete Files\" }");
+    UploadFileSync(testData.m_InitiateFileUploadsResponse->result->uploadDetails[0]->uploadUrl, requestBody);
     return S_OK;
 }
 
@@ -101,6 +127,10 @@ void AutoGenDataTests::FillFinalizeFileUploadsPrerequisiteInitiateFileUploadsReq
 HRESULT AutoGenDataTests::StoreFinalizeFileUploadsPrerequisitePFDataInitiateFileUploadsResponse(std::shared_ptr<InitiateFileUploadsResponseHolder> result)
 {
     testData.m_InitiateFileUploadsResponse = result;
+
+    PlayFab::JsonDocument requestBody;
+    requestBody.Parse("{ \"body\": \"Finalize File Uploads\" }");
+    UploadFileSync(testData.m_InitiateFileUploadsResponse->result->uploadDetails[0]->uploadUrl, requestBody);
     return S_OK;
 }
 
@@ -222,7 +252,11 @@ void AutoGenDataTests::FillSetObjectsPrerequisiteSetObjectsRequest(PFDataSetObje
 {
     // Example request: "{ \"ExpectedProfileVersion\": 5, \"Objects\": [ {  \"ObjectName\": \"SaveSate\",  \"DataObject\": {  \"PlayerDetails\": {   \"LastMissionSuccess\": \"2017-06-15T11:05:19Z\",   \"LastMissionFailure\": \"2017-06-12T11:05:19Z\",   \"MapPosition\": [   22,   37.78   ],   \"IsPaidUpgrade\": true  },  \"GameSettings\": {   \"Screen\": \"FriendsList\",   \"Favorites\": [   \"Place 1\",   \"Place 2\"   ]  }  },  \"SimpleStatements\": {  \"Read\": [   {   \"Friend\": true   }  ],  \"Write\": [   \"Self\"  ]  } } ], \"Entity\": { \"Id\": \"A8140AB9109712B\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
     ModelVector<PFDataSetObjectWrapper<>> objects;
-    objects.push_back(PFDataSetObject{});
+    PFDataSetObject pfObject{};
+    pfObject.objectName = "TestObjectName";
+    pfObject.dataObject.stringValue = "can't be null right now";
+    pfObject.escapedDataObject = "\"Test Object Prereq Data\"";
+    objects.push_back(pfObject);
     request.SetObjects(std::move(objects));
     request.SetEntity(PFEntityKey{ "B64BE91E5DBD5597", "title_player_account" });
 }
@@ -238,7 +272,10 @@ void AutoGenDataTests::FillSetObjectsRequest(PFDataSetObjectsRequestWrapper<>& r
     // TODO: debug Failing test
     // Example Request: "{ \"ExpectedProfileVersion\": 5, \"Objects\": [ {  \"ObjectName\": \"SaveSate\",  \"DataObject\": {  \"PlayerDetails\": {   \"LastMissionSuccess\": \"2017-06-15T11:05:19Z\",   \"LastMissionFailure\": \"2017-06-12T11:05:19Z\",   \"MapPosition\": [   22,   37.78   ],   \"IsPaidUpgrade\": true  },  \"GameSettings\": {   \"Screen\": \"FriendsList\",   \"Favorites\": [   \"Place 1\",   \"Place 2\"   ]  }  },  \"SimpleStatements\": {  \"Read\": [   {   \"Friend\": true   }  ],  \"Write\": [   \"Self\"  ]  } } ], \"Entity\": { \"Id\": \"A8140AB9109712B\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
     ModelVector<PFDataSetObjectWrapper<>> objects;
-    objects.push_back(PFDataSetObject{});
+    PFDataSetObject pfObject{};
+    pfObject.objectName = "TestObjectName";
+    pfObject.dataObject.stringValue = "{ \"Test Object\": \"New Data\" }";
+    objects.push_back(pfObject);
     request.SetObjects(std::move(objects));
     request.SetEntity(PFEntityKey{ "B64BE91E5DBD5597", "title_player_account" });
 }
