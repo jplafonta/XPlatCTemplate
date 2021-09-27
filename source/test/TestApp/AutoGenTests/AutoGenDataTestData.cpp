@@ -252,7 +252,11 @@ void AutoGenDataTests::FillSetObjectsPrerequisiteSetObjectsRequest(PFDataSetObje
 {
     // Example request: "{ \"ExpectedProfileVersion\": 5, \"Objects\": [ {  \"ObjectName\": \"SaveSate\",  \"DataObject\": {  \"PlayerDetails\": {   \"LastMissionSuccess\": \"2017-06-15T11:05:19Z\",   \"LastMissionFailure\": \"2017-06-12T11:05:19Z\",   \"MapPosition\": [   22,   37.78   ],   \"IsPaidUpgrade\": true  },  \"GameSettings\": {   \"Screen\": \"FriendsList\",   \"Favorites\": [   \"Place 1\",   \"Place 2\"   ]  }  },  \"SimpleStatements\": {  \"Read\": [   {   \"Friend\": true   }  ],  \"Write\": [   \"Self\"  ]  } } ], \"Entity\": { \"Id\": \"A8140AB9109712B\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
     ModelVector<PFDataSetObjectWrapper<>> objects;
-    objects.push_back(PFDataSetObject{});
+    PFDataSetObject pfObject{};
+    pfObject.objectName = "TestObjectName";
+    pfObject.dataObject.stringValue = "can't be null right now";
+    pfObject.escapedDataObject = "\"Test Object Prereq Data\"";
+    objects.push_back(pfObject);
     request.SetObjects(std::move(objects));
     request.SetEntity(PFEntityKey{ "B64BE91E5DBD5597", "title_player_account" });
 }
@@ -268,7 +272,10 @@ void AutoGenDataTests::FillSetObjectsRequest(PFDataSetObjectsRequestWrapper<>& r
     // TODO: debug Failing test
     // Example Request: "{ \"ExpectedProfileVersion\": 5, \"Objects\": [ {  \"ObjectName\": \"SaveSate\",  \"DataObject\": {  \"PlayerDetails\": {   \"LastMissionSuccess\": \"2017-06-15T11:05:19Z\",   \"LastMissionFailure\": \"2017-06-12T11:05:19Z\",   \"MapPosition\": [   22,   37.78   ],   \"IsPaidUpgrade\": true  },  \"GameSettings\": {   \"Screen\": \"FriendsList\",   \"Favorites\": [   \"Place 1\",   \"Place 2\"   ]  }  },  \"SimpleStatements\": {  \"Read\": [   {   \"Friend\": true   }  ],  \"Write\": [   \"Self\"  ]  } } ], \"Entity\": { \"Id\": \"A8140AB9109712B\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
     ModelVector<PFDataSetObjectWrapper<>> objects;
-    objects.push_back(PFDataSetObject{});
+    PFDataSetObject pfObject{};
+    pfObject.objectName = "TestObjectName";
+    pfObject.dataObject.stringValue = "{ \"Test Object\": \"New Data\" }";
+    objects.push_back(pfObject);
     request.SetObjects(std::move(objects));
     request.SetEntity(PFEntityKey{ "B64BE91E5DBD5597", "title_player_account" });
 }

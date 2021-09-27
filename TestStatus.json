@@ -185,7 +185,7 @@
   "TestDataGetFiles": "PassingWithData",
   "TestDataGetObjects": "PassingWithData",
   "TestDataInitiateFileUploads": "PassingWithData",
-  "TestDataSetObjects": "Failing"
+  "TestDataSetObjects": "PassingWithData"
 
 
 }
