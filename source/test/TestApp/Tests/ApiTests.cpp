@@ -261,9 +261,7 @@ void ApiTests::ClassSetUp()
     {
         PFAuthenticationLoginWithCustomIDRequest request{};
         request.customId = "CustomId";
-        bool createAccount = true;
-        request.createAccount = &createAccount;
-        request.titleId = testTitleData.titleId.data();
+        request.createAccount = true;
 
         XAsyncBlock async{};
         hr = PFAuthenticationClientLoginWithCustomIDAsync(stateHandle, &request, &async);

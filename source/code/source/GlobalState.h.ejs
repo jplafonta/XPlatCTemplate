@@ -18,6 +18,7 @@ public:
     virtual ~GlobalState() = default;
 
 public:
+    String const& TitleId() const;
     SharedPtr<HttpClient const> HttpClient() const;
     SharedPtr<String const> SecretKey() const;
 
@@ -25,10 +26,10 @@ public:
     SharedPtr<QoS::QoSAPI const> QoSAPI() const;
 
 private:
+    String const m_titleId;
     SharedPtr<PlayFab::HttpClient> m_httpClient;
     SharedPtr<String> m_secretKey;
     SharedPtr<QoS::QoSAPI> m_qosAPI;
-
     TaskQueue m_backgroundQueue;
 };
 

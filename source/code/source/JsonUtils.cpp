@@ -76,6 +76,11 @@ JsonValue ToJson(const String& string)
 
 JsonValue ToJson(const PFJsonObject& jsonObject)
 {
+    // By design, map empty jsonObject to null JsonValue
+    if (!jsonObject.stringValue)
+    {
+        return JsonValue{ rapidjson::kNullType };
+    }
     JsonDocument document{ &allocator };
     document.Parse(jsonObject.stringValue);
     return JsonValue{ document, allocator };

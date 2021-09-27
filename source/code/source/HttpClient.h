@@ -20,8 +20,8 @@ constexpr char kSecretKeyHeaderName[]{ "X-SecretKey" };
 class HttpClient
 {
 public:
-    HttpClient(String&& titleId);
-    HttpClient(String&& baseServiceHost, String&& titleId);
+    HttpClient(String titleId);
+    HttpClient(String&& baseServiceHost, String titleId);
     HttpClient(const HttpClient&) = default;
     ~HttpClient() = default;
 

@@ -85,12 +85,12 @@ typedef struct <%- prefix %>GlobalState* <%- prefix %>StateHandle;
 /// <summary>
 /// Create PlayFab global state.
 /// </summary>
-/// <param name="titleId">TitleId for the title. Found in the Game Manager for your title on the PlayFab Website.</param>
+/// <param name="playFabTitleId">PlayFab TitleId for the title. Found in the Game Manager for your title on the PlayFab Website.</param>
 /// <param name="backgroundQueue">An XTaskQueue that should be used for background work. If no queue is a default (threadpool) queue will be used.</param>
 /// <param name="stateHandle">Pointer to <%- prefix %>StateHandle to write.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT <%- prefix %>Initialize(
-    _In_z_ const char* titleId,
+    _In_z_ const char* playFabTitleId,
     _In_opt_ XTaskQueueHandle backgroundQueue,
     _Outptr_ <%- prefix %>StateHandle* stateHandle
 ) noexcept;
@@ -99,13 +99,13 @@ HRESULT <%- prefix %>Initialize(
 /// <summary>
 /// Create PlayFab global state. Should be only used when implementing admin or server code.
 /// </summary>
-/// <param name="titleId">TitleId for the title. Found in the Game Manager for your title on the PlayFab Website.</param>
+/// <param name="playFabTitleId">PlayFab TitleId for the title. Found in the Game Manager for your title on the PlayFab Website.</param>
 /// <param name="secretKey">Key to be used for Authentication for Server and Admin APIs.</param>
 /// <param name="backgroundQueue">An XTaskQueue that should be used for background work. If no queue is a default (threadpool) queue will be used.</param>
 /// <param name="stateHandle">Pointer to <%- prefix %>StateHandle to write.</param>
 /// <returns>Result code for this API operation.</returns>
 HRESULT <%- prefix %>AdminInitialize(
-    _In_z_ const char* titleId,
+    _In_z_ const char* playFabTitleId,
     _In_z_ const char* secretKey,
     _In_opt_ XTaskQueueHandle backgroundQueue,
     _Outptr_ <%- prefix %>StateHandle* stateHandle

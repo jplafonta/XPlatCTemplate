@@ -78,9 +78,9 @@ for (var propertyIndex = 0; propertyIndex < datatype.properties.length; property
 typedef struct <%- prefix %>LoginWithXUserRequest
 {
     /// <summary>
-    /// (Optional) Automatically create a PlayFab account if one is not currently linked to this ID.
+    /// Automatically create a PlayFab account if one is not currently linked to this ID.
     /// </summary>
-    _Maybenull_ bool const* createAccount;
+    bool createAccount;
 
     /// <summary>
     /// (Optional) The optional custom tags associated with the request (e.g. build number, external
@@ -102,12 +102,6 @@ typedef struct <%- prefix %>LoginWithXUserRequest
     /// (Optional) Player secret that is used to verify API request signatures (Enterprise Only).
     /// </summary>
     _Maybenull_ _Null_terminated_ const char* playerSecret;
-
-    /// <summary>
-    /// Unique identifier for the title, found in the Settings > Game Properties section of the PlayFab
-    /// developer site when a title has been selected.
-    /// </summary>
-    _Null_terminated_ const char* titleId;
 
     /// <summary>
     /// XUserHandle returned from XUserAddAsync or XUserAddByIdWithUiAsync.

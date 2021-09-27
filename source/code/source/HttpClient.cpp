@@ -61,13 +61,13 @@ private:
     SharedPtr<AsyncOpContext<ServiceResponse>> m_asyncContext;
 };
 
-HttpClient::HttpClient(String&& titleId) :
+HttpClient::HttpClient(String titleId) :
     m_baseServiceHost{ productionEnvironmentURL },
     m_titleId{ std::move(titleId) }
 {
 }
 
-HttpClient::HttpClient(String&& baseServiceHost, String&& titleId) :
+HttpClient::HttpClient(String&& baseServiceHost, String titleId) :
     m_baseServiceHost{ std::move(baseServiceHost) },
     m_titleId{ std::move(titleId) }
 {
