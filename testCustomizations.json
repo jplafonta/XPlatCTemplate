@@ -22,8 +22,8 @@
         },
 
         "ClientGetSharedGroupData": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ClientCreateSharedGroup", "ClientUpdateSharedGroupData" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "ClientRemoveSharedGroupMembers": {
@@ -52,8 +52,8 @@
         },
 
         "ServerGetSharedGroupData": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ClientCreateSharedGroup", "ServerUpdateSharedGroupData" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "ServerRemoveSharedGroupMembers": {
