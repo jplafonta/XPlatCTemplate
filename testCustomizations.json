@@ -6,6 +6,66 @@
         "ListMembershipOpportunities": "entityHandle2"
     },
     "prerequisitesAndCleanup": {
+        "AdminSetPublisherData": {
+            "prerequisites": [],
+            "cleanup": []
+        },
+
+        "ClientAddSharedGroupMembers": {
+            "prerequisites": [],
+            "cleanup": []
+        },
+
+        "ClientCreateSharedGroup": {
+            "prerequisites": [],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
+        },
+
+        "ClientGetSharedGroupData": {
+            "prerequisites": [],
+            "cleanup": []
+        },
+
+        "ClientRemoveSharedGroupMembers": {
+            "prerequisites": [],
+            "cleanup": []
+        },
+
+        "ClientUpdateSharedGroupData": {
+            "prerequisites": [],
+            "cleanup": []
+        },
+
+        "ServerAddSharedGroupMembers": {
+            "prerequisites": [],
+            "cleanup": []
+        },
+
+        "ServerCreateSharedGroup": {
+            "prerequisites": [],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
+        },
+
+        "ServerDeleteSharedGroup": {
+            "prerequisites": [ "ClientCreateSharedGroup" ],
+            "cleanup": []
+        },
+
+        "ServerGetSharedGroupData": {
+            "prerequisites": [],
+            "cleanup": []
+        },
+
+        "ServerRemoveSharedGroupMembers": {
+            "prerequisites": [],
+            "cleanup": []
+        },
+
+        "ServerUpdateSharedGroupData": {
+            "prerequisites": [],
+            "cleanup": []
+        },
+
         "AbortFileUploads": {
             "prerequisites": [ "InitiateFileUploads" ],
             "cleanup": []
