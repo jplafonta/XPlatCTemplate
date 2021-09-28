@@ -12,8 +12,8 @@
         },
 
         "ClientAddSharedGroupMembers": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ClientCreateSharedGroup" ],
+            "cleanup": [ "ClientRemoveSharedGroupMembers", "ServerDeleteSharedGroup" ]
         },
 
         "ClientCreateSharedGroup": {
@@ -27,8 +27,8 @@
         },
 
         "ClientRemoveSharedGroupMembers": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ClientCreateSharedGroup", "ClientAddSharedGroupMembers" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "ClientUpdateSharedGroupData": {
@@ -37,8 +37,8 @@
         },
 
         "ServerAddSharedGroupMembers": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ServerCreateSharedGroup" ],
+            "cleanup": [ "ServerRemoveSharedGroupMembers", "ServerDeleteSharedGroup" ]
         },
 
         "ServerCreateSharedGroup": {
@@ -57,8 +57,8 @@
         },
 
         "ServerRemoveSharedGroupMembers": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ServerCreateSharedGroup", "ServerAddSharedGroupMembers" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "ServerUpdateSharedGroupData": {

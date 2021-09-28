@@ -22,11 +22,34 @@ void AutoGenSharedGroupsTests::FillSetPublisherDataRequest(PFSetPublisherDataReq
 
 #pragma region ClientAddSharedGroupMembers
 
+void AutoGenSharedGroupsTests::FillClientAddSharedGroupMembersPrerequisiteCreateSharedGroupRequest(PFSharedGroupsCreateSharedGroupRequestWrapper<>& request)
+{
+    request.SetSharedGroupId("AddSharedGroupMembers");
+}
+
+HRESULT AutoGenSharedGroupsTests::StoreClientAddSharedGroupMembersPrerequisitePFSharedGroupsCreateSharedGroupResult(std::shared_ptr<CreateSharedGroupResultHolder> result)
+{
+    testData.m_CreateSharedGroupResult = result;
+    return S_OK;
+}
+
 void AutoGenSharedGroupsTests::FillAddSharedGroupMembersRequest(PFSharedGroupsAddSharedGroupMembersRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{ \"SharedGroupId\": \"Clan Data\", \"PlayFabIds\": [ \"D984A64B832\", \"F74A523E1562\" ]}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    request.SetSharedGroupId("AddSharedGroupMembers");
+    request.SetPlayFabIds({ "6842934CB46C0834" });
+}
+
+void AutoGenSharedGroupsTests::FillClientAddSharedGroupMembersCleanupRemoveSharedGroupMembersRequest(PFSharedGroupsRemoveSharedGroupMembersRequestWrapper<>& request)
+{
+    // Example Request: "{ \"SharedGroupId\": \"Clan Data\", \"PlayFabIds\": [ \"D984A64B832\", \"F74A523E1562\" ]}"
+    request.SetSharedGroupId("AddSharedGroupMembers");
+    request.SetPlayFabIds({ "6842934CB46C0834" });
+}
+
+void AutoGenSharedGroupsTests::FillClientAddSharedGroupMembersCleanupDeleteSharedGroupRequest(PFSharedGroupsDeleteSharedGroupRequestWrapper<>& request)
+{
+    request.SetSharedGroupId("AddSharedGroupMembers");
 }
 
 #pragma endregion
@@ -78,11 +101,36 @@ HRESULT AutoGenSharedGroupsTests::ValidatePFSharedGroupsGetSharedGroupDataResult
 
 #pragma region ClientRemoveSharedGroupMembers
 
+void AutoGenSharedGroupsTests::FillClientRemoveSharedGroupMembersPrerequisiteCreateSharedGroupRequest(PFSharedGroupsCreateSharedGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"SharedGroupId\": \"Clan Data\"}"
+    request.SetSharedGroupId("RemoveSharedGroupMembers");
+}
+
+HRESULT AutoGenSharedGroupsTests::StoreClientRemoveSharedGroupMembersPrerequisitePFSharedGroupsCreateSharedGroupResult(std::shared_ptr<CreateSharedGroupResultHolder> result)
+{
+    testData.m_CreateSharedGroupResult = result;
+    return S_OK;
+}
+
+void AutoGenSharedGroupsTests::FillClientRemoveSharedGroupMembersPrerequisiteAddSharedGroupMembersRequest(PFSharedGroupsAddSharedGroupMembersRequestWrapper<>& request)
+{
+    // Example request: "{ \"SharedGroupId\": \"Clan Data\", \"PlayFabIds\": [ \"D984A64B832\", \"F74A523E1562\" ]}"
+    request.SetSharedGroupId("RemoveSharedGroupMembers");
+    request.SetPlayFabIds({ "6842934CB46C0834" });
+}
+
 void AutoGenSharedGroupsTests::FillRemoveSharedGroupMembersRequest(PFSharedGroupsRemoveSharedGroupMembersRequestWrapper<>& request)
 {
-    // TODO: debug PassingButNoData test
     // Example Request: "{ \"SharedGroupId\": \"Clan Data\", \"PlayFabIds\": [ \"D984A64B832\", \"F74A523E1562\" ]}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    request.SetSharedGroupId("RemoveSharedGroupMembers");
+    request.SetPlayFabIds({ "6842934CB46C0834" });
+}
+
+void AutoGenSharedGroupsTests::FillClientRemoveSharedGroupMembersCleanupDeleteSharedGroupRequest(PFSharedGroupsDeleteSharedGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"SharedGroupId\": \"Clan Data\"}"
+    request.SetSharedGroupId("RemoveSharedGroupMembers");
 }
 
 #pragma endregion
@@ -100,6 +148,29 @@ void AutoGenSharedGroupsTests::FillUpdateSharedGroupDataRequest(PFSharedGroupsUp
 
 #pragma region ServerAddSharedGroupMembers
 
+void AutoGenSharedGroupsTests::FillServerAddSharedGroupMembersPrerequisiteCreateSharedGroupRequest(PFSharedGroupsCreateSharedGroupRequestWrapper<>& request)
+{
+    request.SetSharedGroupId("AddSharedGroupMembers");
+}
+
+HRESULT AutoGenSharedGroupsTests::StoreServerAddSharedGroupMembersPrerequisitePFSharedGroupsCreateSharedGroupResult(std::shared_ptr<CreateSharedGroupResultHolder> result)
+{
+    testData.m_CreateSharedGroupResult = result;
+    return S_OK;
+}
+
+
+void AutoGenSharedGroupsTests::FillServerAddSharedGroupMembersCleanupRemoveSharedGroupMembersRequest(PFSharedGroupsRemoveSharedGroupMembersRequestWrapper<>& request)
+{
+    // Example Request: "{ \"SharedGroupId\": \"Clan Data\", \"PlayFabIds\": [ \"D984A64B832\", \"F74A523E1562\" ]}"
+    request.SetSharedGroupId("AddSharedGroupMembers");
+    request.SetPlayFabIds({ "6842934CB46C0834" });
+}
+
+void AutoGenSharedGroupsTests::FillServerAddSharedGroupMembersCleanupDeleteSharedGroupRequest(PFSharedGroupsDeleteSharedGroupRequestWrapper<>& request)
+{
+    request.SetSharedGroupId("AddSharedGroupMembers");
+}
 
 #pragma endregion
 
@@ -118,7 +189,7 @@ void AutoGenSharedGroupsTests::FillServerCreateSharedGroupCleanupDeleteSharedGro
 void AutoGenSharedGroupsTests::FillServerDeleteSharedGroupPrerequisiteCreateSharedGroupRequest(PFSharedGroupsCreateSharedGroupRequestWrapper<>& request)
 {
     // Example request: "{ \"SharedGroupId\": \"Clan Data\"}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    request.SetSharedGroupId("DeleteSharedGroup");
 }
 
 HRESULT AutoGenSharedGroupsTests::StoreServerDeleteSharedGroupPrerequisitePFSharedGroupsCreateSharedGroupResult(std::shared_ptr<CreateSharedGroupResultHolder> result)
@@ -129,9 +200,7 @@ HRESULT AutoGenSharedGroupsTests::StoreServerDeleteSharedGroupPrerequisitePFShar
 
 void AutoGenSharedGroupsTests::FillDeleteSharedGroupRequest(PFSharedGroupsDeleteSharedGroupRequestWrapper<>& request)
 {
-    // TODO: debug PassingButNoData test
-    // Example Request: "{ \"SharedGroupId\": \"Clan Data\"}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    request.SetSharedGroupId("DeleteSharedGroup");
 }
 
 #pragma endregion
@@ -143,6 +212,31 @@ void AutoGenSharedGroupsTests::FillDeleteSharedGroupRequest(PFSharedGroupsDelete
 
 #pragma region ServerRemoveSharedGroupMembers
 
+void AutoGenSharedGroupsTests::FillServerRemoveSharedGroupMembersPrerequisiteCreateSharedGroupRequest(PFSharedGroupsCreateSharedGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"SharedGroupId\": \"Clan Data\"}"
+    request.SetSharedGroupId("RemoveSharedGroupMembers");
+}
+
+HRESULT AutoGenSharedGroupsTests::StoreServerRemoveSharedGroupMembersPrerequisitePFSharedGroupsCreateSharedGroupResult(std::shared_ptr<CreateSharedGroupResultHolder> result)
+{
+    testData.m_CreateSharedGroupResult = result;
+    return S_OK;
+}
+
+void AutoGenSharedGroupsTests::FillServerRemoveSharedGroupMembersPrerequisiteAddSharedGroupMembersRequest(PFSharedGroupsAddSharedGroupMembersRequestWrapper<>& request)
+{
+    // Example request: "{ \"SharedGroupId\": \"Clan Data\", \"PlayFabIds\": [ \"D984A64B832\", \"F74A523E1562\" ]}"
+    request.SetSharedGroupId("RemoveSharedGroupMembers");
+    request.SetPlayFabIds({ "6842934CB46C0834" });
+}
+
+
+void AutoGenSharedGroupsTests::FillServerRemoveSharedGroupMembersCleanupDeleteSharedGroupRequest(PFSharedGroupsDeleteSharedGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"SharedGroupId\": \"Clan Data\"}"
+    request.SetSharedGroupId("RemoveSharedGroupMembers");
+}
 
 #pragma endregion
 
