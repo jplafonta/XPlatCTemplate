@@ -27,8 +27,26 @@ private:
     HCHttpCall(const HCHttpCall& other) = delete;
     HCHttpCall& operator=(HCHttpCall other) = delete;
 
+    static HRESULT CALLBACK HCRequestBodyRead(
+        _In_ HCCallHandle callHandle,
+        _In_ size_t offset,
+        _In_ size_t bytesAvailable,
+        _In_opt_ void* context,
+        _Out_writes_bytes_to_(bytesAvailable, *bytesWritten) uint8_t* destination,
+        _Out_ size_t* bytesWritten
+    );
+
+    static HRESULT CALLBACK HCResponseBodyWrite(
+        _In_ HCCallHandle callHandle,
+        _In_reads_bytes_(bytesAvailable) const uint8_t* source,
+        _In_ size_t bytesAvailable,
+        _In_opt_ void* context
+    );
+
     static void CALLBACK HCPerformComplete(XAsyncBlock* async);
 
+    String m_requestBody;
+    Vector<char> m_responseBody;
     TaskQueue const m_queue;
     HCCallHandle m_callHandle{ nullptr };
     XAsyncBlock m_asyncBlock{};
@@ -210,6 +228,7 @@ AsyncOp<ServiceResponse> HCHttpCall::Perform(
     // Set up HCHttpCallHandle
     RETURN_IF_FAILED(HCHttpCallCreate(&call->m_callHandle));
     RETURN_IF_FAILED(HCHttpCallRequestSetUrl(call->m_callHandle, "POST", url));
+    RETURN_IF_FAILED(HCHttpCallResponseSetResponseBodyWriteFunction(call->m_callHandle, HCHttpCall::HCResponseBodyWrite, call.get()));
 
     // Add default PlayFab headers
     RETURN_IF_FAILED(HCHttpCallRequestSetHeader(call->m_callHandle, "Accept", "application/json", true));
@@ -225,8 +244,11 @@ AsyncOp<ServiceResponse> HCHttpCall::Perform(
         }
     }
 
-    String jsonString = JsonUtils::WriteToString(requestBody);
-    RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyString(call->m_callHandle, jsonString.data()));
+    if (!requestBody.IsNull())
+    {
+        call->m_requestBody = JsonUtils::WriteToString(requestBody);
+        RETURN_IF_FAILED(HCHttpCallRequestSetRequestBodyReadFunction(call->m_callHandle, HCHttpCall::HCRequestBodyRead, call->m_requestBody.size(), call.get()));
+    }
 
     call->m_asyncBlock.callback = HCPerformComplete;
     call->m_asyncBlock.context = call.get();
@@ -243,6 +265,48 @@ AsyncOp<ServiceResponse> HCHttpCall::Perform(
     return asyncOp;
 }
 
+HRESULT HCHttpCall::HCRequestBodyRead(
+    _In_ HCCallHandle callHandle,
+    _In_ size_t offset,
+    _In_ size_t bytesAvailable,
+    _In_opt_ void* context,
+    _Out_writes_bytes_to_(bytesAvailable, *bytesWritten) uint8_t* destination,
+    _Out_ size_t* bytesWritten
+)
+{
+    UNREFERENCED_PARAMETER(callHandle);
+
+    assert(destination);
+    assert(bytesAvailable > 0);
+    assert(bytesWritten);
+
+    auto call{ static_cast<HCHttpCall*>(context) }; // non-owning
+    assert(offset < call->m_requestBody.size());
+
+    *bytesWritten = std::min(bytesAvailable, call->m_requestBody.size() - offset);
+    std::memcpy(destination, call->m_requestBody.data() + offset, *bytesWritten);
+
+    return S_OK;
+}
+
+HRESULT HCHttpCall::HCResponseBodyWrite(
+    _In_ HCCallHandle callHandle,
+    _In_reads_bytes_(bytesAvailable) const uint8_t* source,
+    _In_ size_t bytesAvailable,
+    _In_opt_ void* context
+)
+{
+    UNREFERENCED_PARAMETER(callHandle);
+
+    assert(source);
+    assert(bytesAvailable > 0);
+
+    auto call{ static_cast<HCHttpCall*>(context) }; // non-owning
+    call->m_responseBody.insert(call->m_responseBody.end(), source, source + bytesAvailable);
+
+    return S_OK;
+}
+
 void HCHttpCall::HCPerformComplete(XAsyncBlock* async)
 {
     // Retake ownership of asyncContext
@@ -254,21 +318,17 @@ void HCHttpCall::HCPerformComplete(XAsyncBlock* async)
         // Try to parse the response body no matter what. PlayFab often returns a response body even
         // on failure and they can provide more details about what went wrong. If we are unable to parse the response
         // body correctly, fall back to returning the Http status code.
-        const char* responseString{ nullptr };
-        HRESULT hr = HCHttpCallResponseGetResponseString(call->m_callHandle, &responseString);
-        if (FAILED(hr))
-        {
-            asyncOpContext->Complete(hr);
-            return;
-        }
+
+        // Ensure response is null terminated before treating as a string
+        call->m_responseBody.push_back(0);
 
         JsonDocument responseJson{ &JsonUtils::allocator };
-        responseJson.Parse(responseString);
+        responseJson.Parse(call->m_responseBody.data());
         if (responseJson.HasParseError())
         {
             // Couldn't parse response body, fall back to Http status code
             uint32_t httpCode{ 0 };
-            hr = HCHttpCallResponseGetStatusCode(call->m_callHandle, &httpCode);
+            HRESULT hr = HCHttpCallResponseGetStatusCode(call->m_callHandle, &httpCode);
             if (FAILED(hr))
             {
                 asyncOpContext->Complete(hr);
@@ -297,7 +357,7 @@ void HCHttpCall::HCPerformComplete(XAsyncBlock* async)
 
         // Get requestId response header
         const char* requestId;
-        hr = HCHttpCallResponseGetHeader(call->m_callHandle, "X-RequestId", &requestId);
+        HRESULT hr = HCHttpCallResponseGetHeader(call->m_callHandle, "X-RequestId", &requestId);
         if (FAILED(hr))
         {
             asyncOpContext->Complete(hr);
