@@ -32,8 +32,8 @@
         },
 
         "ClientUpdateSharedGroupData": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ClientCreateSharedGroup" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "ServerAddSharedGroupMembers": {
@@ -47,7 +47,7 @@
         },
 
         "ServerDeleteSharedGroup": {
-            "prerequisites": [ "ClientCreateSharedGroup" ],
+            "prerequisites": [ "ServerCreateSharedGroup" ],
             "cleanup": []
         },
 
@@ -62,8 +62,8 @@
         },
 
         "ServerUpdateSharedGroupData": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ServerCreateSharedGroup" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "AbortFileUploads": {

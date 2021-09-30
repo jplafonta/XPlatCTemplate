@@ -81,7 +81,6 @@ void AutoGenSharedGroupsTests::FillClientCreateSharedGroupCleanupDeleteSharedGro
 
 void AutoGenSharedGroupsTests::FillGetSharedGroupDataRequest(PFSharedGroupsGetSharedGroupDataRequestWrapper<>& request)
 {
-    // TODO: debug PassingButNoData test
     // Example Request: "{ \"SharedGroupId\": \"Clan Data\", \"Keys\": [ \"ClanKills\", \"LastClanUpdate\" ], \"GetMembers\": true}"
     UNREFERENCED_PARAMETER(request); // TODO
 }
@@ -137,11 +136,31 @@ void AutoGenSharedGroupsTests::FillClientRemoveSharedGroupMembersCleanupDeleteSh
 
 #pragma region ClientUpdateSharedGroupData
 
+void AutoGenSharedGroupsTests::FillClientUpdateSharedGroupDataPrerequisiteCreateSharedGroupRequest(PFSharedGroupsCreateSharedGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"SharedGroupId\": \"Clan Data\"}"
+    request.SetSharedGroupId("UpdateSharedGroupData");
+}
+
+HRESULT AutoGenSharedGroupsTests::StoreClientUpdateSharedGroupDataPrerequisitePFSharedGroupsCreateSharedGroupResult(std::shared_ptr<CreateSharedGroupResultHolder> result)
+{
+    testData.m_CreateSharedGroupResult = result;
+    return S_OK;
+}
+
 void AutoGenSharedGroupsTests::FillUpdateSharedGroupDataRequest(PFSharedGroupsUpdateSharedGroupDataRequestWrapper<>& request)
 {
-    // TODO: debug PassingButNoData test
     // Example Request: "{ \"SharedGroupId\": \"Clan Data\", \"Data\": { \"ClanKills\": \"34\", \"LastClanUpdate\": \"2014-10-03T09:21:14Z\" }, \"Permission\": \"Public\"}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    request.SetSharedGroupId("UpdateSharedGroupData");
+    StringDictionaryEntryVector<> data{};
+    data.insert_or_assign("test update key", "test update value");
+    request.SetData(data);
+}
+
+void AutoGenSharedGroupsTests::FillClientUpdateSharedGroupDataCleanupDeleteSharedGroupRequest(PFSharedGroupsDeleteSharedGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"SharedGroupId\": \"Clan Data\"}"
+    request.SetSharedGroupId("UpdateSharedGroupData");
 }
 
 #pragma endregion
@@ -242,6 +261,24 @@ void AutoGenSharedGroupsTests::FillServerRemoveSharedGroupMembersCleanupDeleteSh
 
 #pragma region ServerUpdateSharedGroupData
 
+void AutoGenSharedGroupsTests::FillServerUpdateSharedGroupDataPrerequisiteCreateSharedGroupRequest(PFSharedGroupsCreateSharedGroupRequestWrapper<>& request)
+{
+    // Example request: "{ \"SharedGroupId\": \"Clan Data\"}"
+    request.SetSharedGroupId("UpdateSharedGroupData");
+}
+
+HRESULT AutoGenSharedGroupsTests::StoreServerUpdateSharedGroupDataPrerequisitePFSharedGroupsCreateSharedGroupResult(std::shared_ptr<CreateSharedGroupResultHolder> result)
+{
+    testData.m_CreateSharedGroupResult = result;
+    return S_OK;
+}
+
+
+void AutoGenSharedGroupsTests::FillServerUpdateSharedGroupDataCleanupDeleteSharedGroupRequest(PFSharedGroupsDeleteSharedGroupRequestWrapper<>& request)
+{
+    // Example Request: "{ \"SharedGroupId\": \"Clan Data\"}"
+    request.SetSharedGroupId("UpdateSharedGroupData");
+}
 
 #pragma endregion
  
