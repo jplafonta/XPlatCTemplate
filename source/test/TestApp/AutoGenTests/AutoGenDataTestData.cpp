@@ -258,7 +258,7 @@ void AutoGenDataTests::FillSetObjectsPrerequisiteSetObjectsRequest(PFDataSetObje
     pfObject.escapedDataObject = "\"Test Object Prereq Data\"";
     objects.push_back(pfObject);
     request.SetObjects(std::move(objects));
-    request.SetEntity(PFEntityKey{ "B64BE91E5DBD5597", "title_player_account" });
+    request.SetEntity(PFEntityKey{ "33D5E873FB4D8629", "title_player_account" });
 }
 
 HRESULT AutoGenDataTests::StoreSetObjectsPrerequisitePFDataSetObjectsResponse(std::shared_ptr<SetObjectsResponseHolder> result)
@@ -277,7 +277,7 @@ void AutoGenDataTests::FillSetObjectsRequest(PFDataSetObjectsRequestWrapper<>& r
     pfObject.dataObject.stringValue = "{ \"Test Object\": \"New Data\" }";
     objects.push_back(pfObject);
     request.SetObjects(std::move(objects));
-    request.SetEntity(PFEntityKey{ "B64BE91E5DBD5597", "title_player_account" });
+    request.SetEntity(PFEntityKey{ "33D5E873FB4D8629", "title_player_account" });
 }
 
 HRESULT AutoGenDataTests::ValidatePFDataSetObjectsResponse(PFDataSetObjectsResponse* result)
