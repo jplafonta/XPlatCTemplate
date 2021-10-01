@@ -12,8 +12,8 @@
         },
 
         "ClientAddSharedGroupMembers": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ClientCreateSharedGroup" ],
+            "cleanup": [ "ClientRemoveSharedGroupMembers", "ServerDeleteSharedGroup" ]
         },
 
         "ClientCreateSharedGroup": {
@@ -22,23 +22,23 @@
         },
 
         "ClientGetSharedGroupData": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ClientCreateSharedGroup", "ClientUpdateSharedGroupData" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "ClientRemoveSharedGroupMembers": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ClientCreateSharedGroup", "ClientAddSharedGroupMembers" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "ClientUpdateSharedGroupData": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ClientCreateSharedGroup" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "ServerAddSharedGroupMembers": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ServerCreateSharedGroup" ],
+            "cleanup": [ "ServerRemoveSharedGroupMembers", "ServerDeleteSharedGroup" ]
         },
 
         "ServerCreateSharedGroup": {
@@ -47,23 +47,23 @@
         },
 
         "ServerDeleteSharedGroup": {
-            "prerequisites": [ "ClientCreateSharedGroup" ],
+            "prerequisites": [ "ServerCreateSharedGroup" ],
             "cleanup": []
         },
 
         "ServerGetSharedGroupData": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ClientCreateSharedGroup", "ServerUpdateSharedGroupData" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "ServerRemoveSharedGroupMembers": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ServerCreateSharedGroup", "ServerAddSharedGroupMembers" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "ServerUpdateSharedGroupData": {
-            "prerequisites": [],
-            "cleanup": []
+            "prerequisites": [ "ServerCreateSharedGroup" ],
+            "cleanup": [ "ServerDeleteSharedGroup" ]
         },
 
         "AbortFileUploads": {
