@@ -185,11 +185,11 @@
   "TestDataGetObjects": "PassingWithData",
   "TestDataInitiateFileUploads": "PassingWithData",
   "TestDataSetObjects": "PassingWithData",
-  "TestProfilesGetGlobalPolicy": "Failing",
+  "TestProfilesGetGlobalPolicy": "PassingWithData",
   "TestProfilesGetProfile": "PassingWithData",
   "TestProfilesGetProfiles": "PassingWithData",
   "TestProfilesGetTitlePlayersFromMasterPlayerAccountIds": "PassingWithData",
-  "TestProfilesSetGlobalPolicy": "Failing",
+  "TestProfilesSetGlobalPolicy": "PassingWithData",
   "TestProfilesSetProfileLanguage": "PassingWithData",
   "TestProfilesSetProfilePolicy": "PassingWithData"
 

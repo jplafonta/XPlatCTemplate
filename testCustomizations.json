@@ -4,7 +4,9 @@
         "AddMembers": "titleEntityHandle",
         "ApplyToGroup": "entityHandle2",
         "ListMembershipOpportunities": "entityHandle2",
-        "SetObjects": "entityHandle2"
+        "SetObjects": "entityHandle2",
+        "GetGlobalPolicy": "titleEntityHandle",
+        "SetGlobalPolicy": "titleEntityHandle"
     },
     "prerequisitesAndCleanup": {
         "AdminSetPublisherData": {
