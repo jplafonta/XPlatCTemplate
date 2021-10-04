@@ -13,7 +13,6 @@ using namespace PlayFab::Wrappers;
 
 void AutoGenProfilesTests::FillGetGlobalPolicyRequest(PFProfilesGetGlobalPolicyRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{}"
     UNREFERENCED_PARAMETER(request); // TODO
 }
@@ -104,9 +103,18 @@ HRESULT AutoGenProfilesTests::ValidatePFProfilesGetTitlePlayersFromMasterPlayerA
 
 void AutoGenProfilesTests::FillSetGlobalPolicyRequest(PFProfilesSetGlobalPolicyRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{ \"Permissions\": [ {  \"Resource\": \"pfrn:data--title_player_account!90901000/Profile/SomethingCool\",  \"Action\": \"*\",  \"Effect\": \"Allow\",  \"Principal\": {  \"ChildOf\": {   \"EntityType\": \"[SELF]\"  }  },  \"Comment\": \"An example policy\" } ]}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    PFProfilesEntityPermissionStatementWrapper<> permission;
+    permission.SetAction("Write");
+    permission.SetEffect(PFEffectType::Deny);
+    permission.SetCondition({ "{ \"CallingEntityType\": \"character\" }" });
+    permission.SetComment("Testing Global Policy: Only title can edit user statistics");
+    permission.SetPrincipal({ "{ \"*\" }" });
+    permission.SetResource("pfrn:data--*!*/Profile/Statistics/*");
+
+    ModelVector<PFProfilesEntityPermissionStatementWrapper<>> permissions;
+    permissions.push_back(permission);
+    request.SetPermissions(permissions);
 }
 
 #pragma endregion

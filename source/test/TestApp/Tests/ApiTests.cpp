@@ -85,22 +85,22 @@ void ApiTests::TestApiEntityToken(TestContext& testContext)
 {
     struct GetProfilesResult : public XAsyncResult
     {
-        PFAccountManagementGetEntityProfileResponse* result{ nullptr };
+        PFProfilesGetEntityProfileResponse* result{ nullptr };
 
         HRESULT Get(XAsyncBlock* async) override
         {
             size_t requiredBufferSize;
-            RETURN_IF_FAILED(PFAccountManagementGetProfileGetResultSize(async, &requiredBufferSize));
+            RETURN_IF_FAILED(PFProfilesGetProfileGetResultSize(async, &requiredBufferSize));
 
             resultBuffer.resize(requiredBufferSize);
-            return PFAccountManagementGetProfileGetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr);
+            return PFProfilesGetProfileGetResult(async, resultBuffer.size(), resultBuffer.data(), &result, nullptr);
         }
     };
 
     auto async = std::make_unique<XAsyncHelper<GetProfilesResult>>(testContext);
 
-    PFAccountManagementGetEntityProfileRequest request{};
-    HRESULT hr = PFAccountManagementGetProfileAsync(entityHandle, &request, &async->asyncBlock);
+    PFProfilesGetEntityProfileRequest request{};
+    HRESULT hr = PFProfilesGetProfileAsync(entityHandle, &request, &async->asyncBlock);
     if (FAILED(hr))
     {
         testContext.Fail("PlayFabProfilesGetProfileAsync", hr);
