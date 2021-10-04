@@ -33,11 +33,10 @@ HRESULT AutoGenProfilesTests::ValidatePFProfilesGetGlobalPolicyResponse(PFProfil
 
 void AutoGenProfilesTests::FillGetEntityProfileRequest(PFProfilesGetEntityProfileRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{ \"Entity\": { \"Id\": \"1234567787392\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
     PFEntityKeyWrapper<> entity{};
     entity.SetId("B64BE91E5DBD5597");
-    entity.SetType("title_player_account");
+    entity.SetType(PFTitlePlayerEntityType);
     request.SetEntity(entity);
 }
 
@@ -55,15 +54,14 @@ HRESULT AutoGenProfilesTests::ValidatePFProfilesGetEntityProfileResponse(PFProfi
 
 void AutoGenProfilesTests::FillGetEntityProfilesRequest(PFProfilesGetEntityProfilesRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{ \"Entities\": [ {  \"Id\": \"1234567787392\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" }, {  \"Id\": \"42434567785265\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}"
     PFEntityKeyWrapper<> entity1{};
     entity1.SetId("B64BE91E5DBD5597");
-    entity1.SetType("title_player_account");
+    entity1.SetType(PFTitlePlayerEntityType);
 
     PFEntityKeyWrapper<> entity2{};
     entity2.SetId("61E37494004A216C");
-    entity2.SetType("title_player_account");
+    entity2.SetType(PFTitlePlayerEntityType);
 
     ModelVector<PFEntityKeyWrapper<>> entities{};
     entities.push_back(entity1);
@@ -86,9 +84,8 @@ HRESULT AutoGenProfilesTests::ValidatePFProfilesGetEntityProfilesResponse(PFProf
 
 void AutoGenProfilesTests::FillGetTitlePlayersFromMasterPlayerAccountIdsRequest(PFProfilesGetTitlePlayersFromMasterPlayerAccountIdsRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{ \"MasterPlayerAccountIds\": [ \"1233455677\" ], \"TitleId\": \"{{TitleId}}\"}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    request.SetMasterPlayerAccountIds({ "8C2294C98CAFA174" });
 }
 
 HRESULT AutoGenProfilesTests::ValidatePFProfilesGetTitlePlayersFromMasterPlayerAccountIdsResponse(PFProfilesGetTitlePlayersFromMasterPlayerAccountIdsResponse* result)
@@ -118,9 +115,13 @@ void AutoGenProfilesTests::FillSetGlobalPolicyRequest(PFProfilesSetGlobalPolicyR
 
 void AutoGenProfilesTests::FillSetProfileLanguageRequest(PFProfilesSetProfileLanguageRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{ \"Language\": \"en\", \"ExpectedVersion\": 123, \"Entity\": { \"Id\": \"1234\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    PFEntityKeyWrapper<> entity{};
+    entity.SetId("B64BE91E5DBD5597");
+    entity.SetType(PFTitlePlayerEntityType);
+    request.SetEntity(entity);
+
+    request.SetLanguage("en");
 }
 
 HRESULT AutoGenProfilesTests::ValidatePFProfilesSetProfileLanguageResponse(PFProfilesSetProfileLanguageResponse* result)
@@ -138,9 +139,33 @@ HRESULT AutoGenProfilesTests::ValidatePFProfilesSetProfileLanguageResponse(PFPro
 
 void AutoGenProfilesTests::FillSetEntityProfilePolicyRequest(PFProfilesSetEntityProfilePolicyRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{ \"Statements\": [ {  \"Resource\": \"pfrn:data--*!*/Profile/Files/avatar.png\",  \"Action\": \"Read\",  \"Effect\": \"Allow\",  \"Principal\": {  \"FriendOf\": \"true\"  },  \"Comment\": \"Allow my friends to read my avatar\" } ], \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    PFEntityKeyWrapper<> entity{};
+    entity.SetId("B64BE91E5DBD5597");
+    entity.SetType(PFTitlePlayerEntityType);
+    request.SetEntity(entity);
+
+    PFJsonObject doc;
+    doc.stringValue = "{ \"Friend\": \"true\" }";
+
+    PFProfilesEntityPermissionStatementWrapper<> permission1;
+    permission1.SetAction("Read");
+    permission1.SetEffect(PFEffectType::Allow);
+    permission1.SetComment("Testing Profile Policy 1");
+    permission1.SetPrincipal(doc);
+    permission1.SetResource("pfrn:data--title_player_account!B64BE91E5DBD5597/Profile/Objects/*");
+
+    PFProfilesEntityPermissionStatementWrapper<> permission2;
+    permission2.SetAction("Write");
+    permission2.SetEffect(PFEffectType::Deny);
+    permission2.SetComment("Testing Profile Policy 2");
+    permission2.SetPrincipal(doc);
+    permission2.SetResource("pfrn:data--title_player_account!B64BE91E5DBD5597/Profile/Files/*");
+
+    ModelVector<PFProfilesEntityPermissionStatementWrapper<>> permissions;
+    permissions.push_back(permission1);
+    permissions.push_back(permission2);
+    request.SetStatements(permissions);
 }
 
 HRESULT AutoGenProfilesTests::ValidatePFProfilesSetEntityProfilePolicyResponse(PFProfilesSetEntityProfilePolicyResponse* result)

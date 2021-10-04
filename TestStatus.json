@@ -188,9 +188,9 @@
   "TestProfilesGetGlobalPolicy": "Failing",
   "TestProfilesGetProfile": "PassingWithData",
   "TestProfilesGetProfiles": "PassingWithData",
-  "TestProfilesGetTitlePlayersFromMasterPlayerAccountIds": "Failing",
+  "TestProfilesGetTitlePlayersFromMasterPlayerAccountIds": "PassingWithData",
   "TestProfilesSetGlobalPolicy": "Failing",
-  "TestProfilesSetProfileLanguage": "Failing",
-  "TestProfilesSetProfilePolicy": "Failing"
+  "TestProfilesSetProfileLanguage": "PassingWithData",
+  "TestProfilesSetProfilePolicy": "PassingWithData"
 
 }
