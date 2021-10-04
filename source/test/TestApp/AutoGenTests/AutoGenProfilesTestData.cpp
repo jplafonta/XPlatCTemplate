@@ -3,126 +3,156 @@
 #include "TestApp.h"
 #include "AutoGenProfilesTests.h"
 #include "XAsyncHelper.h"
-#include <playfab/PlayFabClientAuthApi.h>
-#include <playfab/PlayFabClientApi.h>
-#include <playfab/PlayFabProfilesApi.h>
-#include <playfab/PlayFabAdminApi.h>
-#include <playfab/PlayFabAuthenticationAuthApi.h>
-#include <playfab/PlayFabClientDataModels.h>
 
 namespace PlayFabUnit
 {
 
-void AutoGenProfilesTests::FillPlayFabProfilesGetGlobalPolicyRequest( PlayFab::ProfilesModels::GetGlobalPolicyRequest* request )
+using namespace PlayFab::Wrappers;
+
+#pragma region GetGlobalPolicy
+
+void AutoGenProfilesTests::FillGetGlobalPolicyRequest(PFProfilesGetGlobalPolicyRequestWrapper<>& request)
 {
-    // TODO: debug  test
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( "{}" );
-    request->FromJson(inputJson);
+    // TODO: debug Failing test
+    // Example Request: "{}"
+    UNREFERENCED_PARAMETER(request); // TODO
 }
 
-HRESULT AutoGenProfilesTests::ValidatePlayFabProfilesGetGlobalPolicyResponse( PlayFabProfilesGetGlobalPolicyResponse* result )
+HRESULT AutoGenProfilesTests::ValidatePFProfilesGetGlobalPolicyResponse(PFProfilesGetGlobalPolicyResponse* result)
 {
-    // result.permissions = PlayFabProfilesEntityPermissionStatement const* const*;
+    // result.permissions = PFProfilesEntityPermissionStatement const* const*;
     // result.permissionsCount = uint32_t;
 
     UNREFERENCED_PARAMETER(result);
     return S_OK;
 }
 
-void AutoGenProfilesTests::FillPlayFabProfilesGetEntityProfileRequest( PlayFab::ProfilesModels::GetEntityProfileRequest* request )
+#pragma endregion
+
+#pragma region GetProfile
+
+void AutoGenProfilesTests::FillGetEntityProfileRequest(PFProfilesGetEntityProfileRequestWrapper<>& request)
 {
-    // TODO: debug  test
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( "{ \"Entity\": { \"Id\": \"1234567787392\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}" );
-    request->FromJson(inputJson);
+    // TODO: debug Failing test
+    // Example Request: "{ \"Entity\": { \"Id\": \"1234567787392\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    PFEntityKeyWrapper<> entity{};
+    entity.SetId("B64BE91E5DBD5597");
+    entity.SetType("title_player_account");
+    request.SetEntity(entity);
 }
 
-HRESULT AutoGenProfilesTests::ValidatePlayFabProfilesGetEntityProfileResponse( PlayFabProfilesGetEntityProfileResponse* result )
+HRESULT AutoGenProfilesTests::ValidatePFProfilesGetEntityProfileResponse(PFProfilesGetEntityProfileResponse* result)
 {
-    // result.profile = PlayFabProfilesEntityProfileBody const*;
+    // result.profile = PFProfilesEntityProfileBody const*;
 
     UNREFERENCED_PARAMETER(result);
     return S_OK;
 }
 
-void AutoGenProfilesTests::FillPlayFabProfilesGetEntityProfilesRequest( PlayFab::ProfilesModels::GetEntityProfilesRequest* request )
+#pragma endregion
+
+#pragma region GetProfiles
+
+void AutoGenProfilesTests::FillGetEntityProfilesRequest(PFProfilesGetEntityProfilesRequestWrapper<>& request)
 {
-    // TODO: debug  test
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( "{ \"Entities\": [ {  \"Id\": \"1234567787392\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" }, {  \"Id\": \"42434567785265\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}" );
-    request->FromJson(inputJson);
+    // TODO: debug Failing test
+    // Example Request: "{ \"Entities\": [ {  \"Id\": \"1234567787392\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" }, {  \"Id\": \"42434567785265\",  \"Type\": \"title_player_account\",  \"TypeString\": \"title_player_account\" } ]}"
+    PFEntityKeyWrapper<> entity1{};
+    entity1.SetId("B64BE91E5DBD5597");
+    entity1.SetType("title_player_account");
+
+    PFEntityKeyWrapper<> entity2{};
+    entity2.SetId("61E37494004A216C");
+    entity2.SetType("title_player_account");
+
+    ModelVector<PFEntityKeyWrapper<>> entities{};
+    entities.push_back(entity1);
+    entities.push_back(entity2);
+    request.SetEntities(entities);
 }
 
-HRESULT AutoGenProfilesTests::ValidatePlayFabProfilesGetEntityProfilesResponse( PlayFabProfilesGetEntityProfilesResponse* result )
+HRESULT AutoGenProfilesTests::ValidatePFProfilesGetEntityProfilesResponse(PFProfilesGetEntityProfilesResponse* result)
 {
-    // result.profiles = PlayFabProfilesEntityProfileBody const* const*;
+    // result.profiles = PFProfilesEntityProfileBody const* const*;
     // result.profilesCount = uint32_t;
 
     UNREFERENCED_PARAMETER(result);
     return S_OK;
 }
 
-void AutoGenProfilesTests::FillPlayFabProfilesGetTitlePlayersFromMasterPlayerAccountIdsRequest( PlayFab::ProfilesModels::GetTitlePlayersFromMasterPlayerAccountIdsRequest* request )
+#pragma endregion
+
+#pragma region GetTitlePlayersFromMasterPlayerAccountIds
+
+void AutoGenProfilesTests::FillGetTitlePlayersFromMasterPlayerAccountIdsRequest(PFProfilesGetTitlePlayersFromMasterPlayerAccountIdsRequestWrapper<>& request)
 {
-    // TODO: debug  test
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( "{ \"MasterPlayerAccountIds\": [ \"1233455677\" ], \"TitleId\": \"{{TitleId}}\"}" );
-    request->FromJson(inputJson);
+    // TODO: debug Failing test
+    // Example Request: "{ \"MasterPlayerAccountIds\": [ \"1233455677\" ], \"TitleId\": \"{{TitleId}}\"}"
+    UNREFERENCED_PARAMETER(request); // TODO
 }
 
-HRESULT AutoGenProfilesTests::ValidatePlayFabProfilesGetTitlePlayersFromMasterPlayerAccountIdsResponse( PlayFabProfilesGetTitlePlayersFromMasterPlayerAccountIdsResponse* result )
+HRESULT AutoGenProfilesTests::ValidatePFProfilesGetTitlePlayersFromMasterPlayerAccountIdsResponse(PFProfilesGetTitlePlayersFromMasterPlayerAccountIdsResponse* result)
 {
     // result.titleId = const char*;
-    // result.titlePlayerAccounts = struct PlayFabEntityKeyDictionaryEntry const*;
+    // result.titlePlayerAccounts = struct PFEntityKeyDictionaryEntry const*;
     // result.titlePlayerAccountsCount = uint32_t;
 
     UNREFERENCED_PARAMETER(result);
     return S_OK;
 }
 
-void AutoGenProfilesTests::FillPlayFabProfilesSetGlobalPolicyRequest( PlayFab::ProfilesModels::SetGlobalPolicyRequest* request )
+#pragma endregion
+
+#pragma region SetGlobalPolicy
+
+void AutoGenProfilesTests::FillSetGlobalPolicyRequest(PFProfilesSetGlobalPolicyRequestWrapper<>& request)
 {
-    // TODO: debug  test
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( "{ \"Permissions\": [ {  \"Resource\": \"pfrn:data--title_player_account!90901000/Profile/SomethingCool\",  \"Action\": \"*\",  \"Effect\": \"Allow\",  \"Principal\": {  \"ChildOf\": {   \"EntityType\": \"[SELF]\"  }  },  \"Comment\": \"An example policy\" } ]}" );
-    request->FromJson(inputJson);
+    // TODO: debug Failing test
+    // Example Request: "{ \"Permissions\": [ {  \"Resource\": \"pfrn:data--title_player_account!90901000/Profile/SomethingCool\",  \"Action\": \"*\",  \"Effect\": \"Allow\",  \"Principal\": {  \"ChildOf\": {   \"EntityType\": \"[SELF]\"  }  },  \"Comment\": \"An example policy\" } ]}"
+    UNREFERENCED_PARAMETER(request); // TODO
 }
 
-void AutoGenProfilesTests::FillPlayFabProfilesSetProfileLanguageRequest( PlayFab::ProfilesModels::SetProfileLanguageRequest* request )
+#pragma endregion
+
+#pragma region SetProfileLanguage
+
+void AutoGenProfilesTests::FillSetProfileLanguageRequest(PFProfilesSetProfileLanguageRequestWrapper<>& request)
 {
-    // TODO: debug  test
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( "{ \"Language\": \"en\", \"ExpectedVersion\": 123, \"Entity\": { \"Id\": \"1234\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}" );
-    request->FromJson(inputJson);
+    // TODO: debug Failing test
+    // Example Request: "{ \"Language\": \"en\", \"ExpectedVersion\": 123, \"Entity\": { \"Id\": \"1234\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    UNREFERENCED_PARAMETER(request); // TODO
 }
 
-HRESULT AutoGenProfilesTests::ValidatePlayFabProfilesSetProfileLanguageResponse( PlayFabProfilesSetProfileLanguageResponse* result )
+HRESULT AutoGenProfilesTests::ValidatePFProfilesSetProfileLanguageResponse(PFProfilesSetProfileLanguageResponse* result)
 {
-    // result.operationResult = PlayFabProfilesOperationTypes const*;
+    // result.operationResult = PFOperationTypes const*;
     // result.versionNumber = int32_t const*;
 
     UNREFERENCED_PARAMETER(result);
     return S_OK;
 }
 
-void AutoGenProfilesTests::FillPlayFabProfilesSetEntityProfilePolicyRequest( PlayFab::ProfilesModels::SetEntityProfilePolicyRequest* request )
+#pragma endregion
+
+#pragma region SetProfilePolicy
+
+void AutoGenProfilesTests::FillSetEntityProfilePolicyRequest(PFProfilesSetEntityProfilePolicyRequestWrapper<>& request)
 {
-    // TODO: debug  test
-    PlayFab::JsonDocument inputJson;
-    inputJson.Parse( "{ \"Statements\": [ {  \"Resource\": \"pfrn:data--*!*/Profile/Files/avatar.png\",  \"Action\": \"Read\",  \"Effect\": \"Allow\",  \"Principal\": {  \"FriendOf\": \"true\"  },  \"Comment\": \"Allow my friends to read my avatar\" } ], \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}" );
-    request->FromJson(inputJson);
+    // TODO: debug Failing test
+    // Example Request: "{ \"Statements\": [ {  \"Resource\": \"pfrn:data--*!*/Profile/Files/avatar.png\",  \"Action\": \"Read\",  \"Effect\": \"Allow\",  \"Principal\": {  \"FriendOf\": \"true\"  },  \"Comment\": \"Allow my friends to read my avatar\" } ], \"Entity\": { \"Id\": \"90901000\", \"Type\": \"title_player_account\", \"TypeString\": \"title_player_account\" }}"
+    UNREFERENCED_PARAMETER(request); // TODO
 }
 
-HRESULT AutoGenProfilesTests::ValidatePlayFabProfilesSetEntityProfilePolicyResponse( PlayFabProfilesSetEntityProfilePolicyResponse* result )
+HRESULT AutoGenProfilesTests::ValidatePFProfilesSetEntityProfilePolicyResponse(PFProfilesSetEntityProfilePolicyResponse* result)
 {
-    // result.permissions = PlayFabProfilesEntityPermissionStatement const* const*;
+    // result.permissions = PFProfilesEntityPermissionStatement const* const*;
     // result.permissionsCount = uint32_t;
 
     UNREFERENCED_PARAMETER(result);
     return S_OK;
 }
 
+#pragma endregion
  
 
 }

@@ -1,6 +1,15 @@
 {
   "featureGroupOverrides": {
-    "calls": {},
+    "calls": {
+      "GetGlobalPolicy": "Profiles",
+      "GetProfile": "Profiles",
+      "GetProfiles": "Profiles",
+      "GetTitlePlayersFromMasterPlayerAccountIds": "Profiles",
+      "SetGlobalPolicy": "Profiles",
+      "SetProfileLanguage": "Profiles",
+      "SetProfilePolicy": "Profiles",
+      "AdminSetPublisherData": "TitleDataManagement"
+    },
     "apis": {},
     "subgroups": {
       "Account Management": "AccountManagement",

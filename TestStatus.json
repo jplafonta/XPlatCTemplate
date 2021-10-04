@@ -142,7 +142,6 @@
   "TestClientWriteCharacterEvent": "Failing",
   "TestClientWritePlayerEvent": "PassingWithData",
   "TestClientWriteTitleEvent": "PassingWithData",
-  "TestSharedGroupsAdminSetPublisherData": "PassingButNoData",
   "TestSharedGroupsClientAddSharedGroupMembers": "PassingWithData",
   "TestSharedGroupsClientCreateSharedGroup": "PassingWithData",
   "TestSharedGroupsClientGetSharedGroupData": "PassingWithData",
@@ -185,7 +184,13 @@
   "TestDataGetFiles": "PassingWithData",
   "TestDataGetObjects": "PassingWithData",
   "TestDataInitiateFileUploads": "PassingWithData",
-  "TestDataSetObjects": "PassingWithData"
-
+  "TestDataSetObjects": "PassingWithData",
+  "TestProfilesGetGlobalPolicy": "Failing",
+  "TestProfilesGetProfile": "PassingWithData",
+  "TestProfilesGetProfiles": "PassingWithData",
+  "TestProfilesGetTitlePlayersFromMasterPlayerAccountIds": "Failing",
+  "TestProfilesSetGlobalPolicy": "Failing",
+  "TestProfilesSetProfileLanguage": "Failing",
+  "TestProfilesSetProfilePolicy": "Failing"
 
 }
