@@ -9,17 +9,6 @@ namespace PlayFabUnit
 
 using namespace PlayFab::Wrappers;
 
-#pragma region AdminSetPublisherData
-
-void AutoGenSharedGroupsTests::FillSetPublisherDataRequest(PFSetPublisherDataRequestWrapper<>& request)
-{
-    // TODO: debug PassingButNoData test
-    // Example Request: "{ \"Key\": \"Running Speed\", \"Value\": \"1.03\"}"
-    UNREFERENCED_PARAMETER(request); // TODO
-}
-
-#pragma endregion
-
 #pragma region ClientAddSharedGroupMembers
 
 void AutoGenSharedGroupsTests::FillClientAddSharedGroupMembersPrerequisiteCreateSharedGroupRequest(PFSharedGroupsCreateSharedGroupRequestWrapper<>& request)
