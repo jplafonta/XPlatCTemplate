@@ -83,8 +83,6 @@ for (var i = 0; i < featureGroup.calls.length; i++)
     ss << "Request:"; Log(ss);
 <% 
     var datatype = call.requestDatatype;
-    if( datatype.name == call.request )
-    {
 %>
 
     // PlayFab<%- featureGroup.name + call.request %> struct:<% 
@@ -118,7 +116,6 @@ for (var i = 0; i < featureGroup.calls.length; i++)
     } 
 
     } 
-}
 if( false ) { throw Error('Not found ' + call.request) } %>
 
 }

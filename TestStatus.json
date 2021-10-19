@@ -191,6 +191,14 @@
   "TestProfilesGetTitlePlayersFromMasterPlayerAccountIds": "PassingWithData",
   "TestProfilesSetGlobalPolicy": "PassingWithData",
   "TestProfilesSetProfileLanguage": "PassingWithData",
-  "TestProfilesSetProfilePolicy": "PassingWithData"
+  "TestProfilesSetProfilePolicy": "PassingWithData",
+  "TestFriendsClientAddFriend": "Failing",
+  "TestFriendsClientGetFriendsList": "PassingWithData",
+  "TestFriendsClientRemoveFriend": "Failing",
+  "TestFriendsClientSetFriendTags": "PassingWithData",
+  "TestFriendsServerAddFriend": "Failing",
+  "TestFriendsServerGetFriendsList": "Failing",
+  "TestFriendsServerRemoveFriend": "Failing",
+  "TestFriendsServerSetFriendTags": "Failing"
 
 }
