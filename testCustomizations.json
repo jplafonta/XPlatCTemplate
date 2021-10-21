@@ -9,8 +9,13 @@
         "SetGlobalPolicy": "titleEntityHandle"
     },
     "prerequisitesAndCleanup": {
-        "AdminSetPublisherData": {
+        "ClientAddFriend": {
             "prerequisites": [],
+            "cleanup": [ "ClientRemoveFriend" ]
+        },
+
+        "ClientRemoveFriend": {
+            "prerequisites": [ "ClientAddFriend" ],
             "cleanup": []
         },
 

@@ -13,9 +13,8 @@ using namespace PlayFab::Wrappers;
 
 void AutoGenFriendsTests::FillClientAddFriendRequest(PFFriendsClientAddFriendRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{ \"FriendPlayFabId\": \"29837799\"}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    request.SetFriendPlayFabId("76D9E1E588B0CFFC");
 }
 
 HRESULT AutoGenFriendsTests::ValidatePFFriendsAddFriendResult(PFFriendsAddFriendResult* result)
@@ -26,15 +25,20 @@ HRESULT AutoGenFriendsTests::ValidatePFFriendsAddFriendResult(PFFriendsAddFriend
     return S_OK;
 }
 
+void AutoGenFriendsTests::FillClientAddFriendCleanupClientRemoveFriendRequest(PFFriendsClientRemoveFriendRequestWrapper<>& request)
+{
+    // Example Request: "{ \"FriendPlayFabId\": \"29837799\"}"
+    request.SetFriendPlayFabId("76D9E1E588B0CFFC");
+}
+
 #pragma endregion
 
 #pragma region ClientGetFriendsList
 
 void AutoGenFriendsTests::FillClientGetFriendsListRequest(PFFriendsClientGetFriendsListRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{ \"IncludeSteamFriends\": true}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    UNREFERENCED_PARAMETER(request);
 }
 
 HRESULT AutoGenFriendsTests::ValidatePFFriendsGetFriendsListResult(PFFriendsGetFriendsListResult* result)
@@ -50,11 +54,22 @@ HRESULT AutoGenFriendsTests::ValidatePFFriendsGetFriendsListResult(PFFriendsGetF
 
 #pragma region ClientRemoveFriend
 
+void AutoGenFriendsTests::FillClientRemoveFriendPrerequisiteClientAddFriendRequest(PFFriendsClientAddFriendRequestWrapper<>& request)
+{
+    // Example request: "{ \"FriendPlayFabId\": \"29837799\"}"
+    request.SetFriendPlayFabId("76D9E1E588B0CFFC");
+}
+
+HRESULT AutoGenFriendsTests::StoreClientRemoveFriendPrerequisitePFFriendsAddFriendResult(std::shared_ptr<AddFriendResultHolder> result)
+{
+    testData.m_AddFriendResult = result;
+    return S_OK;
+}
+
 void AutoGenFriendsTests::FillClientRemoveFriendRequest(PFFriendsClientRemoveFriendRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{ \"FriendPlayFabId\": \"29837799\"}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    request.SetFriendPlayFabId("76D9E1E588B0CFFC");
 }
 
 #pragma endregion
@@ -63,9 +78,10 @@ void AutoGenFriendsTests::FillClientRemoveFriendRequest(PFFriendsClientRemoveFri
 
 void AutoGenFriendsTests::FillClientSetFriendTagsRequest(PFFriendsClientSetFriendTagsRequestWrapper<>& request)
 {
-    // TODO: debug Failing test
     // Example Request: "{ \"FriendPlayFabId\": \"29837799\", \"Tags\": [ \"great sniper\", \"no good at melee\" ]}"
-    UNREFERENCED_PARAMETER(request); // TODO
+    UNREFERENCED_PARAMETER(request);
+    request.SetFriendPlayFabId("75DE95A234BF9D97");
+    request.SetTags({ "tag1", "tag2" });
 }
 
 #pragma endregion
