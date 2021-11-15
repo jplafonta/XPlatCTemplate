@@ -576,7 +576,7 @@ ModelVector<ModelWrapperT, Alloc>::ModelVector(typename ModelWrapperT::ModelType
     this->m_values.reserve(count);
     for (;begin != end; ++begin)
     {
-        this->push_back(PointerVectorType::value_type{ **begin });
+        this->push_back(typename PointerVectorType::value_type{ **begin });
     }
 }
 
