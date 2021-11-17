@@ -16,8 +16,8 @@ popd
 
 
 pushd "external/libHttpClient"
-git checkout fd3593cf7fe19791148b7be219c6e2babd028ef2
-git reset --hard fd3593cf7fe19791148b7be219c6e2babd028ef2
+git checkout 6d65866efd8314a05fd72116120860f63db042ba
+git reset --hard 6d65866efd8314a05fd72116120860f63db042ba
 popd
 
 pushd "external/DirectXTK12"
