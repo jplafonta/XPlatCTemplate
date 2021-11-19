@@ -384,7 +384,7 @@ namespace PlayFabUnit
 
 void TestApp::Log(_Printf_format_string_ char const* format, ...)
 {
-    char message[8000] = {};
+    static char message[1024 * 64];
 
     va_list varArgs{};
     va_start(varArgs, format);
@@ -408,25 +408,9 @@ void TestApp::Log(_Printf_format_string_ char const* format, ...)
 // is likely to be very different on all of them.
 bool TestApp::LoadTitleDataJson(std::shared_ptr<char*>& testDataJson, size_t& testDataJsonLen)
 {
-    // Get the path to the test data file from the current environment vars.
-    std::string titleDataPath;
-
-    {
-        char* titleDataPathCStr = nullptr;
-        size_t titleDataPathCStrLen;
-        errno_t err = _dupenv_s(&titleDataPathCStr, &titleDataPathCStrLen, "PF_TEST_TITLE_DATA_JSON");
-
-        if ((0 != err) || (nullptr == titleDataPathCStr) || (0 == titleDataPathCStrLen))
-            return false;
-
-        titleDataPath = titleDataPathCStr;
-
-        delete[] titleDataPathCStr;
-    }
-
     // Read the title data from the file into the output character array.
     std::ifstream titleDataFile;
-    titleDataFile.open(titleDataPath, std::ios::binary | std::ios::in);
+    titleDataFile.open("TestTitle.json", std::ios::binary | std::ios::in);
 
     if (!titleDataFile)
     {

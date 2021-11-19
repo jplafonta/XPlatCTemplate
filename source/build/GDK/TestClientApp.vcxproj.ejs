@@ -96,7 +96,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(PlayFabTestDir)\TestApp\GDK\ATGTK;$(PlayFabExternalDir)\DirectXTK12\Inc;$(PlayFabTestDir)\TestApp\GDK\LiveTK;$(PlayFabTestDir)/TestApp;$(PlayFabTestDir)/TestApp/Tests;$(PlayFabSourceDir)\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(PlayFabTestDir)\TestApp\GDK\ATGTK;$(PlayFabExternalDir)\DirectXTK12\Inc;$(PlayFabTestDir)\TestApp\GDK\LiveTK;$(PlayFabTestDir)/TestApp;$(PlayFabTestDir)/TestApp/Tests;$(PlayFabSourceDir)\source;$(PlayFabSourceDir)\source\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -120,7 +120,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(PlayFabTestDir)\TestApp\GDK\ATGTK;$(PlayFabExternalDir)\DirectXTK12\Inc;$(PlayFabTestDir)\TestApp\GDK\LiveTK;$(PlayFabTestDir)/TestApp;$(PlayFabTestDir)/TestApp/Tests;$(PlayFabSourceDir)\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(PlayFabTestDir)\TestApp\GDK\ATGTK;$(PlayFabExternalDir)\DirectXTK12\Inc;$(PlayFabTestDir)\TestApp\GDK\LiveTK;$(PlayFabTestDir)/TestApp;$(PlayFabTestDir)/TestApp/Tests;$(PlayFabSourceDir)\source;$(PlayFabSourceDir)\source\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -141,7 +141,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;__WRL_NO_DEFAULT_LIB__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(PlayFabTestDir)\TestApp\GDK\ATGTK;$(PlayFabExternalDir)\DirectXTK12\Inc;$(PlayFabTestDir)\TestApp\GDK\LiveTK;$(PlayFabTestDir)/TestApp;$(PlayFabTestDir)/TestApp/Tests;$(PlayFabSourceDir)\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(PlayFabTestDir)\TestApp\GDK\ATGTK;$(PlayFabExternalDir)\DirectXTK12\Inc;$(PlayFabTestDir)\TestApp\GDK\LiveTK;$(PlayFabTestDir)/TestApp;$(PlayFabTestDir)/TestApp/Tests;$(PlayFabSourceDir)\source;$(PlayFabSourceDir)\source\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -246,6 +246,11 @@ for(var featureGroupName in SDKFeatureGroups) {
       <FileType>Document</FileType>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Gaming.Desktop.x64'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Gaming.Desktop.x64'">true</DeploymentContent>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="$(PlayFabRoot)\TestTitle.json">
+      <DeploymentContent>true</DeploymentContent>
     </CopyFileToFolders>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

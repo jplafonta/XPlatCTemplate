@@ -21,7 +21,7 @@
     </ClCompile>
     <Lib>
       <!-- Are these needed on all platforms? -->
-      <AdditionalDependencies>ws2_32.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
 

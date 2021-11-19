@@ -14,7 +14,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <!-- Internal include paths -->
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(PlayFabSourceDir)/source</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(PlayFabSourceDir)/source;$(PlayFabSourceDir)/source/Common</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
 
